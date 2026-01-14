@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Mock Interview - Question by Question</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 900px;
+      overflow: hidden;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      background: linear-gradient(to right, #4a6fa5, #3a4f7a);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 16px;
+    }
+
+    .question-section {
+      background: #f8f9fa;
+      padding: 30px;
+      border-bottom: 1px solid #e9ecef;
+      position: relative;
+    }
+
+    .question-counter {
+      background: #3a4f7a;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .question-text {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      font-size: 20px;
+      line-height: 1.6;
+      color: #2c3e50;
+      border-left: 5px solid #4a6fa5;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+    }
+
+    .question-type-badge {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      background: #e3f2fd;
+      color: #4a6fa5;
+      padding: 6px 15px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .recording-section {
+      padding: 30px;
+      text-align: center;
+    }
+
+    video {
+      width: 100%;
+      max-width: 640px;
+      height: 360px;
+      background: #000;
+      border-radius: 12px;
+      margin: 0 auto 30px;
+      display: block;
+      object-fit: cover;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .controls {
+      margin: 25px 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 14px 30px;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 180px;
+    }
+
+    #startBtn {
+      background: linear-gradient(to right, #00b09b, #96c93d);
+      color: white;
+    }
+
+    #startBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,176,155,0.3);
+    }
+
+    #stopBtn {
+      background: linear-gradient(to right, #ff416c, #ff4b2b);
+      color: white;
+    }
+
+    #stopBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255,65,108,0.3);
+    }
+
+    #skipBtn {
+      background: linear-gradient(to right, #95a5a6, #7f8c8d);
+      color: white;
+    }
+
+    #skipBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(149,165,166,0.3);
+    }
+
+    #nextBtn {
+      background: linear-gradient(to right, #4a6fa5, #3a4f7a);
+      color: white;
+      display: none;
+    }
+
+    #nextBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(74,111,165,0.3);
+    }
+
+    #finishBtn {
+      background: linear-gradient(to right, #f39c12, #e67e22);
+      color: white;
+      display: none;
+    }
+
+    #finishBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(243,156,18,0.3);
+    }
+
+    button:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    #result {
+      padding: 0 30px 30px;
+      display: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #4a6fa5;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .confidence-display {
+      margin-bottom: 30px;
+    }
+
+    .confidence-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .confidence-category {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .confidence-score {
+      font-size: 16px;
+      opacity: 0.9;
+      margin-bottom: 15px;
+    }
+
+    .confidence-percentage {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 20px;
+    }
+
+    .progress-bar {
+      background: rgba(255, 255, 255, 0.2);
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .progress-fill {
+      background: white;
+      height: 100%;
+      width: 0%;
+      transition: width 1.5s ease-in-out;
+    }
+
+    .confidence-excellent {
+      background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+    }
+
+    .confidence-good {
+      background: linear-gradient(135deg, #4a6fa5 0%, #3a4f7a 100%);
+    }
+
+    .confidence-average {
+      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    }
+
+    .confidence-below-average {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    }
+
+    .confidence-poor {
+      background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    }
+
+    .feedback-section {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid #4a6fa5;
+    }
+
+    .strengths {
+      border-left-color: #27ae60;
+    }
+
+    .improvements {
+      border-left-color: #e74c3c;
+    }
+
+    .transcript {
+      border-left-color: #3498db;
+    }
+
+    .sample-answer {
+      border-left-color: #9b59b6;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .feedback-list {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .feedback-list ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .feedback-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid #e9ecef;
+      color: #34495e;
+    }
+
+    .feedback-list li:last-child {
+      border-bottom: none;
+    }
+
+    .transcript-content {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #2c3e50;
+      font-style: italic;
+      padding: 10px;
+      background: white;
+      border-radius: 6px;
+      border-left: 3px solid #3498db;
+    }
+
+    .sample-answer-content {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #2c3e50;
+      padding: 10px;
+      background: white;
+      border-radius: 6px;
+      border-left: 3px solid #9b59b6;
+    }
+
+    .content-score {
+      margin-bottom: 25px;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .score-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      border: 1px solid #dee2e6;
+    }
+
+    .score-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: #4a6fa5;
+      margin-bottom: 5px;
+    }
+
+    .score-label {
+      font-size: 12px;
+      color: #7f8c8d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .api-info {
+      text-align: center;
+      font-size: 12px;
+      color: #95a5a6;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .error-message {
+      background: #fee;
+      border: 1px solid #fcc;
+      color: #c00;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .recording-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background: #ff4b2b;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px;
+        border-radius: 15px;
+      }
+      
+      .header {
+        padding: 20px;
+      }
+      
+      .header h1 {
+        font-size: 24px;
+      }
+      
+      .question-section {
+        padding: 20px;
+      }
+      
+      .question-text {
+        font-size: 18px;
+        padding: 20px;
+      }
+      
+      .recording-section {
+        padding: 20px;
+      }
+      
+      video {
+        height: 280px;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      button {
+        width: 100%;
+        max-width: 300px;
+      }
+      
+      .feedback-section {
+        padding: 20px;
+      }
+      
+      .score-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+      
+      .header h1 {
+        font-size: 20px;
+        flex-direction: column;
+      }
+      
+      .question-type-badge {
+        position: static;
+        margin-top: 15px;
+        display: inline-block;
+      }
+      
+      .score-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎤 AI Mock Interview Practice</h1>
+      <p>Answer interview questions one by one and get comprehensive AI-powered feedback</p>
+    </div>
+
+    <!-- Question Section -->
+    <div class="question-section">
+      <div class="question-counter" id="questionCounter">Question 1 of 10</div>
+      <div class="question-text" id="questionDisplay">
+        🎯 Loading question...
+      </div>
+      <div id="questionTypeBadge" class="question-type-badge">Loading...</div>
+    </div>
+
+    <div class="recording-section">
+      <video id="video" autoplay muted></video>
+      
+      <div class="controls">
+        <button id="startBtn">🎤 Start Recording</button>
+        <button id="stopBtn" disabled>⏹️ Stop & Analyze</button>
+        <button id="skipBtn">⏭️ Skip Question</button>
+        <button id="nextBtn">➡️ Next Question</button>
+        <button id="finishBtn">🏁 Finish Interview</button>
+      </div>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    let mediaRecorder, chunks = [];
+    const videoElement = document.getElementById('video');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const skipBtn = document.getElementById('skipBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const finishBtn = document.getElementById('finishBtn');
+    const resultDiv = document.getElementById('result');
+    const questionDisplay = document.getElementById('questionDisplay');
+    const questionTypeBadge = document.getElementById('questionTypeBadge');
+    const questionCounter = document.getElementById('questionCounter');
+
+    // Interview state
+    let currentQuestionIndex = 0;
+    let currentLevel = 'beginner';
+    let totalQuestions = 10;
+    let currentSessionId = generateSessionId();
+    let questions = [];
+
+    // Get level from URL if provided
+    const urlParams = new URLSearchParams(window.location.search);
+    const levelParam = urlParams.get('level');
+    if (levelParam && ['beginner', 'intermediate', 'advanced'].includes(levelParam)) {
+      currentLevel = levelParam;
+      totalQuestions = getTotalQuestionsForLevel(currentLevel);
+    }
+
+    // Initialize
+    initializeInterview();
+
+    // Generate unique session ID
+    function generateSessionId() {
+      return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Get total questions based on level
+    function getTotalQuestionsForLevel(level) {
+      const questionsPerLevel = {
+        'beginner': 10,
+        'intermediate': 12,
+        'advanced': 15
+      };
+      return questionsPerLevel[level] || 10;
+    }
+
+    // Initialize interview by fetching questions
+    async function initializeInterview() {
+      try {
+        // Fetch questions for the current level
+        const response = await fetch(`/get_questions/${currentLevel}`);
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        questions = data.questions || [];
+        
+        if (questions.length === 0) {
+          showError('No questions found for this level. Please generate questions first.');
+          return;
+        }
+        
+        totalQuestions = questions.length;
+        updateQuestionCounter();
+        loadQuestion(currentQuestionIndex);
+        
+        // Setup media recording
+        setupMediaRecorder();
+        
+      } catch (error) {
+        console.error('Initialization error:', error);
+        showError('Failed to initialize interview. Please try again.');
+      }
+    }
+
+    // Load a specific question
+    function loadQuestion(index) {
+      if (index >= questions.length) {
+        showFinalResults();
+        return;
+      }
+      
+      const question = questions[index];
+      updateQuestionDisplay(question.question_text, 'general');
+      updateQuestionCounter();
+      
+      // Reset UI state
+      resultDiv.innerHTML = '';
+      resultDiv.style.display = 'none';
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      skipBtn.disabled = false;
+      nextBtn.style.display = 'none';
+      finishBtn.style.display = 'none';
+      startBtn.innerHTML = '🎤 Start Recording';
+      
+      // Show skip button for all questions except the last one
+      if (currentQuestionIndex === totalQuestions - 1) {
+        skipBtn.style.display = 'none';
+      } else {
+        skipBtn.style.display = 'flex';
+      }
+      
+      // Reset video stream if needed
+      resetVideoStream();
+    }
+
+    // Skip question function
+    async function skipCurrentQuestion() {
+      const currentQuestion = questions[currentQuestionIndex];
+      
+      try {
+        // Send skip request to backend
+        const response = await fetch('/skip_question', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            question_id: currentQuestion.question_id,
+            session_id: currentSessionId,
+            level: currentLevel,
+            question_number: currentQuestionIndex + 1
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          console.log(`Skipped question ${currentQuestionIndex + 1}`);
+          
+          // Move to next question
+          currentQuestionIndex++;
+          if (currentQuestionIndex < totalQuestions) {
+            loadQuestion(currentQuestionIndex);
+          } else {
+            showFinalResults();
+          }
+        } else {
+          console.error('Failed to skip question:', data.error);
+          showError('Failed to skip question. Please try again.');
+        }
+      } catch (error) {
+        console.error('Skip question error:', error);
+        showError('Network error while skipping question.');
+      }
+    }
+
+    // Event listener for skip button
+    skipBtn.addEventListener('click', skipCurrentQuestion);
+
+    // Update question counter
+    function updateQuestionCounter() {
+      questionCounter.textContent = `Question ${currentQuestionIndex + 1} of ${totalQuestions}`;
+    }
+
+    // Update question display
+    function updateQuestionDisplay(question, type) {
+      const typeColors = {
+        'introduction': '#3498db',
+        'technical': '#e74c3c',
+        'behavioral': '#9b59b6',
+        'company': '#2ecc71',
+        'hr': '#f39c12',
+        'situational': '#1abc9c',
+        'general': '#7f8c8d'
+      };
+      
+      const typeIcons = {
+        'introduction': '👤',
+        'technical': '💻',
+        'behavioral': '📖',
+        'company': '🏢',
+        'hr': '🤝',
+        'situational': '🎯',
+        'general': '💬'
+      };
+      
+      const color = typeColors[type] || '#4a6fa5';
+      const icon = typeIcons[type] || '❓';
+      
+      questionDisplay.innerHTML = `${icon} ${question}`;
+      questionTypeBadge.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+      questionTypeBadge.style.background = color + '20';
+      questionTypeBadge.style.color = color;
+      questionDisplay.style.borderLeftColor = color;
+    }
+
+    // Setup media recorder
+    function setupMediaRecorder() {
+      navigator.mediaDevices.getUserMedia({ 
+        video: { width: 640, height: 480 },
+        audio: { 
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        }
+      })
+      .then(stream => {
+        videoElement.srcObject = stream;
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm;codecs=vp9,opus'
+        });
+
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const formData = new FormData();
+          formData.append('video', blob, 'interview_answer.webm');
+          
+          // Add current question data
+          const currentQuestion = questions[currentQuestionIndex];
+          formData.append('question', currentQuestion.question_text);
+          formData.append('question_id', currentQuestion.question_id);
+          formData.append('session_id', currentSessionId);
+          formData.append('level', currentLevel);
+          formData.append('question_number', currentQuestionIndex + 1);
+
+          showLoading();
+          
+          fetch('/analyze_voice', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+              if (data.error) {
+                throw new Error(data.error);
+              }
+              displayResults(data);
+            })
+            .catch(err => {
+              console.error('Analysis error:', err);
+              showError(err.message || 'Unable to process your response. Please try again.');
+            });
+
+          chunks = [];
+        };
+
+        startBtn.onclick = () => {
+          mediaRecorder.start();
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+          skipBtn.disabled = true;
+          startBtn.innerHTML = '<span class="recording-indicator"></span> 🔴 Recording...';
+          resultDiv.style.display = 'none';
+        };
+
+        stopBtn.onclick = () => {
+          mediaRecorder.stop();
+          startBtn.disabled = true;
+          stopBtn.disabled = true;
+          skipBtn.disabled = true;
+          const tracks = videoElement.srcObject.getTracks();
+          tracks.forEach(track => track.stop());
+        };
+      })
+      .catch(err => {
+        console.error('Media device error:', err);
+        showError('Camera/microphone access is required. Please allow permissions and reload.');
+      });
+    }
+
+    // Reset video stream
+    function resetVideoStream() {
+      if (videoElement.srcObject) {
+        const tracks = videoElement.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+      }
+      
+      // Restart media stream
+      navigator.mediaDevices.getUserMedia({ 
+        video: { width: 640, height: 480 },
+        audio: { 
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        }
+      })
+      .then(stream => {
+        videoElement.srcObject = stream;
+        
+        // Update media recorder with new stream
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm;codecs=vp9,opus'
+        });
+
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const formData = new FormData();
+          formData.append('video', blob, 'interview_answer.webm');
+          
+          const currentQuestion = questions[currentQuestionIndex];
+          formData.append('question', currentQuestion.question_text);
+          formData.append('question_id', currentQuestion.question_id);
+          formData.append('session_id', currentSessionId);
+          formData.append('level', currentLevel);
+          formData.append('question_number', currentQuestionIndex + 1);
+
+          showLoading();
+          
+          fetch('/analyze_voice', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+              if (data.error) {
+                throw new Error(data.error);
+              }
+              displayResults(data);
+            })
+            .catch(err => {
+              console.error('Analysis error:', err);
+              showError(err.message || 'Unable to process your response. Please try again.');
+            });
+
+          chunks = [];
+        };
+      })
+      .catch(err => {
+        console.error('Media device error:', err);
+      });
+    }
+
+    // Show loading state
+    function showLoading() {
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
+            🔍 Analyzing Your Interview Response...
+          </p>
+          <p style="color: #7f8c8d;">
+            <small>Processing voice analysis, content evaluation, and generating feedback...</small>
+          </p>
+        </div>
+      `;
+    }
+
+    // Show error message
+    function showError(message) {
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `
+        <div class="error-message">
+          <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">❌ Error</p>
+          <p style="margin-bottom: 20px;">${message}</p>
+          <button onclick="location.reload()" style="
+            background: linear-gradient(to right, #4a6fa5, #3a4f7a);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+          ">🔄 Reload Page</button>
+        </div>
+      `;
+    }
+
+    // Display results
+    function displayResults(data) {
+      // Update question display with actual question and type
+      updateQuestionDisplay(data.question || questions[currentQuestionIndex].question_text, 
+                          data.question_type || 'general');
+      
+      const confidenceClass = `confidence-${data.confidence_category.toLowerCase().replace(' ', '-')}`;
+      const confidenceScore = parseFloat(data.confidence_score) || 0;
+      
+      let resultHTML = `
+        <div class="confidence-display">
+          <div class="confidence-card ${confidenceClass}">
+            <div class="confidence-category">${data.confidence_category}</div>
+            <div class="confidence-score">Voice Confidence Score</div>
+            <div class="confidence-percentage">${confidenceScore}%</div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${confidenceScore}%"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Transcript
+      if (data.transcript && data.transcript.trim().length > 0) {
+        resultHTML += `
+          <div class="feedback-section transcript">
+            <div class="section-title"><i>📝</i> Your Response</div>
+            <div class="feedback-list">
+              <div class="transcript-content">"${data.transcript}"</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Content Analysis
+      if (data.content_analysis) {
+        const analysis = data.content_analysis;
+        
+        // Score grid
+        const scoreFields = [];
+        for (const [key, value] of Object.entries(analysis)) {
+          if (key.endsWith('_score') && typeof value === 'number') {
+            scoreFields.push({ key, value });
+          }
+        }
+
+        if (scoreFields.length > 0) {
+          resultHTML += `
+            <div class="content-score">
+              <div class="section-title"><i>📊</i> Content Analysis Scores</div>
+              <div class="score-grid">
+                ${scoreFields.map(field => `
+                  <div class="score-card">
+                    <div class="score-value">${field.value}/10</div>
+                    <div class="score-label">${field.key.replace('_score', '').replace('_', ' ').toUpperCase()}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Strengths
+        if (analysis.strengths && Array.isArray(analysis.strengths) && analysis.strengths.length > 0) {
+          resultHTML += `
+            <div class="feedback-section strengths">
+              <div class="section-title"><i>👍</i> Content Strengths</div>
+              <div class="feedback-list">
+                <ul>${analysis.strengths.map(strength => `<li>${strength}</li>`).join('')}</ul>
+              </div>
+            </div>
+          `;
+        }
+
+        // Improvements
+        if (analysis.improvements && Array.isArray(analysis.improvements) && analysis.improvements.length > 0) {
+          resultHTML += `
+            <div class="feedback-section improvements">
+              <div class="section-title"><i>💡</i> Content Improvements</div>
+              <div class="feedback-list">
+                <ul>${analysis.improvements.map(improvement => `<li>${improvement}</li>`).join('')}</ul>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // Sample Answer
+      if (data.sample_answer) {
+        resultHTML += `
+          <div class="feedback-section sample-answer">
+            <div class="section-title"><i>💡</i> Sample Answer</div>
+            <div class="feedback-list">
+              <div class="sample-answer-content">${data.sample_answer}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Voice Strengths & Improvements
+      if (data.strengths && data.strengths.length > 0) {
+        resultHTML += `
+          <div class="feedback-section strengths">
+            <div class="section-title"><i>🎤</i> Voice Strengths</div>
+            <div class="feedback-list">
+              <ul>${data.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+            </div>
+          </div>
+        `;
+      }
+
+      if (data.improvements && data.improvements.length > 0) {
+        resultHTML += `
+          <div class="feedback-section improvements">
+            <div class="section-title"><i>🔧</i> Voice Improvements</div>
+            <div class="feedback-list">
+              <ul>${data.improvements.map(i => `<li>${i}</li>`).join('')}</ul>
+            </div>
+          </div>
+        `;
+      }
+
+      // API Info
+      resultHTML += `
+        <div class="api-info">
+          Powered by ${data.api_provider || 'Groq'} AI • Model: ${data.model_used || 'Llama-3.1-8B'}
+          ${data.question_type ? ` • Question Type: ${data.question_type.charAt(0).toUpperCase() + data.question_type.slice(1)}` : ''}
+        </div>
+      `;
+
+      resultDiv.innerHTML = resultHTML;
+      resultDiv.style.display = 'block';
+      
+      // Show appropriate buttons
+      skipBtn.style.display = 'none';
+      if (currentQuestionIndex < totalQuestions - 1) {
+        nextBtn.style.display = 'flex';
+      } else {
+        finishBtn.style.display = 'flex';
+      }
+      
+      // Animate progress bar
+      setTimeout(() => {
+        const progressFill = document.querySelector('.progress-fill');
+        if (progressFill) {
+          progressFill.style.width = confidenceScore + '%';
+        }
+      }, 100);
+    }
+
+    // Show final results
+    function showFinalResults() {
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `
+        <div class="confidence-display">
+          <div class="confidence-card">
+            <div class="confidence-category">🎉 Interview Completed!</div>
+            <div class="confidence-score">You have answered all ${totalQuestions} questions</div>
+            <div class="confidence-percentage">100%</div>
+            <p style="margin-top: 20px; opacity: 0.9;">
+              Great job! You've completed the ${currentLevel} level interview.
+            </p>
+            <div style="margin-top: 30px;">
+              <button onclick="location.reload()" style="
+                background: linear-gradient(to right, #4a6fa5, #3a4f7a);
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                margin: 5px;
+              ">🔄 Start New Interview</button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Hide all buttons
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'none';
+      skipBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      finishBtn.style.display = 'none';
+    }
+
+    // Event listeners for Next and Finish buttons
+    nextBtn.onclick = () => {
+      currentQuestionIndex++;
+      loadQuestion(currentQuestionIndex);
+    };
+
+    finishBtn.onclick = () => {
+      showFinalResults();
+    };
+  </script>
+</body>
+</html>

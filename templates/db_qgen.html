@@ -1,0 +1,596 @@
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Question Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: honeydew;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #00966D;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .level-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .level-btn {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .level-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .level-btn.active {
+            border-color: #3498db;
+            background: #3498db;
+            color: white;
+        }
+        .level-btn.beginner.active {
+            background: #27ae60;
+            border-color: #27ae60;
+        }
+        .level-btn.intermediate.active {
+            background: #f39c12;
+            border-color: #f39c12;
+        }
+        .level-btn.advanced.active {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
+        }
+        .submit-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        .loading.active {
+            display: block;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .error-message.active {
+            display: block;
+        }
+        .success-message {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .success-message.active {
+            display: block;
+        }
+        
+        /* Tips Section Styles */
+        .tips-section {
+            display: none;
+        }
+        .tips-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .tips-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .tips-header h2 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .tips-header p {
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+        
+        .tips-container {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .tip-item {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-left: 5px solid #3498db;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .tip-number {
+            background: #3498db;
+            color: white;
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .tip-content {
+            flex: 1;
+        }
+        
+        .tip-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .tip-icon {
+            font-size: 32px;
+        }
+        
+        .tip-title {
+            color: #2c3e50;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .tip-description {
+            color: #34495e;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .tip-details {
+            color: #7f8c8d;
+            font-size: 15px;
+            line-height: 1.5;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #27ae60;
+        }
+        
+        /* Start Interview Button */
+        .start-interview-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 50px;
+            border: none;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 auto;
+            display: block;
+        }
+        .start-interview-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Scrollbar styling */
+        .tips-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .tips-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .tips-container::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 10px;
+        }
+        
+        .tips-container::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 AI Interview Question Generator</h1>
+            <p>Generate tailored interview questions based on resume, job role, and experience level</p>
+        </div>
+        
+        <div class="content">
+            <!-- Input Form Section -->
+            <div class="form-section" id="formSection">
+                <div class="form-group">
+                    <label for="jobTitle">🎯 Target Job Role *</label>
+                    <input type="text" id="jobTitle" placeholder="e.g., Software Developer, Data Analyst, Product Manager" required>
+                </div>
+                <div class="form-group">
+                    <label for="companyName">🏢 Target Company</label>
+                    <input type="text" id="companyName" placeholder="e.g., Google, Microsoft, Amazon">
+                </div>
+                <div class="form-group">
+                    <label for="resume">📄 Upload Resume (PDF) *</label>
+                    <input type="file" id="resume" accept=".pdf" required>
+                </div>
+                <div class="form-group">
+                    <label>📊 Interview Level *</label>
+                    <div class="level-buttons">
+                        <div class="level-btn beginner active" data-level="beginner">
+                            🟢 Beginner
+                            <div style="font-size: 12px; font-weight: normal; margin-top: 5px;">10 Questions</div>
+                        </div>
+                        <div class="level-btn intermediate" data-level="intermediate">
+                            🟡 Intermediate
+                            <div style="font-size: 12px; font-weight: normal; margin-top: 5px;">12 Questions</div>
+                        </div>
+                        <div class="level-btn advanced" data-level="advanced">
+                            🔴 Advanced
+                            <div style="font-size: 12px; font-weight: normal; margin-top: 5px;">15 Questions</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="submit-btn" id="nextBtn">
+                    🚀 Next
+                </button>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p></p>
+                </div>
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+            </div>
+            
+            <!-- Tips Section -->
+            <div class="tips-section" id="tipsSection">
+                <div class="tips-header">
+                    <h2>📚 Essential Interview Tips</h2>
+                    <p>Review these 15 important tips before starting your interview</p>
+                </div>
+                
+                <div class="tips-container" id="tipsContainer">
+                    <!-- Tips will be dynamically inserted here -->
+                </div>
+                
+                <button class="start-interview-btn" id="startInterviewBtn">
+                    🚀 Start Interview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLevel = 'beginner';
+        
+        // 15 Interview tips
+        const interviewTips = [
+            {
+                icon: "🔍",
+                title: "Research Thoroughly",
+                description: "Research the company, role, and industry trends before the interview",
+                details: "Go beyond just the website. Look at recent news, product updates, and company culture on LinkedIn. Check their mission, values, and recent achievements."
+            },
+            {
+                icon: "📄",
+                title: "Know Your Resume",
+                description: "Be prepared to explain everything on your resume in detail",
+                details: "Practice explaining each project, internship, and skill mentioned in your resume. Quantify achievements and be ready to discuss challenges and solutions."
+            },
+            {
+                icon: "💻",
+                title: "Practice Technical Questions",
+                description: "For technical roles, practice common algorithms and data structures",
+                details: "Use platforms like LeetCode, HackerRank, or CodeSignal for practice. Focus on time and space complexity analysis."
+            },
+            {
+                icon: "⭐",
+                title: "Prepare STAR Stories",
+                description: "Prepare 5-7 stories using the STAR method",
+                details: "Situation, Task, Action, Result - structure your answers for behavioral questions. Focus on your specific contributions and outcomes."
+            },
+            {
+                icon: "🗣️",
+                title: "Clear and Concise Answers",
+                description: "Keep your answers focused and to the point",
+                details: "Aim for 1-2 minute answers. Practice summarizing complex ideas simply. Avoid rambling by structuring your thoughts."
+            },
+            {
+                icon: "⏱️",
+                title: "Control Your Pace",
+                description: "Speak at a moderate pace - not too fast, not too slow",
+                details: "Aim for 140-160 words per minute. Practice with a timer. Pause briefly before important points."
+            },
+            {
+                icon: "🤐",
+                title: "Minimize Filler Words",
+                description: "Reduce 'um', 'uh', 'like', 'you know'",
+                details: "Pause briefly instead of using filler words. Record yourself to identify patterns. Practice speaking more deliberately."
+            },
+            {
+                icon: "💪",
+                title: "Project Confidence",
+                description: "Speak with energy and conviction",
+                details: "Practice speaking from your diaphragm, not your throat. Stand up if possible. Use a confident tone."
+            },
+            {
+                icon: "🎯",
+                title: "Sit Up Straight",
+                description: "Maintain good posture throughout",
+                details: "Shoulders back, spine straight, head level. Avoid slouching or leaning. Good posture projects confidence."
+            },
+            {
+                icon: "👁️",
+                title: "Look at the Camera",
+                description: "Look directly at the webcam, not the screen",
+                details: "Place the camera at eye level. Stick a note near the camera as a reminder. Practice maintaining eye contact."
+            },
+            {
+                icon: "👐",
+                title: "Use Natural Gestures",
+                description: "Hand gestures can emphasize points",
+                details: "Keep gestures above the waist, natural and not excessive. Avoid crossing arms. Use open palm gestures."
+            },
+            {
+                icon: "😊",
+                title: "Smile Naturally",
+                description: "A genuine smile builds rapport",
+                details: "Smile at appropriate moments, especially when greeting and ending. Maintain a pleasant expression throughout."
+            },
+            {
+                icon: "🔧",
+                title: "Test Your Equipment",
+                description: "Test camera, microphone, and internet",
+                details: "Do a test call with a friend. Check audio levels and video quality. Ensure good lighting and background."
+            },
+            {
+                icon: "🌐",
+                title: "Choose Quiet Location",
+                description: "Find a quiet, professional-looking space",
+                details: "Background should be clean and neutral. Good lighting is essential. Minimize distractions and noise."
+            },
+            {
+                icon: "🧠",
+                title: "Stay Positive and Confident",
+                description: "Believe in your abilities and preparation",
+                details: "Take deep breaths before starting. Focus on your strengths. Remember it's a conversation, not an interrogation."
+            }
+        ];
+
+        // Level selection
+        document.querySelectorAll('.level-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentLevel = this.dataset.level;
+            });
+        });
+
+        // Next button click handler
+        document.getElementById('nextBtn').addEventListener('click', async function() {
+            const jobTitle = document.getElementById('jobTitle').value.trim();
+            const companyName = document.getElementById('companyName').value.trim();
+            const resumeFile = document.getElementById('resume').files[0];
+
+            // Validation
+            if (!jobTitle) {
+                showError('Please enter a job title');
+                return;
+            }
+            if (!resumeFile) {
+                showError('Please upload a resume');
+                return;
+            }
+            if (resumeFile.type !== 'application/pdf') {
+                showError('Please upload a PDF file');
+                return;
+            }
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('tipsSection').classList.add('active');
+            displayAllTips();
+           
+
+           
+                const formData = new FormData();
+                formData.append('resume', resumeFile);
+                formData.append('job_title', jobTitle);
+                formData.append('company_name', companyName);
+                formData.append('level', currentLevel);
+
+                fetch('/generate-questions', {
+                    method: 'POST',
+                    body: formData
+                })
+
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        console.error('Question generation failed:', data.error);
+                    }
+                })
+                .catch(err => {
+                    console.error('Background API error:', err);
+
+                });
+                    });
+                
+
+                    // Generate and display all tips
+                    
+                    
+                    
+
+        // Display all 15 tips
+        function displayAllTips() {
+            const tipsContainer = document.getElementById('tipsContainer');
+            tipsContainer.innerHTML = '';
+            
+            interviewTips.forEach((tip, index) => {
+                const tipItem = document.createElement('div');
+                tipItem.className = 'tip-item';
+                
+                tipItem.innerHTML = `
+                    <div class="tip-number">${index + 1}</div>
+                    <div class="tip-content">
+                        <div class="tip-header">
+                            <div class="tip-icon">${tip.icon}</div>
+                            <h3 class="tip-title">${tip.title}</h3>
+                        </div>
+                        <p class="tip-description">${tip.description}</p>
+                        <div class="tip-details">${tip.details}</div>
+                    </div>
+                `;
+                
+                tipsContainer.appendChild(tipItem);
+            });
+        }
+
+        // Start interview button
+        document.getElementById('startInterviewBtn').addEventListener('click', function() {
+            // Redirect to your interview page (db_vans.py)
+            window.location.href = 'http://localhost:5002/'; // This will load your existing interview interface
+        });
+
+        // Helper functions
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('active', show);
+            document.getElementById('nextBtn').disabled = show;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+            setTimeout(() => errorDiv.classList.remove('active'), 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.classList.add('active');
+            setTimeout(() => successDiv.classList.remove('active'), 3000);
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('successMessage').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

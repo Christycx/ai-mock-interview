@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mock Interview Prototype</title>
+</head>
+<body>
+    <h1>Mock Interview Prototype</h1>
+
+    <div id="question-container">
+        <p id="question"></p>
+    </div>
+
+    <video id="preview" autoplay muted width="480" height="360"></video><br>
+    <button id="start">Start Recording</button>
+    <button id="stop" disabled>Stop Recording</button>
+
+    <h2>Per-Question Feedback</h2>
+    <table border="1" id="feedback-table">
+        <tr>
+            <th>Question</th>
+            <th>Expression</th>
+            <th>Eye Contact</th>
+            <th>Confidence</th>
+        </tr>
+    </table>
+
+    <script>
+        const questions = {{ questions|tojson }};
+        let current = 0;
+        const questionEl = document.getElementById("question");
+        const video = document.getElementById("preview");
+        const startBtn = document.getElementById("start");
+        const stopBtn = document.getElementById("stop");
+        const feedbackTable = document.getElementById("feedback-table");
+
+        questionEl.textContent = questions[current];
+
+        let mediaRecorder;
+        let chunks = [];
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+            video.srcObject = stream;
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/mp4' });
+                chunks = [];
+                const formData = new FormData();
+                formData.append("video", blob, `answer${current+1}.mp4`);
+
+                fetch("/upload", { method: "POST", body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    const row = feedbackTable.insertRow();
+                    row.insertCell(0).innerText = questions[current];
+                    row.insertCell(1).innerText = data.expression;
+                    row.insertCell(2).innerText = data.eye_contact;
+                    row.insertCell(3).innerText = data.confidence;
+
+                    current++;
+                    if(current < questions.length){
+                        questionEl.textContent = questions[current];
+                    } else {
+                        questionEl.textContent = "Interview Completed!";
+                        startBtn.disabled = true;
+                        stopBtn.disabled = true;
+                    }
+                });
+            };
+        });
+
+        startBtn.onclick = () => {
+            mediaRecorder.start();
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        };
+
+        stopBtn.onclick = () => {
+            mediaRecorder.stop();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        };
+    </script>
+</body>
+</html>

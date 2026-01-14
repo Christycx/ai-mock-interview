@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Interview Assistant - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:900,700,500,400|Roboto:400,700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      min-height: 100vh;
+      background: linear-gradient(132deg, #edfbe9 0%, #bff8d2 80%, #fff 100%);
+      font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+      margin: 0; 
+      padding: 0; 
+      color: #183820;
+      scroll-behavior: smooth;
+      line-height: 1.6;
+    }
+
+    .container {
+      display: flex;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 500px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(45, 250, 101, 0.15);
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    .login-content {
+      padding: 60px 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: linear-gradient(110deg, #e9fff0 0%, #f5fff9 100%);
+      text-align: center;
+    }
+
+    .welcome-screen {
+      padding: 60px 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: linear-gradient(110deg, #e9fff0 0%, #f5fff9 100%);
+      text-align: center;
+      display: none;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 40px;
+      flex-direction: column;
+    }
+
+    .logo-icon {
+      background: linear-gradient(109deg, #22bc66 0%, #68fa7a 77%);
+      color: white;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 44px rgba(44, 250, 151, 0.4);
+      animation: orb1 2.6s infinite alternate cubic-bezier(.74,-0.08,.31,1.16);
+    }
+
+    @keyframes orb1 {
+      from { box-shadow: 0 6px 72px rgba(194, 251, 220, 0.4); }
+      to   { box-shadow: 0 13px 98px rgba(78, 167, 35, 0.4); }
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 900;
+      color: #1e963f;
+      text-shadow: 0 4px 28px rgba(138, 229, 131, 0.2);
+      text-align: center;
+    }
+
+    .welcome-text {
+      font-size: 36px;
+      font-weight: 900;
+      color: #1e963f;
+      margin-bottom: 10px;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    .user-welcome-text {
+      font-size: 42px;
+      font-weight: 900;
+      color: #1e963f;
+      margin-bottom: 20px;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    .user-name {
+      color: #22bc66;
+      text-decoration: underline;
+      text-underline-offset: 8px;
+      animation: nameGlow 2s infinite alternate;
+    }
+
+    @keyframes nameGlow {
+      from { text-shadow: 0 0 10px rgba(34, 188, 102, 0.3); }
+      to { text-shadow: 0 0 20px rgba(34, 188, 102, 0.5); }
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: #33874b;
+      margin-bottom: 40px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+    }
+
+    .welcome-subtitle {
+      font-size: 20px;
+      color: #33874b;
+      margin-bottom: 50px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .login-form {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #1e963f;
+      font-size: 16px;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 16px;
+      border: 2px solid #d1f7d8;
+      border-radius: 10px;
+      background: #f8fff9;
+      color: #20532c;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #22bc66;
+      box-shadow: 0 0 0 3px rgba(34, 188, 102, 0.1);
+    }
+
+    .login-btn {
+      background: linear-gradient(90deg, #19c44e 0%, #8ce86c 100%);
+      color: white;
+      border: none;
+      padding: 18px 40px;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 7px 36px rgba(126, 233, 108, 0.4);
+      animation: glowing2 2.2s infinite alternate;
+    }
+
+    .start-btn {
+      background: linear-gradient(90deg, #22bc66 0%, #68fa7a 100%);
+      color: white;
+      border: none;
+      padding: 22px 50px;
+      font-size: 22px;
+      font-weight: 700;
+      border-radius: 15px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 40px rgba(126, 233, 108, 0.5);
+      animation: pulse 1.5s infinite alternate;
+      display: inline-block;
+    }
+
+    @keyframes pulse {
+      from { 
+        transform: scale(1);
+        box-shadow: 0 10px 40px rgba(126, 233, 108, 0.5);
+      }
+      to { 
+        transform: scale(1.05);
+        box-shadow: 0 15px 50px rgba(126, 233, 108, 0.7);
+      }
+    }
+
+    .start-btn:hover {
+      background: linear-gradient(90deg, #36e271 0%, #9efd88 100%);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 15px 50px rgba(126, 233, 108, 0.7);
+    }
+
+    .start-btn:active {
+      transform: translateY(0) scale(1);
+    }
+
+    @keyframes glowing2 {
+      0% { box-shadow: 0 4px 28px rgba(198, 255, 201, 0.4); }
+      50% { box-shadow: 0 8px 40px rgba(140, 235, 154, 0.6); }
+      100% { box-shadow: 0 4px 47px rgba(177, 255, 186, 0.4); }
+    }
+
+    .login-btn:hover {
+      background: linear-gradient(90deg, #36e271 0%, #9efd88 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(126, 233, 108, 0.5);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .switch-form {
+      text-align: center;
+      margin-top: 30px;
+      color: #33874b;
+    }
+
+    .switch-btn {
+      background: none;
+      border: none;
+      color: #22bc66;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 5px;
+      transition: color 0.3s ease;
+    }
+
+    .switch-btn:hover {
+      color: #43ec82;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 14px;
+      margin-top: 10px;
+      min-height: 20px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .features-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-top: 40px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .feature-item {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease;
+    }
+
+    .feature-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-icon {
+      font-size: 24px;
+      color: #22bc66;
+    }
+
+    .feature-text {
+      font-size: 14px;
+      color: #387532;
+      font-weight: 500;
+    }
+
+    .motivation-text {
+      position: relative;
+      color: #1e963f;
+      font-weight: 600;
+      font-size: 18px;
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(30, 150, 63, 0.2);
+    }
+
+    .welcome-features {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 40px;
+      margin-bottom: 50px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .welcome-feature {
+      background: rgba(255, 255, 255, 0.8);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: left;
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid #22bc66;
+    }
+
+    .welcome-feature-icon {
+      font-size: 28px;
+      color: #22bc66;
+      min-width: 40px;
+    }
+
+    .welcome-feature-text {
+      font-size: 16px;
+      color: #387532;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .login-wrapper {
+        max-width: 450px;
+      }
+      
+      .login-content, .welcome-screen {
+        padding: 40px 30px;
+      }
+      
+      .welcome-text {
+        font-size: 32px;
+      }
+      
+      .user-welcome-text {
+        font-size: 36px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .login-wrapper {
+        max-width: 100%;
+      }
+      
+      .login-content, .welcome-screen {
+        padding: 30px 20px;
+      }
+      
+      .welcome-text {
+        font-size: 28px;
+      }
+      
+      .user-welcome-text {
+        font-size: 32px;
+      }
+      
+      .features-list {
+        grid-template-columns: 1fr;
+      }
+      
+      .logo-text {
+        font-size: 24px;
+      }
+      
+      .start-btn {
+        padding: 18px 40px;
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="login-wrapper">
+      <!-- Centered Login Content -->
+      <div class="login-content" id="login-content">
+        <div class="logo">
+          <div class="logo-icon">🤖</div>
+          <div class="logo-text">AI Interview Assistant</div>
+        </div>
+        
+        <h1 class="welcome-text">Welcome Back</h1>
+        <p class="subtitle">Sign in to access your personalized interview preparation tools and continue your journey to interview mastery.</p>
+        
+        <div class="login-form">
+          <div id="login-form">
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" placeholder="you@example.com" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" placeholder="Enter your password" required>
+            </div>
+            
+            <div class="error-message" id="error-message">&nbsp;</div>
+            
+            <button type="button" class="login-btn" id="login-button">
+              Sign In
+            </button>
+            
+            <div class="switch-form">
+              <span>New user? </span>
+              <button type="button" class="switch-btn" id="switch-to-signup">Create an account</button>
+            </div>
+          </div>
+          
+          <div id="signup-form" style="display: none;">
+            <div class="form-group">
+              <label for="signup-name">Full Name</label>
+              <input type="text" id="signup-name" placeholder="Enter your full name" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="signup-email">Email Address</label>
+              <input type="email" id="signup-email" placeholder="you@example.com" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="signup-password">Password</label>
+              <input type="password" id="signup-password" placeholder="Create a strong password" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="confirm-password">Confirm Password</label>
+              <input type="password" id="confirm-password" placeholder="Confirm your password" required>
+            </div>
+            
+            <div class="error-message" id="signup-error-message">&nbsp;</div>
+            
+            <button type="button" class="login-btn" id="signup-button">
+              Create Account
+            </button>
+            
+            <div class="switch-form">
+              <span>Already have an account? </span>
+              <button type="button" class="switch-btn" id="switch-to-login">Sign in instead</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="features-list">
+          <div class="feature-item">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-text">Personalized Interview Questions</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-text">Instant AI Feedback</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📊</div>
+            <div class="feature-text">Progress Tracking</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🔒</div>
+            <div class="feature-text">Secure & Private</div>
+          </div>
+        </div>
+        
+        <div class="motivation-text">
+          Prepare • Practice • Excel
+        </div>
+      </div>
+      
+      <!-- Welcome Screen (Initially Hidden) -->
+      <div class="welcome-screen" id="welcome-screen">
+        <div class="logo">
+          <div class="logo-icon">🤖</div>
+          <div class="logo-text">AI Interview Assistant</div>
+        </div>
+        
+        <h1 class="user-welcome-text">Welcome, <span id="user-name" class="user-name">User</span>!</h1>
+        
+        <p class="welcome-subtitle">
+          Your journey to interview excellence begins now.<br>
+          Get ready to practice with AI-powered mock interviews tailored just for you.
+        </p>
+        
+        <div class="welcome-features">
+          <div class="welcome-feature">
+            <div class="welcome-feature-icon">🎯</div>
+            <div class="welcome-feature-text">
+              <strong>Personalized Questions:</strong> Based on your resume and job preferences
+            </div>
+          </div>
+          <div class="welcome-feature">
+            <div class="welcome-feature-icon">⚡</div>
+            <div class="welcome-feature-text">
+              <strong>Real-time Feedback:</strong> Get instant analysis on your answers
+            </div>
+          </div>
+          <div class="welcome-feature">
+            <div class="welcome-feature-icon">📈</div>
+            <div class="welcome-feature-text">
+              <strong>Progress Tracking:</strong> Monitor your improvement over time
+            </div>
+          </div>
+        </div>
+        
+        <button type="button" class="start-btn" id="start-button">
+          Let's Start Your Interview Prep!
+        </button>
+        
+        <div class="motivation-text">
+          Prepare • Practice • Excel
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple user storage in localStorage
+    function getUsers() {
+      return JSON.parse(localStorage.getItem('aiinterview-users') || '[]');
+    }
+    
+    function addUser(user) {
+      const users = getUsers();
+      users.push(user);
+      localStorage.setItem('aiinterview-users', JSON.stringify(users));
+    }
+    
+    function findUserByEmail(email) {
+      const users = getUsers();
+      return users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    }
+    
+    // Toggle between login and signup forms
+    document.getElementById('switch-to-signup').addEventListener('click', function() {
+      document.getElementById('login-form').style.display = 'none';
+      document.getElementById('signup-form').style.display = 'block';
+      document.getElementById('error-message').textContent = ' ';
+    });
+    
+    document.getElementById('switch-to-login').addEventListener('click', function() {
+      document.getElementById('signup-form').style.display = 'none';
+      document.getElementById('login-form').style.display = 'block';
+      document.getElementById('signup-error-message').textContent = ' ';
+    });
+    
+    // Show welcome screen function
+    function showWelcomeScreen(userName) {
+      // Set the user name in welcome screen
+      document.getElementById('user-name').textContent = userName;
+      
+      // Hide login content
+      document.getElementById('login-content').style.display = 'none';
+      
+      // Show welcome screen
+      document.getElementById('welcome-screen').style.display = 'flex';
+    }
+    
+    // Login functionality
+    document.getElementById('login-button').addEventListener('click', function() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorElement = document.getElementById('error-message');
+      
+      // Validation
+      if (!email || !password) {
+        errorElement.textContent = 'Please fill in all fields.';
+        return;
+      }
+      
+      if (!isValidEmail(email)) {
+        errorElement.textContent = 'Please enter a valid email address.';
+        return;
+      }
+      
+      // Check credentials
+      const user = findUserByEmail(email);
+      
+      if (!user) {
+        errorElement.textContent = 'No account found with this email. Please sign up.';
+        return;
+      }
+      
+      if (user.password !== password) {
+        errorElement.textContent = 'Incorrect password. Please try again.';
+        return;
+      }
+      
+      // Store current user (without password for security)
+      const currentUser = { name: user.name, email: user.email };
+      localStorage.setItem('aiinterview-current-user', JSON.stringify(currentUser));
+      
+      // Show welcome screen instead of redirecting immediately
+      showWelcomeScreen(user.name);
+    });
+    
+    // Signup functionality
+    document.getElementById('signup-button').addEventListener('click', function() {
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const errorElement = document.getElementById('signup-error-message');
+      
+      // Validation
+      if (!name || !email || !password || !confirmPassword) {
+        errorElement.textContent = 'Please fill in all fields.';
+        return;
+      }
+      
+      if (!isValidEmail(email)) {
+        errorElement.textContent = 'Please enter a valid email address.';
+        return;
+      }
+      
+      if (password.length < 6) {
+        errorElement.textContent = 'Password must be at least 6 characters.';
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        errorElement.textContent = 'Passwords do not match.';
+        return;
+      }
+      
+      // Check if user already exists
+      if (findUserByEmail(email)) {
+        errorElement.textContent = 'An account with this email already exists.';
+        return;
+      }
+      
+      // Create new user
+      const newUser = {
+        name: name,
+        email: email.toLowerCase(),
+        password: password
+      };
+      
+      addUser(newUser);
+      
+      // Store current user
+      const currentUser = { name: newUser.name, email: newUser.email };
+      localStorage.setItem('aiinterview-current-user', JSON.stringify(currentUser));
+      
+      // Show welcome screen
+      showWelcomeScreen(name);
+    });
+    
+    // Start button functionality - redirect to port 5001
+    document.getElementById('start-button').addEventListener('click', function() {
+      window.location.href = 'http://127.0.0.1:5001/';
+    });
+    
+    // Email validation function
+    function isValidEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+    
+    // Allow form submission with Enter key
+    document.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        if (document.getElementById('login-form').style.display !== 'none') {
+          document.getElementById('login-button').click();
+        } else if (document.getElementById('signup-form').style.display !== 'none') {
+          document.getElementById('signup-button').click();
+        }
+      }
+    });
+    
+    // Check if user is already logged in
+    //window.addEventListener('load', function() {
+     // const currentUser = JSON.parse(localStorage.getItem('aiinterview-current-user') || 'null');
+      //if (currentUser && currentUser.name) {
+        // User is already logged in, show welcome screen
+       // showWelcomeScreen(currentUser.name);
+      //}
+    //});
+  </script>
+</body>
+</html>

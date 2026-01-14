@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Beginner Voice Analysis</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .header {
+      background: #3498db;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .header p {
+      margin: 5px 0 0 0;
+      opacity: 0.9;
+    }
+
+    .recording-section {
+      padding: 20px;
+      text-align: center;
+    }
+
+    video {
+      border: 2px solid #3498db;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      height: 250px;
+      background: #000;
+    }
+
+    .controls {
+      margin: 15px 0;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      font-weight: bold;
+    }
+
+    #startBtn {
+      background: #27ae60;
+      color: white;
+    }
+
+    #stopBtn {
+      background: #e74c3c;
+      color: white;
+    }
+
+    button:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    #result {
+      padding: 20px;
+      display: none;
+    }
+
+    .confidence-display {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .confidence-card {
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .confidence-excellent { background: #27ae60; }
+    .confidence-good { background: #3498db; }
+    .confidence-average { background: #f39c12; }
+    .confidence-below-average { background: #e74c3c; }
+    .confidence-poor { background: #95a5a6; }
+
+    .confidence-category {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .confidence-score {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .feedback-section {
+      margin: 20px 0;
+    }
+
+    .section-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #2c3e50;
+      font-size: 18px;
+    }
+
+    .feedback-list {
+      background: #f8f9fa;
+      border-radius: 5px;
+      padding: 15px;
+      border-left: 4px solid #3498db;
+    }
+
+    .strengths .feedback-list {
+      border-left-color: #27ae60;
+      background: #d5f4e6;
+    }
+
+    .improvements .feedback-list {
+      border-left-color: #e74c3c;
+      background: #fdeaea;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      padding: 8px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    li:last-child {
+      border-bottom: none;
+    }
+
+    .transcript-content {
+      background: #f8f9fa;
+      border-radius: 5px;
+      padding: 15px;
+      border-left: 4px solid #f39c12;
+      font-style: italic;
+      color: #555;
+    }
+
+    .action-buttons {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .retry-btn {
+      background: #9b59b6;
+      color: white;
+      padding: 12px 30px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .recording-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: #e74c3c;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .error-message {
+      background: #fdeaea;
+      color: #e74c3c;
+      padding: 15px;
+      border-radius: 5px;
+      text-align: center;
+      border-left: 4px solid #e74c3c;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 10px; }
+      .header { padding: 15px; }
+      .recording-section, #result { padding: 15px; }
+      video { height: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎤 Beginner Voice Analysis</h1>
+      <p>Record your interview answer and get simple feedback</p>
+    </div>
+
+    <div class="recording-section">
+      <video id="video" autoplay muted></video>
+      
+      <div class="controls">
+        <button id="startBtn">Start Recording</button>
+        <button id="stopBtn" disabled>Stop & Analyze</button>
+      </div>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    let mediaRecorder, chunks = [];
+    const videoElement = document.getElementById('video');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resultDiv = document.getElementById('result');
+
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(stream => {
+        videoElement.srcObject = stream;
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm;codecs=vp8'
+        });
+
+        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const formData = new FormData();
+          formData.append('video', blob, 'answer.webm');
+
+          resultDiv.style.display = 'block';
+          resultDiv.innerHTML = `
+            <div class="loading">
+              <div class="spinner"></div>
+              <p>Analyzing your response...</p>
+            </div>
+          `;
+
+          fetch('/analyze_voice', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+              if (data.error) {
+                throw new Error(data.error);
+              }
+              displayResults(data);
+            })
+            .catch(err => {
+              resultDiv.innerHTML = `
+                <div class="error-message">
+                  <p>${err.message || 'Analysis failed. Please try again.'}</p>
+                  <button class="retry-btn" onclick="location.reload()">Try Again</button>
+                </div>
+              `;
+            });
+
+          chunks = [];
+        };
+
+        startBtn.onclick = () => {
+          mediaRecorder.start();
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+          startBtn.innerHTML = '<span class="recording-indicator"></span> Recording...';
+          resultDiv.style.display = 'none';
+        };
+
+        stopBtn.onclick = () => {
+          mediaRecorder.stop();
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+          startBtn.innerHTML = 'Start Recording';
+          const tracks = videoElement.srcObject.getTracks();
+          tracks.forEach(track => track.stop());
+        };
+      })
+      .catch(err => {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+          <div class="error-message">
+            <p>Camera/microphone access required. Please allow permissions.</p>
+            <button class="retry-btn" onclick="location.reload()">Reload</button>
+          </div>
+        `;
+      });
+
+    function displayResults(data) {
+      const confidenceClass = `confidence-${data.confidence_category.toLowerCase().replace(' ', '-')}`;
+      
+      let resultHTML = `
+        <div class="confidence-display">
+          <div class="confidence-card ${confidenceClass}">
+            <div class="confidence-category">${data.confidence_category}</div>
+            <div class="confidence-score">Score: ${data.confidence_score}%</div>
+          </div>
+        </div>
+      `;
+
+      if (data.transcript && data.transcript.trim().length > 0) {
+        resultHTML += `
+          <div class="feedback-section">
+            <div class="section-title">📝 Your Response</div>
+            <div class="transcript-content">"${data.transcript}"</div>
+          </div>
+        `;
+      }
+
+      if (data.strengths && data.strengths.length > 0) {
+        resultHTML += `
+          <div class="feedback-section strengths">
+            <div class="section-title">✅ What You Did Well</div>
+            <div class="feedback-list">
+              <ul>${data.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+            </div>
+          </div>
+        `;
+      }
+
+      if (data.improvements && data.improvements.length > 0) {
+        resultHTML += `
+          <div class="feedback-section improvements">
+            <div class="section-title">💡 Areas to Improve</div>
+            <div class="feedback-list">
+              <ul>${data.improvements.map(i => `<li>${i}</li>`).join('')}</ul>
+            </div>
+          </div>
+        `;
+      }
+
+      resultHTML += `
+        <div class="action-buttons">
+          <button class="retry-btn" onclick="location.reload()">Try Another Recording</button>
+        </div>
+      `;
+
+      resultDiv.innerHTML = resultHTML;
+    }
+  </script>
+</body>
+</html>

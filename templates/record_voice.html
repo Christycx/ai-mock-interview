@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      padding: 30px;
+      background: honeydew;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+    }
+    video {
+      border-radius: 10px;
+      border: 3px solid #ddd;
+      width: 100%;
+      max-width: 640px;
+      height: 480px;
+      background: #000;
+    }
+    .button-group {
+      margin: 20px 0;
+    }
+    button {
+      margin: 10px;
+      padding: 12px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+    #startBtn {
+      background: #4CAF50;
+      color: white;
+    }
+    #startBtn:hover:not(:disabled) {
+      background: #45a049;
+      transform: translateY(-2px);
+    }
+    #stopBtn {
+      background: #f44336;
+      color: white;
+    }
+    #stopBtn:hover:not(:disabled) {
+      background: #da190b;
+      transform: translateY(-2px);
+    }
+    button:disabled {
+      background: #cccccc !important;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    #results {
+      margin-top: 30px;
+      text-align: left;
+      display: inline-block;
+      width: 100%;
+    }
+    .quality-card {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 15px 0;
+      border-left: 5px solid #ddd;
+    }
+    .quality-good {
+      border-left-color: #4CAF50;
+      background: #f1f8e9;
+    }
+    .quality-average {
+      border-left-color: #ff9800;
+      background: #fff3e0;
+    }
+    .quality-needs_improvement {
+      border-left-color: #f44336;
+      background: #ffebee;
+    }
+    .quality-badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .badge-good {
+      background: #4CAF50;
+      color: white;
+    }
+    .badge-average {
+      background: #ff9800;
+      color: white;
+    }
+    .badge-needs_improvement {
+      background: #f44336;
+      color: white;
+    }
+    .overall-assessment {
+      background:  #00966D;;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    .recommendations {
+      background: #e3f2fd;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .recommendations ul {
+      text-align: left;
+      margin: 0;
+      padding-left: 20px;
+    }
+    .loading {
+      color: #666;
+      font-style: italic;
+    }
+    .metric-title {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 AI Mock Interview Analysis</h1>
+    <video id="video" autoplay muted></video>
+    
+    <div class="button-group">
+      <button id="startBtn">🎥 Start Recording</button>
+      <button id="stopBtn">⏹️ Stop Recording</button>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    let mediaRecorder;
+    let recordedChunks = [];
+
+    const video = document.getElementById('video');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const results = document.getElementById('results');
+
+    // Initial state: Stop button disabled
+    stopBtn.disabled = true;
+
+    function getQualityClass(quality) {
+      const qualityMap = {
+        'good': 'quality-good',
+        'average': 'quality-average',
+        'needs_improvement': 'quality-needs_improvement'
+      };
+      return qualityMap[quality] || 'quality-average';
+    }
+
+    function getQualityBadge(quality) {
+      const badgeMap = {
+        'good': 'badge-good',
+        'average': 'badge-average',
+        'needs_improvement': 'badge-needs_improvement'
+      };
+      return badgeMap[quality] || 'badge-average';
+    }
+
+    function getQualityText(quality) {
+      const textMap = {
+        'good': 'Good ✅',
+        'average': 'Average ⚠️',
+        'needs_improvement': 'Needs Improvement ❌'
+      };
+      return textMap[quality] || 'Average ⚠️';
+    }
+
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: 640, height: 480 }, 
+          audio: false 
+        });
+        video.srcObject = stream;
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          recordedChunks = [];
+
+          const formData = new FormData();
+          formData.append('video', blob, 'interview.webm');
+
+          results.innerHTML = `
+            <div class="loading">
+              <h3>🔍 Analyzing Your Interview...</h3>
+              <p>Please wait while we analyze your posture, alignment, and eye contact.</p>
+            </div>
+          `;
+
+          try {
+            const response = await fetch('/analyze_interview', { 
+              method: 'POST', 
+              body: formData 
+            });
+            
+            if (!response.ok) {
+              throw new Error('Analysis failed');
+            }
+            
+            const data = await response.json();
+            displayResults(data);
+          } catch (error) {
+            results.innerHTML = `
+              <div style="color: #f44336; text-align: center;">
+                <h3>❌ Analysis Error</h3>
+                <p>Failed to analyze video. Please try again.</p>
+                <p><small>Error: ${error.message}</small></p>
+              </div>
+            `;
+          }
+        };
+      } catch (error) {
+        results.innerHTML = `
+          <div style="color: #f44336; text-align: center;">
+            <h3>❌ Camera Error</h3>
+            <p>Could not access camera. Please check permissions and try again.</p>
+          </div>
+        `;
+        startBtn.disabled = true;
+      }
+    }
+
+    function displayResults(data) {
+      let resultsHTML = `
+        <h2>📊 Interview Analysis Results</h2>
+        
+        <div class="overall-assessment">
+          <h3>🎯 Overall Assessment</h3>
+          <p style="font-size: 18px; margin: 10px 0;">${data.overall_assessment}</p>
+        </div>
+
+        <h3>Detailed Feedback</h3>
+      `;
+
+      // Posture Analysis
+      resultsHTML += `
+        <div class="quality-card ${getQualityClass(data.posture.quality)}">
+          <span class="quality-badge ${getQualityBadge(data.posture.quality)}">
+            ${getQualityText(data.posture.quality)}
+          </span>
+          <div class="metric-title">🧍‍♀️ Posture Analysis</div>
+          <p>${data.posture.feedback}</p>
+        </div>
+      `;
+
+      // Face Alignment
+      resultsHTML += `
+        <div class="quality-card ${getQualityClass(data.face_alignment.quality)}">
+          <span class="quality-badge ${getQualityBadge(data.face_alignment.quality)}">
+            ${getQualityText(data.face_alignment.quality)}
+          </span>
+          <div class="metric-title">📷 Camera Alignment</div>
+          <p>${data.face_alignment.feedback}</p>
+        </div>
+      `;
+
+      // Eye Contact
+      resultsHTML += `
+        <div class="quality-card ${getQualityClass(data.eye_contact.quality)}">
+          <span class="quality-badge ${getQualityBadge(data.eye_contact.quality)}">
+            ${getQualityText(data.eye_contact.quality)}
+          </span>
+          <div class="metric-title">👁️ Eye Contact</div>
+          <p>${data.eye_contact.feedback}</p>
+        </div>
+      `;
+
+      // Recommendations
+      if (data.recommendations && data.recommendations.length > 0) {
+        resultsHTML += `
+          <div class="recommendations">
+            <h3>💡 Improvement Recommendations</h3>
+            <ul>
+              ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      results.innerHTML = resultsHTML;
+    }
+
+    startBtn.onclick = () => {
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      startBtn.innerText = "🔴 Recording...";
+      results.innerHTML = `
+        <div class="loading">
+          <h3>🎥 Recording in Progress...</h3>
+          <p>Speak clearly and maintain good posture. Click "Stop Recording" when finished.</p>
+        </div>
+      `;
+
+      if (mediaRecorder && mediaRecorder.state === "inactive") {
+        mediaRecorder.start();
+      }
+    };
+
+    stopBtn.onclick = () => {
+      stopBtn.disabled = true;
+      startBtn.disabled = false;
+      startBtn.innerText = "🎥 Start Recording";
+
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+    };
+
+    // Initialize camera when page loads
+    initCamera();
+  </script>
+</body>
+</html>

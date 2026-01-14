@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Mock Interview Analysis</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(to right, #4a6fa5, #3a4f7a);
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .header p {
+      margin: 10px 0 0 0;
+      opacity: 0.9;
+      font-size: 16px;
+    }
+
+    .question-section {
+      padding: 20px;
+      background: #f8f9fa;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .question-text {
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 18px;
+      text-align: center;
+      line-height: 1.6;
+      padding: 15px;
+      background: white;
+      border-radius: 10px;
+      border-left: 5px solid #4a6fa5;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .question-type-badge {
+      display: inline-block;
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 10px;
+      text-transform: capitalize;
+    }
+
+    .recording-section {
+      padding: 25px;
+      text-align: center;
+      background: white;
+    }
+
+    video {
+      border: 3px solid #4a6fa5;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 450px;
+      height: 280px;
+      background: #000;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .controls {
+      margin: 25px 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 14px 30px;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    #startBtn {
+      background: linear-gradient(to right, #00b09b, #96c93d);
+      color: white;
+    }
+
+    #startBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,176,155,0.3);
+    }
+
+    #stopBtn {
+      background: linear-gradient(to right, #ff416c, #ff4b2b);
+      color: white;
+    }
+
+    #stopBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255,65,108,0.3);
+    }
+
+    button:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    #result {
+      padding: 0;
+    }
+
+    .confidence-display {
+      text-align: center;
+      padding: 25px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .confidence-card {
+      color: white;
+      padding: 25px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      max-width: 400px;
+      margin: 0 auto;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .confidence-excellent { background: linear-gradient(135deg, #00b09b, #96c93d); }
+    .confidence-good { background: linear-gradient(135deg, #2196F3, #21CBF3); }
+    .confidence-average { background: linear-gradient(135deg, #FF9800, #FF5722); }
+    .confidence-below-average { background: linear-gradient(135deg, #FF416C, #FF4B2B); }
+    .confidence-poor { background: linear-gradient(135deg, #757575, #9E9E9E); }
+
+    .confidence-category {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .confidence-score {
+      font-size: 18px;
+      opacity: 0.95;
+      margin-bottom: 10px;
+    }
+
+    .confidence-percentage {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 15px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: white;
+      border-radius: 6px;
+      transition: width 1s ease-in-out;
+    }
+
+    .feedback-section {
+      margin: 0;
+      padding: 25px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .feedback-section:nth-child(even) {
+      background: #f8f9fa;
+    }
+
+    .section-title {
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: #2c3e50;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title i {
+      font-size: 22px;
+    }
+
+    .feedback-list {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      border-left: 5px solid #4a6fa5;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+
+    .strengths .feedback-list {
+      border-left-color: #27ae60;
+      background: linear-gradient(to right, rgba(39, 174, 96, 0.05), rgba(46, 204, 113, 0.05));
+    }
+
+    .improvements .feedback-list {
+      border-left-color: #e74c3c;
+      background: linear-gradient(to right, rgba(231, 76, 60, 0.05), rgba(235, 152, 78, 0.05));
+    }
+
+    .sample-answer .feedback-list {
+      border-left-color: #9b59b6;
+      background: linear-gradient(to right, rgba(155, 89, 182, 0.05), rgba(142, 68, 173, 0.05));
+    }
+
+    .transcript .feedback-list {
+      border-left-color: #f39c12;
+      background: linear-gradient(to right, rgba(243, 156, 18, 0.05), rgba(230, 126, 34, 0.05));
+    }
+
+    .content-analysis .feedback-list {
+      border-left-color: #3498db;
+      background: linear-gradient(to right, rgba(52, 152, 219, 0.05), rgba(41, 128, 185, 0.05));
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      padding: 12px 0;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    li:last-child {
+      border-bottom: none;
+    }
+
+    li::before {
+      content: "•";
+      color: #4a6fa5;
+      font-weight: bold;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .strengths li::before {
+      color: #27ae60;
+      content: "✓";
+    }
+
+    .improvements li::before {
+      color: #e74c3c;
+      content: "→";
+    }
+
+    .transcript-content, .sample-answer-content, .analysis-content {
+      line-height: 1.6;
+      color: #2c3e50;
+      font-size: 15px;
+      white-space: pre-line;
+    }
+
+    .action-buttons {
+      text-align: center;
+      padding: 30px;
+      background: #f8f9fa;
+    }
+
+    .retry-btn {
+      background: linear-gradient(to right, #4a6fa5, #3a4f7a);
+      color: white;
+      padding: 16px 40px;
+      font-size: 16px;
+      border-radius: 10px;
+    }
+
+    .retry-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(74, 111, 165, 0.3);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 50px 20px;
+      background: white;
+    }
+
+    .spinner {
+      border: 4px solid rgba(74, 111, 165, 0.1);
+      border-left-color: #4a6fa5;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .recording-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background: #ff416c;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { 
+        opacity: 1; 
+        box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7);
+      }
+      50% { 
+        opacity: 0.7; 
+        box-shadow: 0 0 0 10px rgba(255, 65, 108, 0);
+      }
+    }
+
+    .error-message {
+      background: linear-gradient(to right, rgba(255, 65, 108, 0.1), rgba(255, 75, 43, 0.1));
+      color: #e74c3c;
+      padding: 25px;
+      border-radius: 10px;
+      text-align: center;
+      border-left: 5px solid #e74c3c;
+      margin: 20px;
+    }
+
+    .content-score {
+      text-align: center;
+      margin: 20px 0;
+      padding: 25px;
+      background: linear-gradient(to right, rgba(255, 193, 7, 0.1), rgba(255, 235, 59, 0.1));
+      border-radius: 10px;
+      border-left: 5px solid #ffc107;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .score-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      border: 2px solid #e9ecef;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+
+    .score-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      border-color: #4a6fa5;
+    }
+
+    .score-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 5px;
+    }
+
+    .score-label {
+      font-size: 13px;
+      color: #7f8c8d;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .technical-feedback, .content-feedback {
+      background: linear-gradient(to right, rgba(26, 188, 156, 0.05), rgba(46, 204, 113, 0.05));
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 5px solid #1abc9c;
+      margin: 15px 0;
+      line-height: 1.6;
+    }
+
+    .api-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #7f8c8d;
+      text-align: center;
+      margin-top: 20px;
+      border-top: 1px solid #e9ecef;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .header { padding: 20px; }
+      .header h1 { font-size: 24px; }
+      .question-section, .recording-section, .feedback-section { padding: 15px; }
+      video { height: 220px; }
+      .score-grid { grid-template-columns: repeat(2, 1fr); }
+      .controls { flex-direction: column; }
+      button { width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .score-grid { grid-template-columns: 1fr; }
+      .confidence-category { font-size: 22px; }
+      .score-value { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎤 AI Mock Interview Practice</h1>
+      <p>Record your interview answer and get comprehensive AI-powered feedback</p>
+    </div>
+
+    <!-- Question Section -->
+    <div class="question-section">
+      <div class="question-text" id="questionDisplay">
+        🎯 Technical Question: "What are the four pillars of OOPS (Object-Oriented Programming)? Explain each."
+      </div>
+      <div id="questionTypeBadge" class="question-type-badge">Technical</div>
+    </div>
+
+    <div class="recording-section">
+      <video id="video" autoplay muted></video>
+      
+      <div class="controls">
+        <button id="startBtn">🎤 Start Recording</button>
+        <button id="stopBtn" disabled>⏹️ Stop & Analyze</button>
+      </div>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    let mediaRecorder, chunks = [];
+    const videoElement = document.getElementById('video');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resultDiv = document.getElementById('result');
+    const questionDisplay = document.getElementById('questionDisplay');
+    const questionTypeBadge = document.getElementById('questionTypeBadge');
+
+    // Technical question for prototype (will be replaced by Gemini API integration)
+    const CURRENT_QUESTION = "What are the four pillars of OOPS (Object-Oriented Programming)? Explain each.";
+    const CURRENT_QUESTION_TYPE = "technical";
+
+    // Update question display
+    function updateQuestionDisplay(question, type) {
+      const typeColors = {
+        'introduction': '#3498db',
+        'technical': '#e74c3c',
+        'behavioral': '#9b59b6',
+        'company': '#2ecc71',
+        'hr': '#f39c12',
+        'situational': '#1abc9c',
+        'general': '#7f8c8d'
+      };
+      
+      const typeIcons = {
+        'introduction': '👤',
+        'technical': '💻',
+        'behavioral': '📖',
+        'company': '🏢',
+        'hr': '🤝',
+        'situational': '🎯',
+        'general': '💬'
+      };
+      
+      const color = typeColors[type] || '#4a6fa5';
+      const icon = typeIcons[type] || '❓';
+      
+      questionDisplay.innerHTML = `${icon} ${type.charAt(0).toUpperCase() + type.slice(1)} Question: "${question}"`;
+      questionTypeBadge.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+      questionTypeBadge.style.background = color + '20';
+      questionTypeBadge.style.color = color;
+      questionDisplay.style.borderLeftColor = color;
+    }
+
+    // Initialize question display
+    updateQuestionDisplay(CURRENT_QUESTION, CURRENT_QUESTION_TYPE);
+
+    navigator.mediaDevices.getUserMedia({ 
+      video: { width: 640, height: 480 },
+      audio: { 
+        echoCancellation: true,
+        noiseSuppression: true,
+        sampleRate: 44100
+      }
+    })
+    .then(stream => {
+      videoElement.srcObject = stream;
+      mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9,opus'
+      });
+
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const formData = new FormData();
+        formData.append('video', blob, 'interview_answer.webm');
+        formData.append('question', CURRENT_QUESTION);
+
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <p style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
+              🔍 Analyzing Your Interview Response...
+            </p>
+            <p style="color: #7f8c8d;">
+              <small>Processing voice analysis, content evaluation, and generating feedback...</small>
+            </p>
+          </div>
+        `;
+
+        fetch('/analyze_voice', { method: 'POST', body: formData })
+          .then(res => res.json())
+          .then(data => {
+            if (data.error) {
+              throw new Error(data.error);
+            }
+            displayResults(data);
+          })
+          .catch(err => {
+            console.error('Analysis error:', err);
+            resultDiv.innerHTML = `
+              <div class="error-message">
+                <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">❌ Analysis Failed</p>
+                <p style="margin-bottom: 20px;">${err.message || 'Unable to process your response. Please try again.'}</p>
+                <button class="retry-btn" onclick="location.reload()">🔄 Try Again</button>
+              </div>
+            `;
+          });
+
+        chunks = [];
+      };
+
+      startBtn.onclick = () => {
+        mediaRecorder.start();
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        startBtn.innerHTML = '<span class="recording-indicator"></span> 🔴 Recording...';
+        resultDiv.style.display = 'none';
+      };
+
+      stopBtn.onclick = () => {
+        mediaRecorder.stop();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        startBtn.innerHTML = '🎤 Start Recording';
+        const tracks = videoElement.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+      };
+    })
+    .catch(err => {
+      console.error('Media device error:', err);
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `
+        <div class="error-message">
+          <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">📷 Camera/Microphone Access Required</p>
+          <p style="margin-bottom: 20px;">Please allow camera and microphone permissions to use this feature.</p>
+          <button class="retry-btn" onclick="location.reload()">🔄 Reload Page</button>
+        </div>
+      `;
+    });
+
+    function displayResults(data) {
+      // Update question display with actual question and type
+      updateQuestionDisplay(data.question || CURRENT_QUESTION, data.question_type || CURRENT_QUESTION_TYPE);
+      
+      const confidenceClass = `confidence-${data.confidence_category.toLowerCase().replace(' ', '-')}`;
+      const confidenceScore = parseFloat(data.confidence_score) || 0;
+      
+      let resultHTML = `
+        <div class="confidence-display">
+          <div class="confidence-card ${confidenceClass}">
+            <div class="confidence-category">${data.confidence_category}</div>
+            <div class="confidence-score">Voice Confidence Score</div>
+            <div class="confidence-percentage">${confidenceScore}%</div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${confidenceScore}%"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Transcript
+      if (data.transcript && data.transcript.trim().length > 0) {
+        resultHTML += `
+          <div class="feedback-section transcript">
+            <div class="section-title"><i>📝</i> Your Response</div>
+            <div class="feedback-list">
+              <div class="transcript-content">"${data.transcript}"</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Content Analysis
+      if (data.content_analysis) {
+        const analysis = data.content_analysis;
+        const questionType = data.question_type || 'general';
+        
+        // Dynamic score grid based on analysis type
+        const scoreFields = [];
+        for (const [key, value] of Object.entries(analysis)) {
+          if (key.endsWith('_score') && typeof value === 'number') {
+            scoreFields.push({ key, value });
+          }
+        }
+
+        if (scoreFields.length > 0) {
+          resultHTML += `
+            <div class="content-score">
+              <div class="section-title"><i>📊</i> Content Analysis Scores</div>
+              <div class="score-grid">
+                ${scoreFields.map(field => `
+                  <div class="score-card">
+                    <div class="score-value">${field.value}/10</div>
+                    <div class="score-label">${field.key.replace('_score', '').replace('_', ' ').toUpperCase()}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Content Feedback
+        const feedbackField = analysis.content_feedback || analysis.technical_feedback || analysis.detailed_feedback;
+        if (feedbackField) {
+          resultHTML += `
+            <div class="feedback-section content-analysis">
+              <div class="section-title"><i>🔍</i> Content Assessment</div>
+              <div class="feedback-list">
+                <div class="content-feedback">${feedbackField}</div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Key Points Covered
+        const keyPoints = analysis.key_points_covered || analysis.concepts_covered || analysis.star_elements_present;
+        if (keyPoints && Array.isArray(keyPoints) && keyPoints.length > 0) {
+          resultHTML += `
+            <div class="feedback-section strengths">
+              <div class="section-title"><i>✅</i> Key Points Covered</div>
+              <div class="feedback-list">
+                <ul>${keyPoints.map(point => `<li>${point}</li>`).join('')}</ul>
+              </div>
+            </div>
+          `;
+        }
+
+        // Missing Elements
+        const missing = analysis.missing_elements || analysis.missing_concepts;
+        if (missing && Array.isArray(missing) && missing.length > 0) {
+          resultHTML += `
+            <div class="feedback-section improvements">
+              <div class="section-title"><i>📚</i> Missing Elements</div>
+              <div class="feedback-list">
+                <ul>${missing.map(item => `<li>${item}</li>`).join('')}</ul>
+              </div>
+            </div>
+          `;
+        }
+
+        // Strengths
+        if (analysis.strengths && Array.isArray(analysis.strengths) && analysis.strengths.length > 0) {
+          resultHTML += `
+            <div class="feedback-section strengths">
+              <div class="section-title"><i>👍</i> Content Strengths</div>
+              <div class="feedback-list">
+                <ul>${analysis.strengths.map(strength => `<li>${strength}</li>`).join('')}</ul>
+              </div>
+            </div>
+          `;
+        }
+
+        // Improvements
+        if (analysis.improvements && Array.isArray(analysis.improvements) && analysis.improvements.length > 0) {
+          resultHTML += `
+            <div class="feedback-section improvements">
+              <div class="section-title"><i>💡</i> Content Improvements</div>
+              <div class="feedback-list">
+                <ul>${analysis.improvements.map(improvement => `<li>${improvement}</li>`).join('')}</ul>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // Sample Answer
+      if (data.sample_answer) {
+        resultHTML += `
+          <div class="feedback-section sample-answer">
+            <div class="section-title"><i>💡</i> Sample Answer</div>
+            <div class="feedback-list">
+              <div class="sample-answer-content">${data.sample_answer}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Voice Strengths & Improvements
+      if (data.strengths && data.strengths.length > 0) {
+        resultHTML += `
+          <div class="feedback-section strengths">
+            <div class="section-title"><i>🎤</i> Voice Strengths</div>
+            <div class="feedback-list">
+              <ul>${data.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+            </div>
+          </div>
+        `;
+      }
+
+      if (data.improvements && data.improvements.length > 0) {
+        resultHTML += `
+          <div class="feedback-section improvements">
+            <div class="section-title"><i>🔧</i> Voice Improvements</div>
+            <div class="feedback-list">
+              <ul>${data.improvements.map(i => `<li>${i}</li>`).join('')}</ul>
+            </div>
+          </div>
+        `;
+      }
+
+      // API Info
+      resultHTML += `
+        <div class="api-info">
+          Powered by ${data.api_provider || 'Groq'} AI • Model: ${data.model_used || SAMPLE_ANSWER_MODEL}
+          ${data.question_type ? ` • Question Type: ${data.question_type.charAt(0).toUpperCase() + data.question_type.slice(1)}` : ''}
+        </div>
+      `;
+
+      resultHTML += `
+        <div class="action-buttons">
+          <button class="retry-btn" onclick="location.reload()">🔄 Record Another Answer</button>
+        </div>
+      `;
+
+      resultDiv.innerHTML = resultHTML;
+      
+      // Animate progress bar
+      setTimeout(() => {
+        const progressFill = document.querySelector('.progress-fill');
+        if (progressFill) {
+          progressFill.style.width = confidenceScore + '%';
+        }
+      }, 100);
+    }
+  </script>
+</body>
+</html>

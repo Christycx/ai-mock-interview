@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Question Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: honeydew;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background:  #00966D;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .level-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .level-btn {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .level-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .level-btn.active {
+            border-color: #3498db;
+            background: #3498db;
+            color: white;
+        }
+        .level-btn.beginner.active {
+            background: #27ae60;
+            border-color: #27ae60;
+        }
+        .level-btn.intermediate.active {
+            background: #f39c12;
+            border-color: #f39c12;
+        }
+        .level-btn.advanced.active {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
+        }
+        .submit-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .results-section {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 0;
+            margin-top: 20px;
+        }
+        .results-section.active {
+            display: block;
+        }
+        .results-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .results-content {
+            padding: 25px;
+            background: white;
+            border-radius: 0 0 15px 15px;
+        }
+        .questions-list {
+            counter-reset: question-counter;
+        }
+        .question-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            padding-left: 60px;
+            transition: all 0.3s ease;
+        }
+        .question-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .question-item::before {
+            counter-increment: question-counter;
+            content: counter(question-counter);
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #3498db;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .question-item.beginner::before {
+            background: #27ae60;
+        }
+        .question-item.intermediate::before {
+            background: #f39c12;
+        }
+        .question-item.advanced::before {
+            background: #e74c3c;
+        }
+        .question-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #2c3e50;
+            margin: 0;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        .loading.active {
+            display: block;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .error-message.active {
+            display: block;
+        }
+        .success-message {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .success-message.active {
+            display: block;
+        }
+        .new-session-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .new-session-btn:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 AI Interview Question Generator</h1>
+            <p>Generate tailored interview questions based on resume, job role, and experience level</p>
+        </div>
+        <div class="content">
+            <!-- Input Form Section -->
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="jobTitle">🎯 Target Job Role *</label>
+                    <input type="text" id="jobTitle" placeholder="e.g., Software Developer, Data Analyst, Product Manager" required>
+                </div>
+                <div class="form-group">
+                    <label for="companyName">🏢 Target Company</label>
+                    <input type="text" id="companyName" placeholder="e.g., Google, Microsoft, Amazon">
+                </div>
+                <div class="form-group">
+                    <label for="resume">📄 Upload Resume (PDF) *</label>
+                    <input type="file" id="resume" accept=".pdf" required>
+                </div>
+                <div class="form-group">
+                    <label>📊 Interview Level *</label>
+                    <div class="level-buttons">
+                        <div class="level-btn beginner active" data-level="beginner">
+                            🟢 Beginner
+                            <div style="font-size: 12px; font-weight: normal; margin-top: 5px;">10 Questions</div>
+                        </div>
+                        <div class="level-btn intermediate" data-level="intermediate">
+                            🟡 Intermediate
+                            <div style="font-size: 12px; font-weight: normal; margin-top: 5px;">12 Questions</div>
+                        </div>
+                        <div class="level-btn advanced" data-level="advanced">
+                            🔴 Advanced
+                            <div style="font-size: 12px; font-weight: normal; margin-top: 5px;">15 Questions</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="submit-btn" id="generateBtn">
+                    🚀 Generate Interview Questions
+                </button>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating tailored interview questions... This may take a few seconds.</p>
+                </div>
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection">
+                <div class="results-header">
+                    <h3 id="resultsTitle">Generated Questions</h3>
+                    <button class="new-session-btn" onclick="resetForm()">
+                        ↻ New Session
+                    </button>
+                </div>
+                <div class="results-content">
+                    <div class="questions-list" id="questionsList">
+                        <!-- Questions will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLevel = 'beginner';
+
+        // Level selection
+        document.querySelectorAll('.level-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentLevel = this.dataset.level;
+            });
+        });
+
+        // Generate questions
+        document.getElementById('generateBtn').addEventListener('click', async function() {
+            const jobTitle = document.getElementById('jobTitle').value.trim();
+            const companyName = document.getElementById('companyName').value.trim();
+            const resumeFile = document.getElementById('resume').files[0];
+
+            // Validation
+            if (!jobTitle) {
+                showError('Please enter a job title');
+                return;
+            }
+            if (!resumeFile) {
+                showError('Please upload a resume');
+                return;
+            }
+            if (resumeFile.type !== 'application/pdf') {
+                showError('Please upload a PDF file');
+                return;
+            }
+
+            // Show loading
+            showLoading(true);
+            hideMessages();
+
+            try {
+                const formData = new FormData();
+                formData.append('resume', resumeFile);
+                formData.append('job_title', jobTitle);
+                formData.append('company_name', companyName);
+                formData.append('level', currentLevel);
+
+                const response = await fetch('/generate-questions', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayQuestions(data);
+                    showSuccess(`Successfully generated ${data.total_questions} ${currentLevel} level questions!`);
+                } else {
+                    showError(data.error || 'Failed to generate questions');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        function displayQuestions(data) {
+            const resultsSection = document.getElementById('resultsSection');
+            const questionsList = document.getElementById('questionsList');
+            const resultsTitle = document.getElementById('resultsTitle');
+
+            // Update title
+            resultsTitle.textContent = `${data.level.toUpperCase()} Level Questions - ${data.job_title} ${data.company_name ? 'at ' + data.company_name : ''}`;
+
+            // Clear previous questions
+            questionsList.innerHTML = '';
+
+            // Add questions
+            data.questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = `question-item ${data.level}`;
+
+                // Extract just the question text - remove any extra content
+                let questionText = question.question_text || '';
+
+                // Clean up the question text - remove section headers and extra content
+                questionText = questionText.split('\n')[0]; // Take only the first line
+                questionText = questionText.replace(/^(INTRODUCTION & ICE-BREAKER|HR & BEHAVIORAL QUESTIONS|RESUME-BASED QUESTIONS|JOB ROLE UNDERSTANDING|COMPANY-SPECIFIC QUESTIONS)\s*[:-]*\s*/i, '');
+                questionText = questionText.trim();
+
+                // If the question is still empty or too long, use a simple format
+                if (!questionText || questionText.length > 500) {
+                    questionText = question.question_text ? question.question_text.split('.')[0] + '.' : `Question ${index + 1}`;
+                }
+
+                questionDiv.innerHTML = `
+                    <div class="question-text">${questionText}</div>
+                `;
+                questionsList.appendChild(questionDiv);
+            });
+
+            resultsSection.classList.add('active');
+            // Scroll to results
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('active', show);
+            document.getElementById('generateBtn').disabled = show;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+            setTimeout(() => errorDiv.classList.remove('active'), 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.classList.add('active');
+            setTimeout(() => successDiv.classList.remove('active'), 5000);
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('successMessage').classList.remove('active');
+        }
+
+        function resetForm() {
+            document.getElementById('jobTitle').value = '';
+            document.getElementById('companyName').value = '';
+            document.getElementById('resume').value = '';
+            document.getElementById('resultsSection').classList.remove('active');
+            hideMessages();
+            
+            // Reset to beginner level
+            document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.level-btn.beginner').classList.add('active');
+            currentLevel = 'beginner';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
