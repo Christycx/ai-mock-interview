@@ -562,22 +562,6 @@
   </div>
 
   <script>
-    // Simple user storage in localStorage
-    function getUsers() {
-      return JSON.parse(localStorage.getItem('aiinterview-users') || '[]');
-    }
-    
-    function addUser(user) {
-      const users = getUsers();
-      users.push(user);
-      localStorage.setItem('aiinterview-users', JSON.stringify(users));
-    }
-    
-    function findUserByEmail(email) {
-      const users = getUsers();
-      return users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    }
-    
     // Toggle between login and signup forms
     document.getElementById('switch-to-signup').addEventListener('click', function() {
       document.getElementById('login-form').style.display = 'none';
@@ -603,8 +587,8 @@
       document.getElementById('welcome-screen').style.display = 'flex';
     }
     
-    // Login functionality
-    document.getElementById('login-button').addEventListener('click', function() {
+    // Login functionality - calls Flask backend
+    document.getElementById('login-button').addEventListener('click', async function() {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const errorElement = document.getElementById('error-message');
@@ -620,29 +604,51 @@
         return;
       }
       
-      // Check credentials
-      const user = findUserByEmail(email);
+      // Disable button during request
+      const loginButton = document.getElementById('login-button');
+      loginButton.disabled = true;
+      loginButton.textContent = 'Signing in...';
+      errorElement.textContent = '';
       
-      if (!user) {
-        errorElement.textContent = 'No account found with this email. Please sign up.';
-        return;
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          // Store current user (without password for security)
+          const currentUser = { 
+            name: data.user.name, 
+            email: data.user.email,
+            student_id: data.user.student_id
+          };
+          localStorage.setItem('aiinterview-current-user', JSON.stringify(currentUser));
+          
+          // Show welcome screen
+          showWelcomeScreen(data.user.name);
+        } else {
+          errorElement.textContent = data.error || 'Login failed. Please try again.';
+        }
+      } catch (error) {
+        errorElement.textContent = 'Network error. Please check your connection and try again.';
+        console.error('Login error:', error);
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = 'Sign In';
       }
-      
-      if (user.password !== password) {
-        errorElement.textContent = 'Incorrect password. Please try again.';
-        return;
-      }
-      
-      // Store current user (without password for security)
-      const currentUser = { name: user.name, email: user.email };
-      localStorage.setItem('aiinterview-current-user', JSON.stringify(currentUser));
-      
-      // Show welcome screen instead of redirecting immediately
-      showWelcomeScreen(user.name);
     });
     
-    // Signup functionality
-    document.getElementById('signup-button').addEventListener('click', function() {
+    // Signup functionality - calls Flask backend
+    document.getElementById('signup-button').addEventListener('click', async function() {
       const name = document.getElementById('signup-name').value.trim();
       const email = document.getElementById('signup-email').value.trim();
       const password = document.getElementById('signup-password').value;
@@ -670,27 +676,66 @@
         return;
       }
       
-      // Check if user already exists
-      if (findUserByEmail(email)) {
-        errorElement.textContent = 'An account with this email already exists.';
-        return;
+      // Disable button during request
+      const signupButton = document.getElementById('signup-button');
+      signupButton.disabled = true;
+      signupButton.textContent = 'Creating account...';
+      errorElement.textContent = '';
+      
+      try {
+        const response = await fetch('/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            password: password
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          // After successful signup, automatically log in
+          const loginResponse = await fetch('/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: email,
+              password: password
+            })
+          });
+          
+          const loginData = await loginResponse.json();
+          
+          if (loginResponse.ok) {
+            // Store current user
+            const currentUser = { 
+              name: loginData.user.name, 
+              email: loginData.user.email,
+              student_id: loginData.user.student_id
+            };
+            localStorage.setItem('aiinterview-current-user', JSON.stringify(currentUser));
+            
+            // Show welcome screen
+            showWelcomeScreen(name);
+          } else {
+            errorElement.textContent = 'Account created but login failed. Please try logging in.';
+          }
+        } else {
+          errorElement.textContent = data.error || 'Signup failed. Please try again.';
+        }
+      } catch (error) {
+        errorElement.textContent = 'Network error. Please check your connection and try again.';
+        console.error('Signup error:', error);
+      } finally {
+        signupButton.disabled = false;
+        signupButton.textContent = 'Create Account';
       }
-      
-      // Create new user
-      const newUser = {
-        name: name,
-        email: email.toLowerCase(),
-        password: password
-      };
-      
-      addUser(newUser);
-      
-      // Store current user
-      const currentUser = { name: newUser.name, email: newUser.email };
-      localStorage.setItem('aiinterview-current-user', JSON.stringify(currentUser));
-      
-      // Show welcome screen
-      showWelcomeScreen(name);
     });
     
     // Start button functionality - redirect to port 5001
@@ -714,15 +759,6 @@
         }
       }
     });
-    
-    // Check if user is already logged in
-    //window.addEventListener('load', function() {
-     // const currentUser = JSON.parse(localStorage.getItem('aiinterview-current-user') || 'null');
-      //if (currentUser && currentUser.name) {
-        // User is already logged in, show welcome screen
-       // showWelcomeScreen(currentUser.name);
-      //}
-    //});
   </script>
 </body>
 </html>
