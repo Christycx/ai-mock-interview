@@ -628,6 +628,9 @@
       updateQuestionDisplay(question.question_text, 'general');
       updateQuestionCounter();
       
+      // Generate and play audio for the question
+      generateAndPlayQuestionAudio(question.question_text);
+      
       // Reset UI state
       resultDiv.innerHTML = '';
       resultDiv.style.display = 'none';
@@ -647,6 +650,34 @@
       
       // Reset video stream if needed
       resetVideoStream();
+    }
+
+    // Generate and play audio for question
+    async function generateAndPlayQuestionAudio(questionText) {
+      try {
+        // Request audio generation from backend
+        const response = await fetch('/generate_question_audio', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            question_text: questionText
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.audio_url) {
+          // Create audio element and play
+          const audio = new Audio(data.audio_url);
+          audio.play().catch(error => {
+            console.log('Audio playback error:', error);
+          });
+        }
+      } catch (error) {
+        console.error('Error generating question audio:', error);
+      }
     }
 
     // Skip question function
