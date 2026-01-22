@@ -671,6 +671,7 @@
         if (data.success && data.audio_url) {
           // Create audio element and play
           const audio = new Audio(data.audio_url);
+          audio.playbackRate = 1.1;
           audio.play().catch(error => {
             console.log('Audio playback error:', error);
           });
