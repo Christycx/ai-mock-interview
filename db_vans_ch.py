@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from gtts import gTTS
 import os
 import uuid
+from multiprocessing import Process, Semaphore
 
 AUDIO_FOLDER = "static/audio"
 
@@ -374,6 +375,124 @@ def store_skipped_question(session_id, question_id, question_number):
         if connection:
             connection.close()
         return False
+        # ================================
+# MULTIPROCESSING CONFIGURATION
+# ================================
+MAX_PROCESSES = 2
+process_semaphore = Semaphore(MAX_PROCESSES)
+
+def analyze_answer_process(video_path, question, question_id, session_id, question_number):
+    """
+    Background process function - contains exact same analysis logic as before.
+    Creates its own DB connection inside the process.
+    """
+    with process_semaphore:
+        try:
+            print(f"🔄 [Process] Starting analysis for Question {question_number}")
+            
+            # Audio processing for voice analysis
+            audio_path = extract_audio(video_path)
+            transcribed_text = transcribe_text(audio_path)
+            
+            print(f"📝 [Process] Transcribed text: {transcribed_text}")
+            
+            # VOICE ANALYSIS (using existing tools)
+            audio_features = analyze_audio_features(audio_path)
+            pause_analysis = analyze_pauses_enhanced(audio_path)
+            filler_analysis = analyze_filler_patterns(transcribed_text)
+            
+            analysis_results = {
+                'pause_analysis': pause_analysis,
+                'filler_analysis': filler_analysis,
+                'audio_features': audio_features
+            }
+            
+            confidence_score = calculate_advanced_confidence(analysis_results)
+            confidence_category = get_confidence_category(confidence_score)
+            feedback_data = generate_simple_feedback(analysis_results, confidence_score)
+
+            # CONTENT ANALYSIS (using Groq API)
+            sample_answer = None
+            content_analysis = None
+            
+            if question and transcribed_text.strip():
+                print("🚀 [Process] Starting content analysis...")
+                
+                # Add small delay to avoid rate limits
+                time.sleep(0.5)
+                
+                # Generate sample answer using Groq
+                sample_answer = generate_sample_answer(question)
+                print(f"📋 [Process] Sample answer generated: {sample_answer is not None}")
+                
+                # Add delay between API calls
+                time.sleep(0.5)
+                
+                # Analyze user's answer using Groq
+                content_analysis = analyze_answer_content(question, transcribed_text)
+                print(f"📊 [Process] Content analysis completed: {content_analysis is not None}")
+
+            # Calculate speaking rate for metrics
+            speaking_rate = 0
+            if audio_features['duration'] > 0:
+                speaking_rate = (filler_analysis['word_count'] / audio_features['duration']) * 60
+
+            # STORE FEEDBACK IN DATABASE
+            if session_id and question_id:
+                try:
+                    # Store voice feedback
+                    store_voice_feedback(
+                        session_id=session_id,
+                        question_id=question_id,
+                        question_number=int(question_number),
+                        strengths=feedback_data['strengths'],
+                        improvements=feedback_data['improvements']
+                    )
+                    
+                    # Store content feedback if analysis was performed
+                    if content_analysis and transcribed_text.strip():
+                        store_content_feedback(
+                            session_id=session_id,
+                            question_id=question_id,
+                            question_number=int(question_number),
+                            response=transcribed_text,
+                            content_analysis=content_analysis,
+                            sample_answer=sample_answer
+                        )
+                    elif transcribed_text.strip():  # If we have transcript but no content analysis
+                        store_content_feedback(
+                            session_id=session_id,
+                            question_id=question_id,
+                            question_number=int(question_number),
+                            response=transcribed_text,
+                            content_analysis=None,
+                            sample_answer=sample_answer
+                        )
+                    
+                    print(f"✅ [Process] Feedback stored in database for Q{question_number}")
+                except Exception as e:
+                    print(f"⚠️ [Process] Failed to store feedback in database: {e}")
+
+            # Cleanup
+            for p in [audio_path, video_path]:
+                try:
+                    if os.path.exists(p):
+                        os.remove(p)
+                except Exception:
+                    pass
+
+            print(f"✅ [Process] Analysis completed for Question {question_number}")
+            
+        except Exception as e:
+            print(f"❌ [Process] Analysis error: {str(e)}")
+            
+            # Cleanup on error
+            for p in [video_path]:
+                try:
+                    if os.path.exists(p):
+                        os.remove(p)
+                except Exception:
+                    pass
 
 # ===============================
 # GROQ API CONFIGURATION
@@ -1565,6 +1684,7 @@ def analyze_voice():
     question_id = request.form.get('question_id', '0')
     session_id = request.form.get('session_id', '')
     question_number = request.form.get('question_number', '1')
+    is_last_question = request.form.get('is_last_question', 'false').lower() == 'true'
     
     if not question:
         question = "What are the four pillars of OOPS (Object-Oriented Programming)? Explain each."
@@ -1572,147 +1692,45 @@ def analyze_voice():
     print(f"🎯 Received analysis request for question: {question}")
     print(f"📝 Question ID: {question_id}, Session ID: {session_id}, Question #: {question_number}")
 
-    try:
-        # Audio processing for voice analysis
-        audio_path = extract_audio(video_path)
-        transcribed_text = transcribe_text(audio_path)
-        
-        print(f"📝 Transcribed text: {transcribed_text}")
-        
-        # VOICE ANALYSIS (using existing tools)
-        audio_features = analyze_audio_features(audio_path)
-        pause_analysis = analyze_pauses_enhanced(audio_path)
-        filler_analysis = analyze_filler_patterns(transcribed_text)
-        
-        analysis_results = {
-            'pause_analysis': pause_analysis,
-            'filler_analysis': filler_analysis,
-            'audio_features': audio_features
-        }
-        
-        confidence_score = calculate_advanced_confidence(analysis_results)
-        confidence_category = get_confidence_category(confidence_score)
-        feedback_data = generate_simple_feedback(analysis_results, confidence_score)
-
-        # CONTENT ANALYSIS (using Groq API)
-        sample_answer = None
-        content_analysis = None
-        
-        if question and transcribed_text.strip():
-            print("🚀 Starting content analysis...")
+    # If it's the last question, process synchronously (user will wait)
+    if is_last_question:
+        print(f"⏳ Last question - processing synchronously...")
+        try:
+            # Run analysis in current process for last question
+            analyze_answer_process(video_path, question, question_id, session_id, question_number)
             
-            # Add small delay to avoid rate limits
-            time.sleep(0.5)
+            return jsonify({
+                'success': True,
+                'message': 'Analysis completed',
+                'processing_mode': 'synchronous',
+                'question_number': question_number
+            })
+        except Exception as e:
+            print(f"❌ Analysis error: {str(e)}")
+            return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
+    else:
+        # For non-last questions, process in background
+        try:
+            # Start background process
+            process = Process(
+                target=analyze_answer_process,
+                args=(video_path, question, question_id, session_id, question_number)
+            )
+            process.daemon = True
+            process.start()
             
-            # Generate sample answer using Groq
-            sample_answer = generate_sample_answer(question)
-            print(f"📋 Sample answer generated: {sample_answer is not None}")
+            print(f"✅ Background process started for Question {question_number}")
             
-            # Add delay between API calls
-            time.sleep(0.5)
-            
-            # Analyze user's answer using Groq
-            content_analysis = analyze_answer_content(question, transcribed_text)
-            print(f"📊 Content analysis completed: {content_analysis is not None}")
-
-        # Calculate speaking rate for metrics
-        speaking_rate = 0
-        if audio_features['duration'] > 0:
-            speaking_rate = (filler_analysis['word_count'] / audio_features['duration']) * 60
-
-        # STORE FEEDBACK IN DATABASE
-        if session_id and question_id:
-            try:
-                # Store voice feedback
-                store_voice_feedback(
-                    session_id=session_id,
-                    question_id=question_id,
-                    question_number=int(question_number),
-                    strengths=feedback_data['strengths'],
-                    improvements=feedback_data['improvements']
-                )
-                
-                # Store content feedback if analysis was performed
-                if content_analysis and transcribed_text.strip():
-                    store_content_feedback(
-                        session_id=session_id,
-                        question_id=question_id,
-                        question_number=int(question_number),
-                        response=transcribed_text,
-                        content_analysis=content_analysis,
-                        sample_answer=sample_answer
-                    )
-                elif transcribed_text.strip():  # If we have transcript but no content analysis
-                    store_content_feedback(
-                        session_id=session_id,
-                        question_id=question_id,
-                        question_number=int(question_number),
-                        response=transcribed_text,
-                        content_analysis=None,
-                        sample_answer=sample_answer
-                    )
-                    
-                print("✅ Feedback stored in database")
-            except Exception as e:
-                print(f"⚠️ Failed to store feedback in database: {e}")
-
-        result = {
-            # Voice analysis results
-            "transcript": transcribed_text,
-            "confidence_score": confidence_score,
-            "confidence_category": confidence_category,
-            "improvements": feedback_data['improvements'],
-            "strengths": feedback_data['strengths'],
-            
-            # Voice metrics
-            "voice_metrics": {
-                "word_count": filler_analysis.get('word_count', 0),
-                "filler_words": filler_analysis.get('filler_count', 0),
-                "speaking_rate": round(speaking_rate, 2),
-                "pause_ratio": round(pause_analysis.get('silence_ratio', 0) * 100, 2),
-                "avg_pitch": round(audio_features.get('avg_pitch', 0), 2),
-                "avg_energy": round(audio_features.get('avg_energy', 0), 6),
-                "duration": round(audio_features.get('duration', 0), 2)
-            },
-            
-            # Content analysis results
-            "sample_answer": sample_answer,
-            "content_analysis": content_analysis,
-            "question": question,
-            "question_type": detect_question_type(question) if question else 'technical',
-            
-            # API info
-            "api_provider": "Groq",
-            "model_used": SAMPLE_ANSWER_MODEL,
-            
-            # Storage info
-            "feedback_stored": True,
-            "question_number": question_number
-        }
-
-        # Cleanup
-        for p in [audio_path, video_path]:
-            try:
-                if os.path.exists(p):
-                    os.remove(p)
-            except Exception:
-                pass
-
-        print("✅ Analysis completed successfully")
-        return jsonify(result)
-
-    except Exception as e:
-        print(f"❌ Analysis error: {str(e)}")
-        
-        # Cleanup on error
-        for p in [video_path]:
-            try:
-                if os.path.exists(p):
-                    os.remove(p)
-            except Exception:
-                pass
-        
-        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
+            # Return immediately
+            return jsonify({
+                'success': True,
+                'message': 'Analysis started in background',
+                'processing_mode': 'asynchronous',
+                'question_number': question_number
+            })
+        except Exception as e:
+            print(f"❌ Failed to start background process: {str(e)}")
+            return jsonify({'error': f'Failed to start analysis: {str(e)}'}), 500
 
 # ================================
 # ROUTE FOR SKIPPED QUESTIONS
