@@ -15,7 +15,20 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 from dotenv import load_dotenv
+from gtts import gTTS
+import os
+import uuid
 
+AUDIO_FOLDER = "static/audio"
+
+def generate_tts(question_text):
+    filename = f"{uuid.uuid4()}.mp3"
+    filepath = os.path.join(AUDIO_FOLDER, filename)
+
+    tts = gTTS(text=question_text, lang="en")
+    tts.save(filepath)
+
+    return f"/static/audio/{filename}"
 
 #from db_qgen import app 
 app = Flask(__name__)
@@ -1468,6 +1481,31 @@ def get_questions(level):
     except Exception as e:
         print(f"Error in get_questions: {str(e)}")
         return jsonify({'error': f'Failed to get questions: {str(e)}'}), 500
+
+@app.route('/generate_question_audio', methods=['POST'])
+def generate_question_audio():
+    """Generate audio for a question text"""
+    try:
+        data = request.get_json()
+        question_text = data.get('question_text', '')
+        
+        if not question_text:
+            return jsonify({'error': 'Question text is required'}), 400
+        
+        # Ensure audio folder exists
+        os.makedirs(AUDIO_FOLDER, exist_ok=True)
+        
+        # Generate TTS audio
+        audio_url = generate_tts(question_text)
+        
+        return jsonify({
+            'success': True,
+            'audio_url': audio_url
+        })
+        
+    except Exception as e:
+        print(f"Error generating question audio: {str(e)}")
+        return jsonify({'error': f'Failed to generate audio: {str(e)}'}), 500
 
 @app.route('/check_database', methods=['GET'])
 def check_database():
