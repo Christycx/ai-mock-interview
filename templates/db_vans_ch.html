@@ -559,7 +559,7 @@
     let totalQuestions = 10;
     let currentSessionId = generateSessionId();
     let questions = [];
-
+    let currentAudio = null;
     // Get level from URL if provided
     const urlParams = new URLSearchParams(window.location.search);
     const levelParam = urlParams.get('level');
@@ -655,6 +655,12 @@
     // Generate and play audio for question
     async function generateAndPlayQuestionAudio(questionText) {
       try {
+        // Stop any currently playing audio
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+          currentAudio = null;
+        }
         // Request audio generation from backend
         const response = await fetch('/generate_question_audio', {
           method: 'POST',
@@ -670,10 +676,15 @@
         
         if (data.success && data.audio_url) {
           // Create audio element and play
-          const audio = new Audio(data.audio_url);
-          audio.playbackRate = 1.1;
-          audio.play().catch(error => {
+          currentAudio = new Audio(data.audio_url);
+          currentAudio.playbackRate = 1.3;
+          currentAudio.play().catch(error => {
             console.log('Audio playback error:', error);
+          });
+          
+          // Clear audio reference when playback ends
+          currentAudio.addEventListener('ended', () => {
+            currentAudio = null;
           });
         }
       } catch (error) {
@@ -683,6 +694,12 @@
 
     // Skip question function
     async function skipCurrentQuestion() {
+      // Stop current audio playback
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       const currentQuestion = questions[currentQuestionIndex];
       
       try {
@@ -792,8 +809,18 @@
           formData.append('session_id', currentSessionId);
           formData.append('level', currentLevel);
           formData.append('question_number', currentQuestionIndex + 1);
-
+          // Check if this is the last question
+          const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+          formData.append('is_last_question', isLastQuestion.toString());
+          // If last question, show loading. Otherwise, enable next button immediately
+          if (isLastQuestion) {
           showLoading();
+        } else {
+            // Enable next question immediately
+            nextBtn.style.display = 'flex';
+            nextBtn.disabled = false;
+            resultDiv.style.display = 'none';
+          }
           
           fetch('/analyze_voice', { method: 'POST', body: formData })
             .then(res => res.json())
@@ -801,11 +828,32 @@
               if (data.error) {
                 throw new Error(data.error);
               }
-              displayResults(data);
+              if (isLastQuestion) {
+                resultDiv.innerHTML = `
+                  <div class="loading">
+                    <div class="spinner"></div>
+                    <p style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
+                      ✅ Analysis Complete!
+                    </p>
+                    <p style="color: #7f8c8d;">
+                      <small>All questions have been analyzed and stored.</small>
+                    </p>
+                  </div>
+                `;
+                finishBtn.style.display = 'flex';
+                finishBtn.disabled = false;
+              } else {
+                console.log(`✅ Analysis started in background for Question ${currentQuestionIndex + 1}`);
+              }
             })
+            
             .catch(err => {
               console.error('Analysis error:', err);
-              showError(err.message || 'Unable to process your response. Please try again.');
+              if (isLastQuestion) {
+                showError(err.message || 'Unable to process your response. Please try again.');
+              } else {
+                console.error('Background analysis error (non-blocking):', err);
+              }
             });
 
           chunks = [];
@@ -872,8 +920,19 @@
           formData.append('session_id', currentSessionId);
           formData.append('level', currentLevel);
           formData.append('question_number', currentQuestionIndex + 1);
+           // Check if this is the last question
+           const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+          formData.append('is_last_question', isLastQuestion.toString());
 
+          // If last question, show loading. Otherwise, enable next button immediately
+          if (isLastQuestion) {
           showLoading();
+        } else {
+            // Enable next question immediately
+            nextBtn.style.display = 'flex';
+            nextBtn.disabled = false;
+            resultDiv.style.display = 'none';
+          }
           
           fetch('/analyze_voice', { method: 'POST', body: formData })
             .then(res => res.json())
@@ -881,11 +940,32 @@
               if (data.error) {
                 throw new Error(data.error);
               }
-              displayResults(data);
+              if (isLastQuestion) {
+                resultDiv.innerHTML = `
+                  <div class="loading">
+                    <div class="spinner"></div>
+                    <p style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
+                      ✅ Analysis Complete!
+                    </p>
+                    <p style="color: #7f8c8d;">
+                      <small>All questions have been analyzed and stored.</small>
+                    </p>
+                  </div>
+                `;
+                finishBtn.style.display = 'flex';
+                finishBtn.disabled = false;
+              } else {
+                console.log(`✅ Analysis started in background for Question ${currentQuestionIndex + 1}`);
+              }
             })
+            
             .catch(err => {
               console.error('Analysis error:', err);
-              showError(err.message || 'Unable to process your response. Please try again.');
+              if (isLastQuestion) {
+                showError(err.message || 'Unable to process your response. Please try again.');
+              } else {
+                console.error('Background analysis error (non-blocking):', err);
+              }
             });
 
           chunks = [];
