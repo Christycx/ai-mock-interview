@@ -533,14 +533,15 @@ GEMINI_API_KEY=os.getenv('GEMINI_API_KEY'))
 """)
     
     # Check database connection
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        print("✓ Database connection successful")
-        cursor.close()
-    except Exception as e:
-        print(f"✗ Database connection failed: {e}")
-        print("Please ensure MySQL is running and database exists")
+    with app.app_context():
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            print("✓ Database connection successful")
+            cursor.close()
+        except Exception as e:
+            print(f"✗ Database connection failed: {e}")
+            print("Please ensure MySQL is running and database exists")
     
     app.run(debug=True, port=5001)    
