@@ -634,19 +634,14 @@
       // Reset UI state
       resultDiv.innerHTML = '';
       resultDiv.style.display = 'none';
-      startBtn.disabled = false;
+      startBtn.disabled = true;
       stopBtn.disabled = true;
       skipBtn.disabled = false;
       nextBtn.style.display = 'none';
       finishBtn.style.display = 'none';
       startBtn.innerHTML = '🎤 Start Recording';
       
-      // Show skip button for all questions except the last one
-      if (currentQuestionIndex === totalQuestions - 1) {
-        skipBtn.style.display = 'none';
-      } else {
-        skipBtn.style.display = 'flex';
-      }
+      skipBtn.style.display = 'flex';
       
       // Reset video stream if needed
       resetVideoStream();
@@ -654,6 +649,7 @@
 
     // Generate and play audio for question
     async function generateAndPlayQuestionAudio(questionText) {
+      startBtn.disabled = true;
       try {
         // Stop any currently playing audio
         if (currentAudio) {
@@ -680,15 +676,20 @@
           currentAudio.playbackRate = 1.3;
           currentAudio.play().catch(error => {
             console.log('Audio playback error:', error);
+            startBtn.disabled = false;
           });
           
           // Clear audio reference when playback ends
           currentAudio.addEventListener('ended', () => {
             currentAudio = null;
+            if (stopBtn.disabled) {
+              startBtn.disabled = false;
+            }
           });
         }
       } catch (error) {
         console.error('Error generating question audio:', error);
+        startBtn.disabled = false; 
       }
     }
 
@@ -831,9 +832,8 @@
               if (isLastQuestion) {
                 resultDiv.innerHTML = `
                   <div class="loading">
-                    <div class="spinner"></div>
                     <p style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
-                      ✅ Analysis Complete!
+                      ✅ Analysis Complete for all questions!
                     </p>
                     <p style="color: #7f8c8d;">
                       <small>All questions have been analyzed and stored.</small>
