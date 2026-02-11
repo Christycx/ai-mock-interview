@@ -20,6 +20,7 @@ import os
 import uuid
 from multiprocessing import Process, Semaphore
 from voice_feedback_generator import generate_dynamic_voice_feedback
+from concurrent.futures import ThreadPoolExecutor
 
 AUDIO_FOLDER = "static/audio"
 
@@ -410,35 +411,38 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
             
             confidence_score = calculate_advanced_confidence(analysis_results)
             confidence_category = get_confidence_category(confidence_score)
-            
-            # NEW CODE (use this):
-            # Generate dynamic voice feedback using Groq API
-            print("🎤 [Process] Generating dynamic voice feedback...")
-            feedback_data = generate_dynamic_voice_feedback(analysis_results, confidence_score)
-            print(f"✅ [Process] Dynamic feedback generated:")
-            print(f"   Strengths: {len(feedback_data['strengths'])} points")
-            print(f"   Improvements: {len(feedback_data['improvements'])} points")
 
-            # CONTENT ANALYSIS (using Groq API)
             sample_answer = None
             content_analysis = None
-            
-            if question and transcribed_text.strip():
-                print("🚀 [Process] Starting content analysis...")
-                
-                # Add small delay to avoid rate limits
-                time.sleep(0.5)
-                
-                # Generate sample answer using Groq
-                sample_answer = generate_sample_answer(question)
-                print(f"📋 [Process] Sample answer generated: {sample_answer is not None}")
-                
-                # Add delay between API calls
-                time.sleep(0.5)
-                
-                # Analyze user's answer using Groq
-                content_analysis = analyze_answer_content(question, transcribed_text)
-                print(f"📊 [Process] Content analysis completed: {content_analysis is not None}")
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                # Voice Groq (uses GROQ_VOICE_API_KEY via voice_feedback_generator)
+                voice_future = executor.submit(
+                    generate_dynamic_voice_feedback,
+                    analysis_results,
+                    confidence_score
+                )
+                sample_future = None
+                content_future = None
+                if question and transcribed_text.strip():
+                    # Content Groq (uses GROQ_API_KEY in this file)
+                    sample_future = executor.submit(generate_sample_answer, question)
+                    content_future = executor.submit(
+                        analyze_answer_content,
+                        question,
+                        transcribed_text
+                    )
+                    
+                # Wait for results
+                feedback_data = voice_future.result()
+                print(f"✅ [Process] Dynamic feedback generated:")
+                print(f"   Strengths: {len(feedback_data['strengths'])} points")
+                print(f"   Improvements: {len(feedback_data['improvements'])} points")
+                if sample_future is not None:
+                    sample_answer = sample_future.result()
+                    print(f"📋 [Process] Sample answer generated: {sample_answer is not None}")
+                if content_future is not None:
+                    content_analysis = content_future.result()
+                    print(f"📊 [Process] Content analysis completed: {content_analysis is not None}")
 
             # Calculate speaking rate for metrics
             speaking_rate = 0
