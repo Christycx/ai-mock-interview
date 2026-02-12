@@ -9,8 +9,8 @@ import mysql.connector
 from mysql.connector import Error
 from dotenv import load_dotenv
 
-app = Flask(__name__)
-CORS(app)
+#app = Flask(__name__)
+#CORS(app)
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -620,14 +620,14 @@ def generate_detailed_recommendations(posture, alignment, eye_contact, body_touc
     
     return recommendations
 
-# ---------------- Flask Routes ----------------
-@app.route('/')
-def index():
-    return render_template('face.html')
+# ---------------- (No Flask app here) ----------------
+# face.py is now a helper module only.
+# The Flask app and routes (including /analyze_interview)
+# are defined and run in db_dyn.py.
 
-@app.route('/analyze_interview', methods=['POST'])
-def analyze_interview():
-    if 'video' not in request.files:
+#@app.route('/analyze_interview', methods=['POST'])
+#def analyze_interview():
+    """if 'video' not in request.files:
         return jsonify({'error': 'No video file uploaded'}), 400
 
     video = request.files['video']
@@ -668,7 +668,7 @@ def analyze_interview():
 
     except Exception as e:
         print(f"Analysis error: {str(e)}")
-        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
+        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500 """
 
-if __name__ == '__main__':
-    app.run(debug=True)
+#if __name__ == '__main__':
+ #   app.run(debug=True)
