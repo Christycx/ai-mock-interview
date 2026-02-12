@@ -822,7 +822,18 @@
             nextBtn.disabled = false;
             resultDiv.style.display = 'none';
           }
-          
+
+          // Also send same video to face analysis backend (fire-and-forget)
+          try {
+            const faceForm = new FormData();
+            faceForm.append('video', blob, 'interview_face.webm');
+            faceForm.append('question_number', currentQuestionIndex + 1);
+            fetch('http://localhost:5000/analyze_interview', { method: 'POST', body: faceForm })
+              .catch(err => console.error('Face analysis error (non-blocking):', err));
+          } catch (e) {
+            console.error('Failed to trigger face analysis:', e);
+          }
+
           fetch('/analyze_voice', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
@@ -933,7 +944,18 @@
             nextBtn.disabled = false;
             resultDiv.style.display = 'none';
           }
-          
+
+          // Also send same video to face analysis backend (fire-and-forget)
+          try {
+            const faceForm = new FormData();
+            faceForm.append('video', blob, 'interview_face.webm');
+            faceForm.append('question_number', currentQuestionIndex + 1);
+            fetch('http://localhost:5000/analyze_interview', { method: 'POST', body: faceForm })
+              .catch(err => console.error('Face analysis error (non-blocking):', err));
+          } catch (e) {
+            console.error('Failed to trigger face analysis:', e);
+          }
+
           fetch('/analyze_voice', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
