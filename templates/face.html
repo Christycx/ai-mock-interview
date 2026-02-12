@@ -13,256 +13,275 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: honeydew;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: white;
       min-height: 100vh;
-      padding: 20px;
+      padding: 0;
+      margin: 0;
     }
 
     .container {
-      max-width: 950px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 20px;
-      padding: 40px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 100%;
+      min-height: 100vh;
+      background: #fafafa;
+      padding: 0;
     }
 
     .header {
       text-align: center;
-      margin-bottom: 30px;
+      padding: 48px 60px;
+      background: linear-gradient(135deg, #FF9999 0%, #FFB6C1 50%, #FF9999 100%);
+      border-bottom: 1px solid rgba(255, 153, 153, 0.3);
     }
 
     h1 {
-      color: #333;
-      font-size: 2.5em;
-      margin-bottom: 10px;
-      background: black;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: black;
+      font-size: 2.25em;
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .subtitle {
-      color: #666;
-      font-size: 1.1em;
+      color: black;
+      font-size: 1.05em;
+      font-weight: 400;
+    }
+
+    .content-wrapper {
+      padding: 40px 60px;
     }
 
     .video-section {
-      background: #000;
-      border-radius: 15px;
-      padding: 20px;
-      margin-bottom: 30px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     video {
       width: 100%;
       max-width: 100%;
       height: auto;
-      border-radius: 10px;
+      border-radius: 8px;
       display: block;
+      background: #000;
+      max-height: 650px;
+      object-fit: cover;
     }
 
     .controls {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       justify-content: center;
       flex-wrap: wrap;
       margin-top: 20px;
     }
 
     button {
-      padding: 15px 30px;
-      font-size: 16px;
-      font-weight: bold;
+      padding: 14px 32px;
+      font-size: 15px;
+      font-weight: 500;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      min-width: 180px;
+      transition: all 0.2s ease;
+      min-width: 160px;
+      font-family: inherit;
     }
 
     #startBtn {
-      background: linear-gradient(135deg, #4CAF50, #45a049);
+      background: #2563eb;
       color: white;
+      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
     }
 
     #startBtn:hover:not(:disabled) {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+      background: #1d4ed8;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
 
     #stopBtn {
-      background: linear-gradient(135deg, #f44336, #da190b);
+      background: #dc2626;
       color: white;
+      box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
     }
 
     #stopBtn:hover:not(:disabled) {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+      background: #b91c1c;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
     }
 
     button:disabled {
-      background: #ccc !important;
+      background: #e5e5e5 !important;
+      color: #a3a3a3 !important;
       cursor: not-allowed;
-      transform: none !important;
       box-shadow: none !important;
     }
 
     #results {
-      margin-top: 40px;
+      margin-top: 48px;
     }
 
     .overall-assessment {
       text-align: center;
-      padding: 30px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 15px;
-      color: white;
-      margin-bottom: 30px;
-      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+      padding: 32px;
+      background: linear-gradient(135deg, #FF9999 0%, #FFB6C1 100%);
+      border-radius: 12px;
+      margin-bottom: 32px;
+      box-shadow: 0 2px 8px rgba(255, 153, 153, 0.2);
     }
 
     .overall-assessment h3 {
-      font-size: 1.3em;
-      margin-bottom: 10px;
-      opacity: 0.9;
+      font-size: 1.1em;
+      margin-bottom: 8px;
+      color: black;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.85em;
     }
 
     .overall-assessment p {
-      font-size: 1.5em;
-      font-weight: bold;
+      font-size: 1.4em;
+      font-weight: 600;
+      color: black;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
-      margin-bottom: 30px;
+      margin-bottom: 32px;
     }
 
     .metric-card {
-      background: #f8f9fa;
-      border-radius: 15px;
-      padding: 25px;
-      border-left: 5px solid #ddd;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid #f0f0f0;
     }
 
     .metric-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
     }
 
     .quality-good { 
-      border-left-color: #4CAF50; 
-      background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+      border-left: 4px solid #16a34a;
+      background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
     }
     
     .quality-average { 
-      border-left-color: #ff9800; 
-      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      border-left: 4px solid #ea580c;
+      background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%);
     }
     
     .quality-needs_improvement { 
-      border-left-color: #f44336; 
-      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+      border-left: 4px solid #dc2626;
+      background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
     }
 
     .quality-badge {
       display: inline-block;
-      padding: 8px 16px;
-      border-radius: 25px;
-      font-size: 13px;
-      font-weight: bold;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .badge-good { 
-      background: #4CAF50; 
-      color: white; 
+      background: #dcfce7;
+      color: #166534;
     }
     
     .badge-average { 
-      background: #ff9800; 
-      color: white; 
+      background: #ffedd5;
+      color: #9a3412;
     }
     
     .badge-needs_improvement { 
-      background: #f44336; 
-      color: white; 
-    }
-
-    .metric-icon {
-      font-size: 2em;
-      margin-bottom: 10px;
-      display: block;
+      background: #fee2e2;
+      color: #991b1b;
     }
 
     .metric-title {
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 10px;
-      font-size: 1.1em;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      font-size: 1.05em;
     }
 
     .metric-feedback {
-      color: #555;
+      color: #525252;
       line-height: 1.6;
       font-size: 0.95em;
     }
 
+    .section-title {
+      text-align: center;
+      color: #1a1a1a;
+      margin-bottom: 24px;
+      font-size: 1.5em;
+      font-weight: 600;
+    }
+
     .recommendations-section {
-      margin-top: 30px;
+      margin-top: 32px;
     }
 
     .recommendations-card {
-      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-      border-radius: 15px;
-      padding: 25px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border-radius: 12px;
+      padding: 24px;
       margin-bottom: 20px;
-      border-left: 5px solid #4CAF50;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border: 1px solid #bbf7d0;
     }
 
     .improvements-card {
-      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-      border-radius: 15px;
-      padding: 25px;
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border-radius: 12px;
+      padding: 24px;
       margin-bottom: 20px;
-      border-left: 5px solid #ff9800;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border: 1px solid #fed7aa;
     }
 
     .tips-card {
-      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-      border-radius: 15px;
-      padding: 25px;
-      border-left: 5px solid #2196f3;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid #bfdbfe;
     }
 
     .recommendations-card h3,
     .improvements-card h3,
     .tips-card h3 {
-      margin-bottom: 15px;
-      font-size: 1.3em;
+      margin-bottom: 16px;
+      font-size: 1.15em;
+      font-weight: 600;
     }
 
     .recommendations-card h3 {
-      color: #2e7d32;
+      color: #166534;
     }
 
     .improvements-card h3 {
-      color: #e65100;
+      color: #9a3412;
     }
 
     .tips-card h3 {
-      color: #1565c0;
+      color: #1e40af;
     }
 
     .recommendations-card ul,
@@ -275,32 +294,40 @@
     .recommendations-card li,
     .improvements-card li,
     .tips-card li {
-      padding: 8px 0;
-      color: #333;
-      font-size: 1em;
+      padding: 10px 0;
+      color: #404040;
+      font-size: 0.95em;
       line-height: 1.6;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .recommendations-card li:last-child,
+    .improvements-card li:last-child,
+    .tips-card li:last-child {
+      border-bottom: none;
     }
 
     .loading {
       text-align: center;
-      padding: 40px;
+      padding: 48px;
       color: #666;
     }
 
     .loading h3 {
-      color: #667eea;
-      margin-bottom: 15px;
-      font-size: 1.5em;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+      font-size: 1.3em;
+      font-weight: 600;
     }
 
     .spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #667eea;
+      border: 3px solid #f0f0f0;
+      border-top: 3px solid #2563eb;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
+      width: 48px;
+      height: 48px;
       animation: spin 1s linear infinite;
-      margin: 20px auto;
+      margin: 24px auto;
     }
 
     @keyframes spin {
@@ -309,39 +336,57 @@
     }
 
     .error-message {
-      background: #ffebee;
-      border-left: 5px solid #f44336;
+      background: #fef2f2;
+      border-left: 4px solid #dc2626;
       padding: 20px;
-      border-radius: 10px;
-      color: #c62828;
+      border-radius: 8px;
+      color: #991b1b;
       margin: 20px 0;
     }
 
+    .error-message h3 {
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
     .info-box {
-      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-      border-left: 5px solid #4CAF50;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
+      background: white;
+      border-left: 4px solid #FF9999;
+      padding: 24px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     .info-box h4 {
-      color: #2e7d32;
-      margin-bottom: 10px;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      font-weight: 600;
+      font-size: 1.05em;
     }
 
     .info-box ul {
       margin-left: 20px;
-      color: #333;
+      color: #404040;
+      line-height: 1.8;
+    }
+
+    .info-box li {
+      margin-bottom: 6px;
+    }
+
+    .info-box strong {
+      color: #1a1a1a;
+      font-weight: 600;
     }
 
     @media (max-width: 768px) {
       .container {
-        padding: 20px;
+        padding: 32px 24px;
       }
 
       h1 {
-        font-size: 1.8em;
+        font-size: 1.75em;
       }
 
       .metrics-grid {
@@ -350,7 +395,7 @@
 
       button {
         min-width: 140px;
-        padding: 12px 20px;
+        padding: 12px 24px;
         font-size: 14px;
       }
     }
@@ -359,12 +404,13 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>🎯 AI Mock Interview Analysis</h1>
-      <p class="subtitle">Get comprehensive feedback on your interview performance</p>
+      <h1>AI Mock Interview Analysis</h1>
+      <p class="subtitle">Professional feedback on your interview performance</p>
     </div>
 
-    <div class="info-box">
-      <h4>📋 What We Analyze:</h4>
+    <div class="content-wrapper">
+      <div class="info-box">
+      <h4>Analysis Criteria</h4>
       <ul>
         <li><strong>Posture:</strong> Sitting position, shoulder alignment, and body posture</li>
         <li><strong>Head Position:</strong> Looking up/down/sideways, proper camera alignment</li>
@@ -377,12 +423,13 @@
       <video id="video" autoplay muted></video>
       
       <div class="controls">
-        <button id="startBtn">🎥 Start Recording</button>
-        <button id="stopBtn">⏹️ Stop Recording</button>
+        <button id="startBtn">Start Recording</button>
+        <button id="stopBtn">Stop Recording</button>
       </div>
     </div>
 
     <div id="results"></div>
+    </div>
   </div>
 
   <script>
@@ -415,10 +462,10 @@
 
     function getQualityText(q) {
       return {
-        'good': 'Excellent ✅',
-        'average': 'Good ⚠️',
-        'needs_improvement': 'Needs Improvement ❌'
-      }[q] || 'Good ⚠️';
+        'good': 'Excellent',
+        'average': 'Good',
+        'needs_improvement': 'Needs Improvement'
+      }[q] || 'Good';
     }
 
     async function initCamera() {
@@ -443,9 +490,9 @@
 
           results.innerHTML = `
             <div class="loading">
-              <h3>🔍 Analyzing Your Interview...</h3>
+              <h3>Analyzing Your Interview</h3>
               <div class="spinner"></div>
-              <p>Evaluating posture, eye contact, alignment, and hand movements...</p>
+              <p>Evaluating posture, eye contact, alignment, and hand movements</p>
             </div>
           `;
 
@@ -459,7 +506,7 @@
             if (data.error) {
               results.innerHTML = `
                 <div class="error-message">
-                  <h3>❌ Analysis Error</h3>
+                  <h3>Analysis Error</h3>
                   <p>${data.error}</p>
                 </div>
               `;
@@ -469,7 +516,7 @@
           } catch (error) {
             results.innerHTML = `
               <div class="error-message">
-                <h3>❌ Analysis Error</h3>
+                <h3>Analysis Error</h3>
                 <p>${error.message}</p>
               </div>
             `;
@@ -479,7 +526,7 @@
         startBtn.disabled = true;
         results.innerHTML = `
           <div class="error-message">
-            <h3>❌ Camera Access Error</h3>
+            <h3>Camera Access Error</h3>
             <p>Please allow camera access to use this feature.</p>
           </div>
         `;
@@ -489,11 +536,11 @@
     function displayResults(data) {
       let html = `
         <div class="overall-assessment">
-          <h3>🎯 Overall Assessment</h3>
+          <h3>Overall Assessment</h3>
           <p>${data.overall_assessment}</p>
         </div>
 
-        <h2 style="text-align: center; color: #333; margin-bottom: 25px;">📊 Detailed Analysis</h2>
+        <h2 class="section-title">Detailed Analysis</h2>
         
         <div class="metrics-grid">
       `;
@@ -501,7 +548,6 @@
       // Posture Card
       html += `
         <div class="metric-card ${getQualityClass(data.posture.quality)}">
-          <span class="metric-icon">🧍‍♀️</span>
           <span class="quality-badge ${getQualityBadge(data.posture.quality)}">
             ${getQualityText(data.posture.quality)}
           </span>
@@ -513,7 +559,6 @@
       // Face Alignment Card
       html += `
         <div class="metric-card ${getQualityClass(data.face_alignment.quality)}">
-          <span class="metric-icon">📷</span>
           <span class="quality-badge ${getQualityBadge(data.face_alignment.quality)}">
             ${getQualityText(data.face_alignment.quality)}
           </span>
@@ -525,7 +570,6 @@
       // Eye Contact Card
       html += `
         <div class="metric-card ${getQualityClass(data.eye_contact.quality)}">
-          <span class="metric-icon">👁️</span>
           <span class="quality-badge ${getQualityBadge(data.eye_contact.quality)}">
             ${getQualityText(data.eye_contact.quality)}
           </span>
@@ -537,7 +581,6 @@
       // Body Touch Card
       html += `
         <div class="metric-card ${getQualityClass(data.body_touch.quality)}">
-          <span class="metric-icon">🤲</span>
           <span class="quality-badge ${getQualityBadge(data.body_touch.quality)}">
             ${getQualityText(data.body_touch.quality)}
           </span>
@@ -556,7 +599,7 @@
         if (data.recommendations.strengths && data.recommendations.strengths.length > 0) {
           html += `
             <div class="recommendations-card">
-              <h3>✨ Your Strengths</h3>
+              <h3>Your Strengths</h3>
               <ul>
                 ${data.recommendations.strengths.map(s => `<li>${s}</li>`).join('')}
               </ul>
@@ -568,7 +611,7 @@
         if (data.recommendations.improvements && data.recommendations.improvements.length > 0) {
           html += `
             <div class="improvements-card">
-              <h3>🎯 Areas for Improvement</h3>
+              <h3>Areas for Improvement</h3>
               <ul>
                 ${data.recommendations.improvements.map(i => `<li>${i}</li>`).join('')}
               </ul>
@@ -580,7 +623,7 @@
         if (data.recommendations.tips && data.recommendations.tips.length > 0) {
           html += `
             <div class="tips-card">
-              <h3>💡 Practical Tips</h3>
+              <h3>Practical Tips</h3>
               <ul>
                 ${data.recommendations.tips.map(t => `<li>${t}</li>`).join('')}
               </ul>
@@ -605,10 +648,10 @@
     startBtn.onclick = () => {
       startBtn.disabled = true;
       stopBtn.disabled = false;
-      startBtn.innerText = "🔴 Recording...";
+      startBtn.innerText = "Recording...";
       results.innerHTML = `
         <div class="loading">
-          <h3>🎥 Recording in Progress...</h3>
+          <h3>Recording in Progress</h3>
           <p>Perform your mock interview naturally</p>
         </div>
       `;
@@ -620,22 +663,19 @@
     stopBtn.onclick = () => {
       stopBtn.disabled = true;
       startBtn.disabled = false;
-      startBtn.innerText = "🎥 Start Recording";
+      startBtn.innerText = "Start Recording";
       
       if (mediaRecorder && mediaRecorder.state === "recording") {
         mediaRecorder.stop();
       }
       
-      // Stop camera after analysis starts
       setTimeout(() => {
         stopCamera();
       }, 500);
     };
 
-    // Initialize camera on load
     initCamera();
 
-    // Clean up camera on page unload
     window.addEventListener('beforeunload', () => {
       stopCamera();
     });
