@@ -5,6 +5,9 @@ import mediapipe as mp
 import numpy as np
 import os
 import time
+import mysql.connector
+from mysql.connector import Error
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +19,106 @@ from mediapipe import solutions
 
 mp_face_mesh = solutions.face_mesh
 mp_drawing = solutions.drawing_utils
-mp_pose = solutions.pose 
+mp_pose = solutions.pose
+
+# Load database configuration from .env
+load_dotenv()
+MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
+MYSQL_DB = os.getenv("MYSQL_DB", "")
+
+DEFAULT_RESUME_ID = "FACE_DEFAULT"
+
+
+def get_db_connection():
+    """Create database connection using .env configuration"""
+    try:
+        connection = mysql.connector.connect(
+            host=MYSQL_HOST,
+            user=MYSQL_USER,
+            password=MYSQL_PASSWORD,
+            database=MYSQL_DB,
+        )
+        return connection
+    except Error as e:
+        print(f"Error connecting to MySQL in face.py: {e}")
+        return None
+
+
+def store_face_feedback(feedback):
+    """
+    Store face analysis feedback into face_feedback table.
+    Expects feedback in the structure returned by generate_comprehensive_feedback.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        print("Failed to connect to database for face feedback")
+        return False
+
+    try:
+        cursor = connection.cursor()
+
+        posture = feedback.get("posture", {})
+        alignment = feedback.get("face_alignment", {})
+        eye_contact = feedback.get("eye_contact", {})
+        body_touch = feedback.get("body_touch", {})
+        recommendations = feedback.get("recommendations", {})
+
+        strengths_list = recommendations.get("strengths", []) or []
+        improvements_list = recommendations.get("improvements", []) or []
+        tips_list = recommendations.get("tips", []) or []
+
+        strengths_str = " | ".join(strengths_list)
+        improvements_str = " | ".join(improvements_list)
+        tips_str = " | ".join(tips_list)
+
+        insert_query = """
+            INSERT INTO face_feedback (
+                resumeid,
+                posture_quality,
+                posture_feedback,
+                alignment,
+                alignment_feedback,
+                eye_contact,
+                eyecontact_feedback,
+                touch,
+                touch_feedback,
+                strength,
+                improvements,
+                tips
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+        values = (
+            DEFAULT_RESUME_ID,
+            posture.get("quality", ""),
+            posture.get("feedback", ""),
+            alignment.get("quality", ""),
+            alignment.get("feedback", ""),
+            eye_contact.get("quality", ""),
+            eye_contact.get("feedback", ""),
+            body_touch.get("quality", ""),
+            body_touch.get("feedback", ""),
+            strengths_str,
+            improvements_str,
+            tips_str,
+        )
+
+        cursor.execute(insert_query, values)
+        connection.commit()
+        cursor.close()
+        connection.close()
+        print("✅ Face feedback stored in face_feedback table")
+        return True
+    except Error as e:
+        print(f"❌ Error storing face feedback: {e}")
+        try:
+            connection.close()
+        except Exception:
+            pass
+        return False
 
 # ---------------- Video Analysis ----------------
 def analyze_video(video_path):
@@ -546,6 +648,13 @@ def analyze_interview():
 
         cap.release()
         result = analyze_video(filepath)
+
+        # Store feedback in database (face_feedback table) with default resumeid
+        try:
+            store_face_feedback(result)
+        except Exception as db_err:
+            print(f"⚠️ Failed to store face feedback: {db_err}")
+
         return jsonify(result)
 
     except Exception as e:
