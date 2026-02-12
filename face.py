@@ -46,7 +46,7 @@ def get_db_connection():
         return None
 
 
-def store_face_feedback(feedback):
+def store_face_feedback(feedback, qno=None):
     """
     Store face analysis feedback into face_feedback table.
     Expects feedback in the structure returned by generate_comprehensive_feedback.
@@ -86,9 +86,10 @@ def store_face_feedback(feedback):
                 touch_feedback,
                 strength,
                 improvements,
-                tips
+                tips,
+                qno
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
         values = (
@@ -104,6 +105,7 @@ def store_face_feedback(feedback):
             strengths_str,
             improvements_str,
             tips_str,
+            int(qno) if qno is not None else None,
         )
 
         cursor.execute(insert_query, values)
@@ -649,9 +651,16 @@ def analyze_interview():
         cap.release()
         result = analyze_video(filepath)
 
-        # Store feedback in database (face_feedback table) with default resumeid
+        # Get question number if provided (for qno in face_feedback)
+        qno_raw = request.form.get("question_number") or request.form.get("qno")
         try:
-            store_face_feedback(result)
+            qno_val = int(qno_raw) if qno_raw is not None else None
+        except ValueError:
+            qno_val = None
+
+        # Store feedback in database (face_feedback table) with default resumeid and qno
+        try:
+            store_face_feedback(result, qno=qno_val)
         except Exception as db_err:
             print(f"⚠️ Failed to store face feedback: {db_err}")
 
