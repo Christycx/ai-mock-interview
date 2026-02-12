@@ -828,7 +828,7 @@
             const faceForm = new FormData();
             faceForm.append('video', blob, 'interview_face.webm');
             faceForm.append('question_number', currentQuestionIndex + 1);
-            fetch('http://localhost:5000/analyze_interview', { method: 'POST', body: faceForm })
+            fetch('/analyze_interview', { method: 'POST', body: faceForm })
               .catch(err => console.error('Face analysis error (non-blocking):', err));
           } catch (e) {
             console.error('Failed to trigger face analysis:', e);
@@ -950,7 +950,7 @@
             const faceForm = new FormData();
             faceForm.append('video', blob, 'interview_face.webm');
             faceForm.append('question_number', currentQuestionIndex + 1);
-            fetch('http://localhost:5000/analyze_interview', { method: 'POST', body: faceForm })
+            fetch('/analyze_interview', { method: 'POST', body: faceForm })
               .catch(err => console.error('Face analysis error (non-blocking):', err));
           } catch (e) {
             console.error('Failed to trigger face analysis:', e);
