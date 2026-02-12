@@ -12,8 +12,11 @@ CORS(app)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-mp_face_mesh = mp.solutions.face_mesh
-mp_pose = mp.solutions.pose
+from mediapipe import solutions
+
+mp_face_mesh = solutions.face_mesh
+mp_drawing = solutions.drawing_utils
+mp_pose = solutions.pose 
 
 # ---------------- Video Analysis ----------------
 def analyze_video(video_path):
