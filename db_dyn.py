@@ -22,6 +22,8 @@ from multiprocessing import Process, Semaphore
 from voice_feedback_generator import generate_dynamic_voice_feedback
 from concurrent.futures import ThreadPoolExecutor
 
+from face import analyze_video, store_face_feedback  # at the top, after other imports
+
 AUDIO_FOLDER = "static/audio"
 
 def generate_tts(question_text):
@@ -364,7 +366,47 @@ def store_skipped_question(session_id, question_id, question_number):
                 "",
                 question_number
             ))
-        
+
+        # Also store a "not answered" entry in face_feedback
+        try:
+            cursor.execute(
+                """
+                INSERT INTO face_feedback (
+                    resumeid,
+                    posture_quality,
+                    posture_feedback,
+                    alignment,
+                    alignment_feedback,
+                    eye_contact,
+                    eyecontact_feedback,
+                    touch,
+                    touch_feedback,
+                    strength,
+                    improvements,
+                    tips,
+                    qno
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    session_id,
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "Question was skipped",
+                    question_number,
+                ),
+            )
+        except Error as face_err:
+            print(f"⚠️ Could not store skipped face_feedback row: {face_err}")
+
         connection.commit()
         cursor.close()
         connection.close()
@@ -1713,6 +1755,51 @@ def register_routes(app):
 # ================================
 # DEBUG ROUTE TO CHECK DATABASE
 # ================================
+@app.route('/analyze_interview', methods=['POST'])
+def analyze_interview():
+    if 'video' not in request.files:
+        return jsonify({'error': 'No video file uploaded'}), 400
+
+    video = request.files['video']
+    filename = f"interview_{int(time.time())}.webm"
+    filepath = os.path.join("uploads", filename)
+    video.save(filepath)
+
+    try:
+        cap = cv2.VideoCapture(filepath)
+        if not cap.isOpened():
+            import subprocess
+            mp4_path = filepath.replace(".webm", ".mp4")
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", filepath, "-vcodec", "libx264", mp4_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            cap = cv2.VideoCapture(mp4_path)
+            if not cap.isOpened():
+                return jsonify({'error': 'Cannot open video file even after conversion.'}), 500
+            filepath = mp4_path
+
+        cap.release()
+        result = analyze_video(filepath)
+
+        # Question number → qno in face_feedback
+        qno_raw = request.form.get("question_number") or request.form.get("qno")
+        try:
+            qno_val = int(qno_raw) if qno_raw is not None else None
+        except ValueError:
+            qno_val = None
+
+        try:
+            store_face_feedback(result, qno=qno_val)
+        except Exception as db_err:
+            print(f"⚠️ Failed to store face feedback: {db_err}")
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Analysis error: {str(e)}")
+        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
 
 @app.route('/debug_database', methods=['GET'])
 def debug_database():
@@ -1787,6 +1874,6 @@ if __name__ == '__main__':
     else:
         print("⚠️ Database connection failed - check DB_CONFIG settings")
     
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5000)
     
     
