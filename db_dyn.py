@@ -367,7 +367,7 @@ def store_skipped_question(session_id, question_id, question_number):
                 question_number
             ))
 
-        # Also store a "not answered" entry in face_feedback
+        # NEW: also create a “not answered” row in face_feedback
         try:
             cursor.execute(
                 """
@@ -389,24 +389,24 @@ def store_skipped_question(session_id, question_id, question_number):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
-                    session_id,
-                    "NOT_ANSWERED",
-                    "Question was skipped",
-                    "NOT_ANSWERED",
-                    "Question was skipped",
-                    "NOT_ANSWERED",
-                    "Question was skipped",
-                    "NOT_ANSWERED",
-                    "Question was skipped",
-                    "NOT_ANSWERED",
-                    "Question was skipped",
-                    "Question was skipped",
-                    question_number,
+                    session_id,              # resumeid
+                    "NOT_ANSWERED",          # posture_quality
+                    "Question was skipped",  # posture_feedback
+                    "NOT_ANSWERED",          # alignment
+                    "Question was skipped",  # alignment_feedback
+                    "NOT_ANSWERED",          # eye_contact
+                    "Question was skipped",  # eyecontact_feedback
+                    "NOT_ANSWERED",          # touch
+                    "Question was skipped",  # touch_feedback
+                    "NOT_ANSWERED",          # strength
+                    "Question was skipped",  # improvements
+                    "Question was skipped",  # tips
+                    question_number,         # qno
                 ),
             )
         except Error as face_err:
             print(f"⚠️ Could not store skipped face_feedback row: {face_err}")
-
+        
         connection.commit()
         cursor.close()
         connection.close()
