@@ -456,24 +456,13 @@ def clear_questions():
 # Add this ONE route to your existing db_qgen.py file
 @app.route('/start-interview')
 def start_interview():
-    """Launch the voice analysis interview application"""
-    # This will launch your db_vans_ch.py application
-    import subprocess
-    import sys
-    import os
-    
-    # Get the path to your db_vans_ch.py file (adjust if needed)
-    vans_ch_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db_vans_ch.py')
-    
-    # Launch db_vans_ch.py in a new process
-    subprocess.Popen([sys.executable, vans_ch_path])
-    
-    # Return a message that it's launching
+    """Redirect to the integrated db_dyn interview application."""
+    # db_dyn.py is expected to be running on port 5000 and serving db_vans_ch.html at "/"
     return '''
     <html>
         <head>
             <title>Launching Interview...</title>
-            <meta http-equiv="refresh" content="2;url=http://localhost:5001/" />
+            <meta http-equiv="refresh" content="2;url=http://localhost:5000/" />
             <style>
                 body {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -511,7 +500,7 @@ def start_interview():
                 <div class="spinner"></div>
                 <h2>🚀 Launching Interview App...</h2>
                 <p>You will be redirected in 2 seconds.</p>
-                <p>If not redirected, <a href="http://localhost:5001/">click here</a></p>
+                <p>If not redirected, <a href="http://localhost:5000/">click here</a></p>
             </div>
         </body>
     </html>
