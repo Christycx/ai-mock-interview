@@ -15,6 +15,11 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 from dotenv import load_dotenv
+from flask_mysqldb import MySQL
+from flask_bcrypt import Bcrypt
+from flask_cors import CORS
+import fitz  # PyMuPDF for resume parsing
+import google.generativeai as genai
 from gtts import gTTS
 import os
 import uuid
@@ -35,9 +40,21 @@ def generate_tts(question_text):
 
     return f"/static/audio/{filename}"
 
-#from db_qgen import app 
+# This is the single, integrated Flask app
 app = Flask(__name__)
 CORS(app)
+
+# MySQL + Bcrypt for login and question generation (flask_mysqldb)
+app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST', 'localhost')
+app.config['MYSQL_USER'] = os.getenv('MYSQL_USER', 'root')
+app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', 'interview@1234')
+app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'mockinterview')
+
+mysql_db= MySQL(app)
+bcrypt = Bcrypt(app)
+
+# Gemini / question generation config
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 
 # ================================
 # DATABASE CONFIGURATION
@@ -46,10 +63,10 @@ CORS(app)
 load_dotenv()
 
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'interview@1234',
-    'database': 'mockinterview'
+    'host': os.getenv('MYSQL_HOST', 'localhost'),
+    'user': os.getenv('MYSQL_USER', 'root'),
+    'password': os.getenv('MYSQL_PASSWORD', 'interview@1234'),
+    'database': os.getenv('MYSQL_DB', 'mockinterview')
 }
 
 
@@ -68,6 +85,266 @@ def get_db_connection():
     except Error as e:
         print(f"Error connecting to MySQL: {e}")
         return None
+
+
+def extract_text_from_pdf(file_stream):
+    """Extract text from PDF resume (ported from db_qgen.py)"""
+    try:
+        doc = fitz.open(stream=file_stream.read(), filetype="pdf")
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        return text.strip()
+    except Exception as e:
+        raise Exception(f"PDF extraction failed: {str(e)}")
+
+
+def clean_json_response(response_text):
+    """Clean and parse JSON response from Gemini (ported from db_qgen.py)"""
+    # Remove markdown code blocks if present
+    response_text = re.sub(r'```json\s*', '', response_text)
+    response_text = re.sub(r'\s*```', '', response_text)
+
+    try:
+        return json.loads(response_text)
+    except json.JSONDecodeError:
+        # Try to extract JSON from the response
+        json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group())
+            except Exception:
+                pass
+        raise Exception("Failed to parse JSON response from AI")
+
+
+def generate_beginner_questions(resume_text, job_title, company_name):
+    """Generate beginner level questions (ported from db_qgen.py)"""
+    prompt = f"""
+You are a senior HR professional and technical interviewer conducting a BEGINNER-level interview. 
+Generate exactly 10 professional, polished interview questions that assess foundational skills while maintaining a respectful, corporate tone.
+
+*Candidate Information:*
+- Resume Content: {resume_text[:3000]}
+- Target Job Role: {job_title}
+- Target Company: {company_name}
+
+*Professional Tone Requirements:*
+- Use formal, corporate language appropriate for a professional setting
+- Avoid casual or overly simplified phrasing
+- Maintain clarity while using industry-standard terminology
+- Frame questions in a way that shows respect for the candidate's potential
+- Ensure questions sound like they come from an experienced interviewer
+
+*Question Generation Guidelines:*
+- Assess basic technical/functional knowledge relevant to {job_title}
+- Evaluate professional demeanor and workplace readiness
+- Understand motivation and alignment with {company_name}'s values
+- Gauge ability to handle entry-level responsibilities
+- Questions should be answerable in 1-2 minutes
+
+*Question Categories (Generate EXACTLY in this order):*
+
+*1. PROFESSIONAL INTRODUCTION (1 question):*
+- A formal introductory question that allows the candidate to present themselves professionally
+
+*2. BEHAVIORAL & PROFESSIONAL COMPETENCIES (3 questions):*
+- Professional communication and teamwork abilities
+- Approach to entry-level challenges and deadlines
+- Receptiveness to feedback and professional development
+
+*3. RESUME ANALYSIS (3 questions):*
+- Academic preparation and relevant coursework for {job_title}
+- Application of listed technical skills in practical contexts
+- Learning outcomes from projects or internships
+
+*4. ROLE-SPECIFIC UNDERSTANDING (2 questions):*
+- Comprehension of {job_title} responsibilities
+- Foundational knowledge in required technical/functional areas
+
+*5. COMPANY ALIGNMENT (1 question):*
+- Interest in and basic understanding of {company_name}
+
+*Output Format:*
+Return a JSON array with exactly 10 questions. Each question should have:
+- question_number (1-10)
+- question_category
+- question_text (professionally phrased)
+- purpose
+- expected_answer_duration
+- evaluation_criteria
+- good_answer_indicators (array)
+- red_flags (array)
+
+Generate the questions now, ensuring they sound professional and polished.
+"""
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    response = model.generate_content(prompt)
+    return clean_json_response(response.text)
+
+
+def generate_intermediate_questions(resume_text, job_title, company_name):
+    """Generate intermediate level questions (ported from db_qgen.py)"""
+    prompt = f"""
+You are an expert interviewer conducting an INTERMEDIATE-level interview.
+You are a seasoned technical and hr manager conducting an INTERMEDIATE-level interview.
+Generate exactly 12 professional interview questions that assess depth of expertise and workplace effectiveness.
+
+*Candidate Information:*
+- Resume: {resume_text[:3000]}
+- Job Role: {job_title}
+- Company: {company_name}
+
+*Professional Tone Requirements:*
+- Use authoritative, experienced interviewer tone
+- Employ industry-standard technical and business terminology
+- Frame questions to assess professional judgment and decision-making
+- Maintain respectful yet challenging tone appropriate for experienced candidates
+
+*Interview Focus:*
+- Depth of technical understanding and practical application
+- Problem-solving methodology in professional contexts
+- Project ownership and team collaboration
+- Communication effectiveness with stakeholders
+- Applied knowledge from professional experience
+
+*Question Distribution:*
+1. Professional Background & Career Trajectory (1)
+2. Behavioral & Professional Scenarios (3)
+3. Experience Analysis & Technical Deep Dive (3)
+4. Role-Specific Technical Assessment (3)
+5. Company Alignment & Professional Growth (2)
+
+*Output Format:*
+Return ONLY a valid JSON array (no markdown, no explanations) like this:
+[
+  {{
+    "question_number": 1,
+    "question_category": "Professional Background",
+    "question_text": "Could you walk me through your career progression and how it has prepared you for this role?",
+    "purpose": "Assess career trajectory and role alignment",
+    "expected_answer_duration": "2-3 minutes",
+    "evaluation_criteria": "Clarity, relevance, progression logic",
+    "good_answer_indicators": ["Structured narrative", "Clear role connections"],
+    "red_flags": ["Disjointed explanation", "Lack of preparation"]
+  }},
+  ...
+]
+
+Generate exactly 12 professionally phrased questions.
+"""
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    response = model.generate_content(prompt)
+    return clean_json_response(response.text)
+
+
+def generate_advanced_questions(resume_text, job_title, company_name):
+    """Generate advanced level questions (ported from db_qgen.py)"""
+    prompt = f"""
+You are a C-level executive or senior director conducting an ADVANCED-level interview.
+Generate exactly 15 high-stakes, strategic interview questions that assess leadership, vision, and executive presence.
+
+*Candidate Information:*
+- Resume: {resume_text[:3000]}
+- Target Role: {job_title}
+- Company: {company_name}
+
+*Professional Tone Requirements:*
+- Use executive-level, strategic language
+- Frame questions to assess thought leadership and strategic impact
+- Employ business and technical terminology at director/VP level
+- Questions should reflect high-stakes decision-making scenarios
+- Maintain tone of peer-to-peer discussion among senior professionals
+
+*Interview Focus:*
+- Strategic vision and business impact assessment
+- Leadership philosophy and team development
+- Complex system/process design and optimization
+- Cross-functional influence and organizational change management
+- Alignment with {company_name}'s strategic objectives
+
+*Question Distribution:*
+1. Executive Introduction & Strategic Perspective (1)
+2. Leadership & Organizational Influence (4)
+3. Strategic Technical/Business Decision Making (4)
+4. High-Complexity Problem Solving (4)
+5. Company Vision & Long-term Alignment (2)
+
+*Output Format:*
+Return ONLY a JSON array, no extra text, formatted like this:
+[
+  {{
+    "question_number": 1,
+    "question_category": "Strategic Leadership",
+    "question_text": "How would you approach developing a strategic roadmap for our {job_title} function over the next 3 years?",
+    "purpose": "Evaluate strategic thinking and vision alignment",
+    "expected_answer_duration": "3-4 minutes",
+    "evaluation_criteria": "Strategic depth, business acumen, alignment",
+    "good_answer_indicators": ["Clear strategic framework", "Stakeholder consideration"],
+    "red_flags": ["Tactical focus only", "Lacks business context"]
+  }},
+  ...
+]
+
+Generate exactly 15 executive-level questions.
+"""
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    response = model.generate_content(prompt)
+    return clean_json_response(response.text)
+
+
+def save_questions_to_db(questions_data, resume_id=100, difficulty_level='beginner'):
+    """
+    Save generated questions to database (ported from db_qgen.py)
+    """
+    try:
+        connection = get_db_connection()
+        if connection is None:
+            print("DB connection failed in save_questions_to_db")
+            return False
+
+        cursor = connection.cursor()
+
+        # Map difficulty level to match database enum
+        level_mapping = {
+            'beginner': 'beginner',
+            'intermediate': 'intermedite',  # match existing table typo
+            'advanced': 'advanced'
+        }
+
+        db_level = level_mapping.get(difficulty_level, 'beginner')
+
+        # Insert each question
+        for question in questions_data:
+            # Extract question text (handle different response formats)
+            if isinstance(question, dict):
+                question_text = question.get('question_text', '')
+            else:
+                question_text = str(question)
+
+            if not question_text:
+                continue
+
+            # Clean numbering at start
+            question_text = re.sub(r'^\d+[\.\)\-\s]*', '', question_text.strip())
+
+            sql = """
+                INSERT INTO questions (resume_id, question_text, difficulty_level, created_at)
+                VALUES (%s, %s, %s, NOW())
+            """
+            cursor.execute(sql, (resume_id, question_text, db_level))
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return True
+    except Exception as e:
+        print(f"Database error (save_questions_to_db): {str(e)}")
+        try:
+            connection.rollback()
+        except Exception:
+            pass
+        return False
 
 def get_questions_for_level(level):
     """
@@ -1519,11 +1796,146 @@ def analyze_answer_content(question, user_answer):
         raise Exception(f"Failed to analyze answer: {str(e)}")
 
 # ================================
-# FLASK ROUTES
+# LOGIN + FRONT PAGES
 # ================================
 
 @app.route('/')
-def home():
+def index():
+    """Login page"""
+    return render_template('login.html')
+
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    """User signup"""
+    data = request.json
+    name = data['name']
+    email = data['email']
+    password = data['password']
+
+    hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    cur = mysql_db.connection.cursor()
+    cur.execute("SELECT * FROM login WHERE email=%s", (email,))
+    if cur.fetchone():
+        return jsonify({"error": "User already exists"}), 409
+
+    cur.execute(
+        "INSERT INTO login (name, email, password) VALUES (%s, %s, %s)",
+        (name, email, hashed_pw)
+    )
+    mysql.connection.commit()
+    cur.close()
+
+    return jsonify({"message": "Signup successful"}), 201
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    """User login"""
+    data = request.json
+    email = data['email']
+    password = data['password']
+
+    cur = mysql_db.connection.cursor()
+    cur.execute(
+        "SELECT student_id, name, email, password FROM login WHERE email=%s",
+        (email,)
+    )
+    user = cur.fetchone()
+    cur.close()
+
+    if not user:
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    student_id, name, email, hashed_pw = user
+
+    if not bcrypt.check_password_hash(hashed_pw, password):
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    return jsonify({
+        "message": "Login successful",
+        "user": {
+            "student_id": student_id,
+            "name": name,
+            "email": email
+        }
+    }), 200
+
+
+@app.route('/qgen')
+def qgen_home():
+    """Serve the resume/question generation page"""
+    return render_template('db_qgen.html')
+
+
+@app.route('/generate-questions', methods=['POST'])
+def generate_questions():
+    """Main endpoint for generating questions based on level (ported from db_qgen.py)"""
+    try:
+        if 'resume' not in request.files:
+            return jsonify({'error': 'No resume uploaded'}), 400
+
+        level = request.form.get('level')
+        job_title = request.form.get('job_title', '').strip()
+        company_name = request.form.get('company_name', '').strip()
+
+        if not level or level not in ['beginner', 'intermediate', 'advanced']:
+            return jsonify({'error': 'Invalid level specified'}), 400
+
+        if not job_title:
+            return jsonify({'error': 'Job title is required'}), 400
+
+        # Extract resume text
+        resume_file = request.files['resume']
+        resume_text = extract_text_from_pdf(resume_file)
+
+        if not resume_text:
+            return jsonify({'error': 'Could not extract text from resume'}), 400
+
+        # Generate questions based on level
+        if level == 'beginner':
+            questions = generate_beginner_questions(resume_text, job_title, company_name)
+        elif level == 'intermediate':
+            questions = generate_intermediate_questions(resume_text, job_title, company_name)
+        else:
+            questions = generate_advanced_questions(resume_text, job_title, company_name)
+
+        # Save questions to database
+        db_success = save_questions_to_db(questions, resume_id=100, difficulty_level=level)
+
+        # Prepare simplified response for frontend
+        simplified_questions = []
+        for q in questions:
+            if isinstance(q, dict):
+                simplified_questions.append({
+                    'question_text': q.get('question_text', ''),
+                    'category': q.get('question_category', ''),
+                    'purpose': q.get('purpose', '')
+                })
+            else:
+                simplified_questions.append({
+                    'question_text': str(q),
+                    'category': 'General',
+                    'purpose': 'Assessment'
+                })
+
+        return jsonify({
+            'success': True,
+            'level': level,
+            'job_title': job_title,
+            'company_name': company_name,
+            'questions': simplified_questions,
+            'total_questions': len(questions),
+            'database_saved': db_success
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/interview')
+def interview_home():
     """Serve the main interview practice page"""
     return render_template('db_vans_ch.html')
 
