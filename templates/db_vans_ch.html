@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>AI Mock Interview - Question by Question</title>
@@ -31,8 +32,15 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .header {
@@ -149,7 +157,7 @@
 
     #startBtn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0,176,155,0.3);
+      box-shadow: 0 5px 15px rgba(0, 176, 155, 0.3);
     }
 
     #stopBtn {
@@ -159,7 +167,7 @@
 
     #stopBtn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(255,65,108,0.3);
+      box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
     }
 
     #skipBtn {
@@ -169,7 +177,7 @@
 
     #skipBtn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(149,165,166,0.3);
+      box-shadow: 0 5px 15px rgba(149, 165, 166, 0.3);
     }
 
     #nextBtn {
@@ -180,7 +188,7 @@
 
     #nextBtn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(74,111,165,0.3);
+      box-shadow: 0 5px 15px rgba(74, 111, 165, 0.3);
     }
 
     #finishBtn {
@@ -191,7 +199,7 @@
 
     #finishBtn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(243,156,18,0.3);
+      box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
     }
 
     button:disabled {
@@ -222,8 +230,13 @@
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
     .confidence-display {
@@ -432,9 +445,17 @@
     }
 
     @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+
+      100% {
+        opacity: 1;
+      }
     }
 
     @media (max-width: 768px) {
@@ -442,46 +463,46 @@
         margin: 10px;
         border-radius: 15px;
       }
-      
+
       .header {
         padding: 20px;
       }
-      
+
       .header h1 {
         font-size: 24px;
       }
-      
+
       .question-section {
         padding: 20px;
       }
-      
+
       .question-text {
         font-size: 18px;
         padding: 20px;
       }
-      
+
       .recording-section {
         padding: 20px;
       }
-      
+
       video {
         height: 280px;
       }
-      
+
       .controls {
         flex-direction: column;
         align-items: center;
       }
-      
+
       button {
         width: 100%;
         max-width: 300px;
       }
-      
+
       .feedback-section {
         padding: 20px;
       }
-      
+
       .score-grid {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -491,24 +512,25 @@
       body {
         padding: 10px;
       }
-      
+
       .header h1 {
         font-size: 20px;
         flex-direction: column;
       }
-      
+
       .question-type-badge {
         position: static;
         margin-top: 15px;
         display: inline-block;
       }
-      
+
       .score-grid {
         grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="header">
@@ -527,7 +549,7 @@
 
     <div class="recording-section">
       <video id="video" autoplay muted></video>
-      
+
       <div class="controls">
         <button id="startBtn">🎤 Start Recording</button>
         <button id="stopBtn" disabled>⏹️ Stop & Analyze</button>
@@ -592,25 +614,25 @@
         // Fetch questions for the current level
         const response = await fetch(`/get_questions/${currentLevel}`);
         const data = await response.json();
-        
+
         if (data.error) {
           throw new Error(data.error);
         }
-        
+
         questions = data.questions || [];
-        
+
         if (questions.length === 0) {
           showError('No questions found for this level. Please generate questions first.');
           return;
         }
-        
+
         totalQuestions = questions.length;
         updateQuestionCounter();
         loadQuestion(currentQuestionIndex);
-        
+
         // Setup media recording
         setupMediaRecorder();
-        
+
       } catch (error) {
         console.error('Initialization error:', error);
         showError('Failed to initialize interview. Please try again.');
@@ -623,14 +645,14 @@
         showFinalResults();
         return;
       }
-      
+
       const question = questions[index];
       updateQuestionDisplay(question.question_text, 'general');
       updateQuestionCounter();
-      
+
       // Generate and play audio for the question
       generateAndPlayQuestionAudio(question.question_text);
-      
+
       // Reset UI state
       resultDiv.innerHTML = '';
       resultDiv.style.display = 'none';
@@ -640,9 +662,10 @@
       nextBtn.style.display = 'none';
       finishBtn.style.display = 'none';
       startBtn.innerHTML = '🎤 Start Recording';
-      
+
       skipBtn.style.display = 'flex';
-      
+      skipBtn.disabled = true; // Disable until audio finishes
+
       // Reset video stream if needed
       resetVideoStream();
     }
@@ -650,6 +673,7 @@
     // Generate and play audio for question
     async function generateAndPlayQuestionAudio(questionText) {
       startBtn.disabled = true;
+      skipBtn.disabled = true;
       try {
         // Stop any currently playing audio
         if (currentAudio) {
@@ -669,7 +693,7 @@
         });
 
         const data = await response.json();
-        
+
         if (data.success && data.audio_url) {
           // Create audio element and play
           currentAudio = new Audio(data.audio_url);
@@ -677,19 +701,22 @@
           currentAudio.play().catch(error => {
             console.log('Audio playback error:', error);
             startBtn.disabled = false;
+            skipBtn.disabled = false;
           });
-          
+
           // Clear audio reference when playback ends
           currentAudio.addEventListener('ended', () => {
             currentAudio = null;
             if (stopBtn.disabled) {
               startBtn.disabled = false;
+              skipBtn.disabled = false;
             }
           });
         }
       } catch (error) {
         console.error('Error generating question audio:', error);
-        startBtn.disabled = false; 
+        startBtn.disabled = false;
+        skipBtn.disabled = false;
       }
     }
 
@@ -702,7 +729,7 @@
         currentAudio = null;
       }
       const currentQuestion = questions[currentQuestionIndex];
-      
+
       try {
         // Send skip request to backend
         const response = await fetch('/skip_question', {
@@ -719,10 +746,10 @@
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
           console.log(`Skipped question ${currentQuestionIndex + 1}`);
-          
+
           // Move to next question
           currentQuestionIndex++;
           if (currentQuestionIndex < totalQuestions) {
@@ -759,7 +786,7 @@
         'situational': '#1abc9c',
         'general': '#7f8c8d'
       };
-      
+
       const typeIcons = {
         'introduction': '👤',
         'technical': '💻',
@@ -769,10 +796,10 @@
         'situational': '🎯',
         'general': '💬'
       };
-      
+
       const color = typeColors[type] || '#4a6fa5';
       const icon = typeIcons[type] || '❓';
-      
+
       questionDisplay.innerHTML = `${icon} ${question}`;
       questionTypeBadge.textContent = type.charAt(0).toUpperCase() + type.slice(1);
       questionTypeBadge.style.background = color + '20';
@@ -782,66 +809,66 @@
 
     // Setup media recorder
     function setupMediaRecorder() {
-      navigator.mediaDevices.getUserMedia({ 
+      navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
-        audio: { 
+        audio: {
           echoCancellation: true,
           noiseSuppression: true,
           sampleRate: 44100
         }
       })
-      .then(stream => {
-        videoElement.srcObject = stream;
-        mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'video/webm;codecs=vp9,opus'
-        });
+        .then(stream => {
+          videoElement.srcObject = stream;
+          mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm;codecs=vp9,opus'
+          });
 
-        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+          mediaRecorder.ondataavailable = e => chunks.push(e.data);
 
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'video/webm' });
-          const formData = new FormData();
-          formData.append('video', blob, 'interview_answer.webm');
-          
-          // Add current question data
-          const currentQuestion = questions[currentQuestionIndex];
-          formData.append('question', currentQuestion.question_text);
-          formData.append('question_id', currentQuestion.question_id);
-          formData.append('session_id', currentSessionId);
-          formData.append('level', currentLevel);
-          formData.append('question_number', currentQuestionIndex + 1);
-          // Check if this is the last question
-          const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-          formData.append('is_last_question', isLastQuestion.toString());
-          // If last question, show loading. Otherwise, enable next button immediately
-          if (isLastQuestion) {
-          showLoading();
-        } else {
-            // Enable next question immediately
-            nextBtn.style.display = 'flex';
-            nextBtn.disabled = false;
-            resultDiv.style.display = 'none';
-          }
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            const formData = new FormData();
+            formData.append('video', blob, 'interview_answer.webm');
 
-          // Also send same video to face analysis backend (fire-and-forget)
-          try {
-            const faceForm = new FormData();
-            faceForm.append('video', blob, 'interview_face.webm');
-            faceForm.append('question_number', currentQuestionIndex + 1);
-            fetch('/analyze_interview', { method: 'POST', body: faceForm })
-              .catch(err => console.error('Face analysis error (non-blocking):', err));
-          } catch (e) {
-            console.error('Failed to trigger face analysis:', e);
-          }
+            // Add current question data
+            const currentQuestion = questions[currentQuestionIndex];
+            formData.append('question', currentQuestion.question_text);
+            formData.append('question_id', currentQuestion.question_id);
+            formData.append('session_id', currentSessionId);
+            formData.append('level', currentLevel);
+            formData.append('question_number', currentQuestionIndex + 1);
+            // Check if this is the last question
+            const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+            formData.append('is_last_question', isLastQuestion.toString());
+            // If last question, show loading. Otherwise, enable next button immediately
+            if (isLastQuestion) {
+              showLoading();
+            } else {
+              // Enable next question immediately
+              nextBtn.style.display = 'flex';
+              nextBtn.disabled = false;
+              resultDiv.style.display = 'none';
+            }
 
-          fetch('/analyze_voice', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-              if (data.error) {
-                throw new Error(data.error);
-              }
-              if (isLastQuestion) {
-                resultDiv.innerHTML = `
+            // Also send same video to face analysis backend (fire-and-forget)
+            try {
+              const faceForm = new FormData();
+              faceForm.append('video', blob, 'interview_face.webm');
+              faceForm.append('question_number', currentQuestionIndex + 1);
+              fetch('/analyze_interview', { method: 'POST', body: faceForm })
+                .catch(err => console.error('Face analysis error (non-blocking):', err));
+            } catch (e) {
+              console.error('Failed to trigger face analysis:', e);
+            }
+
+            fetch('/analyze_voice', { method: 'POST', body: formData })
+              .then(res => res.json())
+              .then(data => {
+                if (data.error) {
+                  throw new Error(data.error);
+                }
+                if (isLastQuestion) {
+                  resultDiv.innerHTML = `
                   <div class="loading">
                     <p style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
                       ✅ Analysis Complete for all questions!
@@ -851,47 +878,47 @@
                     </p>
                   </div>
                 `;
-                finishBtn.style.display = 'flex';
-                finishBtn.disabled = false;
-              } else {
-                console.log(`✅ Analysis started in background for Question ${currentQuestionIndex + 1}`);
-              }
-            })
-            
-            .catch(err => {
-              console.error('Analysis error:', err);
-              if (isLastQuestion) {
-                showError(err.message || 'Unable to process your response. Please try again.');
-              } else {
-                console.error('Background analysis error (non-blocking):', err);
-              }
-            });
+                  finishBtn.style.display = 'flex';
+                  finishBtn.disabled = false;
+                } else {
+                  console.log(`✅ Analysis started in background for Question ${currentQuestionIndex + 1}`);
+                }
+              })
 
-          chunks = [];
-        };
+              .catch(err => {
+                console.error('Analysis error:', err);
+                if (isLastQuestion) {
+                  showError(err.message || 'Unable to process your response. Please try again.');
+                } else {
+                  console.error('Background analysis error (non-blocking):', err);
+                }
+              });
 
-        startBtn.onclick = () => {
-          mediaRecorder.start();
-          startBtn.disabled = true;
-          stopBtn.disabled = false;
-          skipBtn.disabled = true;
-          startBtn.innerHTML = '<span class="recording-indicator"></span> 🔴 Recording...';
-          resultDiv.style.display = 'none';
-        };
+            chunks = [];
+          };
 
-        stopBtn.onclick = () => {
-          mediaRecorder.stop();
-          startBtn.disabled = true;
-          stopBtn.disabled = true;
-          skipBtn.disabled = true;
-          const tracks = videoElement.srcObject.getTracks();
-          tracks.forEach(track => track.stop());
-        };
-      })
-      .catch(err => {
-        console.error('Media device error:', err);
-        showError('Camera/microphone access is required. Please allow permissions and reload.');
-      });
+          startBtn.onclick = () => {
+            mediaRecorder.start();
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            skipBtn.disabled = true;
+            startBtn.innerHTML = '<span class="recording-indicator"></span> 🔴 Recording...';
+            resultDiv.style.display = 'none';
+          };
+
+          stopBtn.onclick = () => {
+            mediaRecorder.stop();
+            startBtn.disabled = true;
+            stopBtn.disabled = true;
+            skipBtn.disabled = true;
+            const tracks = videoElement.srcObject.getTracks();
+            tracks.forEach(track => track.stop());
+          };
+        })
+        .catch(err => {
+          console.error('Media device error:', err);
+          showError('Camera/microphone access is required. Please allow permissions and reload.');
+        });
     }
 
     // Reset video stream
@@ -900,70 +927,70 @@
         const tracks = videoElement.srcObject.getTracks();
         tracks.forEach(track => track.stop());
       }
-      
+
       // Restart media stream
-      navigator.mediaDevices.getUserMedia({ 
+      navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
-        audio: { 
+        audio: {
           echoCancellation: true,
           noiseSuppression: true,
           sampleRate: 44100
         }
       })
-      .then(stream => {
-        videoElement.srcObject = stream;
-        
-        // Update media recorder with new stream
-        mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'video/webm;codecs=vp9,opus'
-        });
+        .then(stream => {
+          videoElement.srcObject = stream;
 
-        mediaRecorder.ondataavailable = e => chunks.push(e.data);
+          // Update media recorder with new stream
+          mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm;codecs=vp9,opus'
+          });
 
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'video/webm' });
-          const formData = new FormData();
-          formData.append('video', blob, 'interview_answer.webm');
-          
-          const currentQuestion = questions[currentQuestionIndex];
-          formData.append('question', currentQuestion.question_text);
-          formData.append('question_id', currentQuestion.question_id);
-          formData.append('session_id', currentSessionId);
-          formData.append('level', currentLevel);
-          formData.append('question_number', currentQuestionIndex + 1);
-           // Check if this is the last question
-           const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-          formData.append('is_last_question', isLastQuestion.toString());
+          mediaRecorder.ondataavailable = e => chunks.push(e.data);
 
-          // If last question, show loading. Otherwise, enable next button immediately
-          if (isLastQuestion) {
-          showLoading();
-        } else {
-            // Enable next question immediately
-            nextBtn.style.display = 'flex';
-            nextBtn.disabled = false;
-            resultDiv.style.display = 'none';
-          }
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            const formData = new FormData();
+            formData.append('video', blob, 'interview_answer.webm');
 
-          // Also send same video to face analysis backend (fire-and-forget)
-          try {
-            const faceForm = new FormData();
-            faceForm.append('video', blob, 'interview_face.webm');
-            faceForm.append('question_number', currentQuestionIndex + 1);
-            fetch('/analyze_interview', { method: 'POST', body: faceForm })
-              .catch(err => console.error('Face analysis error (non-blocking):', err));
-          } catch (e) {
-            console.error('Failed to trigger face analysis:', e);
-          }
+            const currentQuestion = questions[currentQuestionIndex];
+            formData.append('question', currentQuestion.question_text);
+            formData.append('question_id', currentQuestion.question_id);
+            formData.append('session_id', currentSessionId);
+            formData.append('level', currentLevel);
+            formData.append('question_number', currentQuestionIndex + 1);
+            // Check if this is the last question
+            const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+            formData.append('is_last_question', isLastQuestion.toString());
 
-          fetch('/analyze_voice', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-              if (data.error) {
-                throw new Error(data.error);
-              }
-              if (isLastQuestion) {
-                resultDiv.innerHTML = `
+            // If last question, show loading. Otherwise, enable next button immediately
+            if (isLastQuestion) {
+              showLoading();
+            } else {
+              // Enable next question immediately
+              nextBtn.style.display = 'flex';
+              nextBtn.disabled = false;
+              resultDiv.style.display = 'none';
+            }
+
+            // Also send same video to face analysis backend (fire-and-forget)
+            try {
+              const faceForm = new FormData();
+              faceForm.append('video', blob, 'interview_face.webm');
+              faceForm.append('question_number', currentQuestionIndex + 1);
+              fetch('/analyze_interview', { method: 'POST', body: faceForm })
+                .catch(err => console.error('Face analysis error (non-blocking):', err));
+            } catch (e) {
+              console.error('Failed to trigger face analysis:', e);
+            }
+
+            fetch('/analyze_voice', { method: 'POST', body: formData })
+              .then(res => res.json())
+              .then(data => {
+                if (data.error) {
+                  throw new Error(data.error);
+                }
+                if (isLastQuestion) {
+                  resultDiv.innerHTML = `
                   <div class="loading">
                     <div class="spinner"></div>
                     <p style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
@@ -974,28 +1001,28 @@
                     </p>
                   </div>
                 `;
-                finishBtn.style.display = 'flex';
-                finishBtn.disabled = false;
-              } else {
-                console.log(`✅ Analysis started in background for Question ${currentQuestionIndex + 1}`);
-              }
-            })
-            
-            .catch(err => {
-              console.error('Analysis error:', err);
-              if (isLastQuestion) {
-                showError(err.message || 'Unable to process your response. Please try again.');
-              } else {
-                console.error('Background analysis error (non-blocking):', err);
-              }
-            });
+                  finishBtn.style.display = 'flex';
+                  finishBtn.disabled = false;
+                } else {
+                  console.log(`✅ Analysis started in background for Question ${currentQuestionIndex + 1}`);
+                }
+              })
 
-          chunks = [];
-        };
-      })
-      .catch(err => {
-        console.error('Media device error:', err);
-      });
+              .catch(err => {
+                console.error('Analysis error:', err);
+                if (isLastQuestion) {
+                  showError(err.message || 'Unable to process your response. Please try again.');
+                } else {
+                  console.error('Background analysis error (non-blocking):', err);
+                }
+              });
+
+            chunks = [];
+          };
+        })
+        .catch(err => {
+          console.error('Media device error:', err);
+        });
     }
 
     // Show loading state
@@ -1037,12 +1064,12 @@
     // Display results
     function displayResults(data) {
       // Update question display with actual question and type
-      updateQuestionDisplay(data.question || questions[currentQuestionIndex].question_text, 
-                          data.question_type || 'general');
-      
+      updateQuestionDisplay(data.question || questions[currentQuestionIndex].question_text,
+        data.question_type || 'general');
+
       const confidenceClass = `confidence-${data.confidence_category.toLowerCase().replace(' ', '-')}`;
       const confidenceScore = parseFloat(data.confidence_score) || 0;
-      
+
       let resultHTML = `
         <div class="confidence-display">
           <div class="confidence-card ${confidenceClass}">
@@ -1071,7 +1098,7 @@
       // Content Analysis
       if (data.content_analysis) {
         const analysis = data.content_analysis;
-        
+
         // Score grid
         const scoreFields = [];
         for (const [key, value] of Object.entries(analysis)) {
@@ -1166,7 +1193,7 @@
 
       resultDiv.innerHTML = resultHTML;
       resultDiv.style.display = 'block';
-      
+
       // Show appropriate buttons
       skipBtn.style.display = 'none';
       if (currentQuestionIndex < totalQuestions - 1) {
@@ -1174,7 +1201,7 @@
       } else {
         finishBtn.style.display = 'flex';
       }
-      
+
       // Animate progress bar
       setTimeout(() => {
         const progressFill = document.querySelector('.progress-fill');
@@ -1211,7 +1238,7 @@
           </div>
         </div>
       `;
-      
+
       // Hide all buttons
       startBtn.style.display = 'none';
       stopBtn.style.display = 'none';
@@ -1231,4 +1258,5 @@
     };
   </script>
 </body>
+
 </html>
