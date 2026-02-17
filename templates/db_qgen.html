@@ -1,5 +1,6 @@
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,49 +11,59 @@
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: honeydew;
             min-height: 100vh;
             padding: 20px;
         }
+
         .container {
             max-width: 1000px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
+
         .header {
             background: #00966D;
             color: white;
             padding: 30px;
             text-align: center;
         }
+
         .header h1 {
             font-size: 2.2rem;
             margin-bottom: 10px;
         }
+
         .content {
             padding: 30px;
         }
+
         .form-section {
             background: #f8f9fa;
             padding: 25px;
             border-radius: 15px;
             margin-bottom: 20px;
         }
+
         .form-group {
             margin-bottom: 20px;
         }
+
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
             color: #2c3e50;
         }
-        input[type="text"], input[type="file"] {
+
+        input[type="text"],
+        input[type="file"] {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid #e9ecef;
@@ -60,16 +71,19 @@
             font-size: 16px;
             transition: all 0.3s ease;
         }
+
         input[type="text"]:focus {
             outline: none;
             border-color: #3498db;
         }
+
         .level-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 12px;
             margin-top: 10px;
         }
+
         .level-btn {
             padding: 15px;
             border: 2px solid #e9ecef;
@@ -80,27 +94,33 @@
             transition: all 0.3s ease;
             font-weight: 600;
         }
+
         .level-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
+
         .level-btn.active {
             border-color: #3498db;
             background: #3498db;
             color: white;
         }
+
         .level-btn.beginner.active {
             background: #27ae60;
             border-color: #27ae60;
         }
+
         .level-btn.intermediate.active {
             background: #f39c12;
             border-color: #f39c12;
         }
+
         .level-btn.advanced.active {
             background: #e74c3c;
             border-color: #e74c3c;
         }
+
         .submit-btn {
             width: 100%;
             padding: 15px;
@@ -113,24 +133,29 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
+
         .submit-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
         }
+
         .submit-btn:disabled {
             background: #bdc3c7;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
+
         .loading {
             display: none;
             text-align: center;
             padding: 30px;
         }
+
         .loading.active {
             display: block;
         }
+
         .spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #3498db;
@@ -140,10 +165,17 @@
             animation: spin 2s linear infinite;
             margin: 0 auto 20px;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
+
         .error-message {
             background: #e74c3c;
             color: white;
@@ -152,9 +184,11 @@
             margin-bottom: 20px;
             display: none;
         }
+
         .error-message.active {
             display: block;
         }
+
         .success-message {
             background: #27ae60;
             color: white;
@@ -163,37 +197,49 @@
             margin-bottom: 20px;
             display: none;
         }
+
         .success-message.active {
             display: block;
         }
-        
+
         /* Tips Section Styles */
         .tips-section {
             display: none;
         }
+
         .tips-section.active {
             display: block;
             animation: fadeIn 0.5s ease;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
+
         .tips-header {
             text-align: center;
             margin-bottom: 30px;
         }
+
         .tips-header h2 {
             color: #2c3e50;
             font-size: 28px;
             margin-bottom: 10px;
         }
+
         .tips-header p {
             color: #7f8c8d;
             font-size: 18px;
         }
-        
+
         .tips-container {
             max-height: 600px;
             overflow-y: auto;
@@ -202,19 +248,19 @@
             border-radius: 15px;
             margin-bottom: 30px;
         }
-        
+
         .tip-item {
             background: white;
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
             border-left: 5px solid #3498db;
             display: flex;
             align-items: flex-start;
             gap: 20px;
         }
-        
+
         .tip-number {
             background: #3498db;
             color: white;
@@ -228,29 +274,29 @@
             font-weight: bold;
             font-size: 18px;
         }
-        
+
         .tip-content {
             flex: 1;
         }
-        
+
         .tip-header {
             display: flex;
             align-items: center;
             gap: 15px;
             margin-bottom: 10px;
         }
-        
+
         .tip-icon {
             font-size: 32px;
         }
-        
+
         .tip-title {
             color: #2c3e50;
             font-size: 20px;
             font-weight: 700;
             margin: 0;
         }
-        
+
         .tip-description {
             color: #34495e;
             font-size: 16px;
@@ -258,7 +304,7 @@
             margin-bottom: 15px;
             font-weight: 500;
         }
-        
+
         .tip-details {
             color: #7f8c8d;
             font-size: 15px;
@@ -268,7 +314,7 @@
             border-radius: 10px;
             border-left: 3px solid #27ae60;
         }
-        
+
         /* Start Interview Button */
         .start-interview-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -283,44 +329,47 @@
             margin: 0 auto;
             display: block;
         }
+
         .start-interview-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
-        
+
         /* Scrollbar styling */
         .tips-container::-webkit-scrollbar {
             width: 8px;
         }
-        
+
         .tips-container::-webkit-scrollbar-track {
             background: #f1f1f1;
             border-radius: 10px;
         }
-        
+
         .tips-container::-webkit-scrollbar-thumb {
             background: #3498db;
             border-radius: 10px;
         }
-        
+
         .tips-container::-webkit-scrollbar-thumb:hover {
             background: #2980b9;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1>🎯 AI Interview Question Generator</h1>
             <p>Generate tailored interview questions based on resume, job role, and experience level</p>
         </div>
-        
+
         <div class="content">
             <!-- Input Form Section -->
             <div class="form-section" id="formSection">
                 <div class="form-group">
                     <label for="jobTitle">🎯 Target Job Role *</label>
-                    <input type="text" id="jobTitle" placeholder="e.g., Software Developer, Data Analyst, Product Manager" required>
+                    <input type="text" id="jobTitle"
+                        placeholder="e.g., Software Developer, Data Analyst, Product Manager" required>
                 </div>
                 <div class="form-group">
                     <label for="companyName">🏢 Target Company</label>
@@ -357,18 +406,18 @@
                 <div class="error-message" id="errorMessage"></div>
                 <div class="success-message" id="successMessage"></div>
             </div>
-            
+
             <!-- Tips Section -->
             <div class="tips-section" id="tipsSection">
                 <div class="tips-header">
                     <h2>📚 Essential Interview Tips</h2>
                     <p>Review these 15 important tips before starting your interview</p>
                 </div>
-                
+
                 <div class="tips-container" id="tipsContainer">
                     <!-- Tips will be dynamically inserted here -->
                 </div>
-                
+
                 <button class="start-interview-btn" id="startInterviewBtn">
                     🚀 Start Interview
                 </button>
@@ -378,7 +427,7 @@
 
     <script>
         let currentLevel = 'beginner';
-        
+
         // 15 Interview tips
         const interviewTips = [
             {
@@ -475,7 +524,7 @@
 
         // Level selection
         document.querySelectorAll('.level-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentLevel = this.dataset.level;
@@ -483,7 +532,7 @@
         });
 
         // Next button click handler
-        document.getElementById('nextBtn').addEventListener('click', async function() {
+        document.getElementById('nextBtn').addEventListener('click', async function () {
             const jobTitle = document.getElementById('jobTitle').value.trim();
             const companyName = document.getElementById('companyName').value.trim();
             const resumeFile = document.getElementById('resume').files[0];
@@ -501,73 +550,82 @@
                 showError('Please upload a PDF file');
                 return;
             }
+
+            
+
+            // Generate session ID locally if not already set
+            if (!window.currentSessionId) {
+                window.currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            const formData = new FormData();
+            formData.append('resume', resumeFile);
+            formData.append('job_title', jobTitle);
+            formData.append('company_name', companyName);
+            formData.append('level', currentLevel);
+            formData.append('session_id', window.currentSessionId);
+
             document.getElementById('formSection').style.display = 'none';
             document.getElementById('tipsSection').classList.add('active');
             displayAllTips();
-           
 
-           
-                const formData = new FormData();
-                formData.append('resume', resumeFile);
-                formData.append('job_title', jobTitle);
-                formData.append('company_name', companyName);
-                formData.append('level', currentLevel);
-
-                fetch('/generate-questions', {
-                    method: 'POST',
-                    body: formData
-                })
-
+            fetch('/generate-questions', {
+                method: 'POST',
+                body: formData
+            })
                 .then(res => res.json())
                 .then(data => {
                     if (!data.success) {
-                        console.error('Question generation failed:', data.error);
+                        showError(data.error || 'Question generation failed');
+                    } else {
+                        // Success!
+                        showSuccess(`Successfully generated ${data.total_questions} questions!`);
+
+                        // Store session_id if returned (backend might refine it)
+                        if (data.session_id) {
+                            window.currentSessionId = data.session_id;
+                        }
                     }
                 })
                 .catch(err => {
-                    console.error('Background API error:', err);
-
+                    console.error('API error:', err);
+                    showError('An error occurred. Please try again.');
                 });
-                    });
-                
+        });
 
-                    // Generate and display all tips
-                    
-                    
-                    
+        // Start interview button
+        document.getElementById('startInterviewBtn').addEventListener('click', function () {
+            // Redirect to interview page with session_id
+            let url = '/start-interview';
+            if (window.currentSessionId) {
+                url += `?session_id=${window.currentSessionId}`;
+            }
+            window.location.href = url;
+        });
 
-        // Display all 15 tips
+        // Helper functions
         function displayAllTips() {
-            const tipsContainer = document.getElementById('tipsContainer');
-            tipsContainer.innerHTML = '';
-            
+            const container = document.getElementById('tipsContainer');
+            if (!container) return;
+            container.innerHTML = '';
             interviewTips.forEach((tip, index) => {
-                const tipItem = document.createElement('div');
-                tipItem.className = 'tip-item';
-                
-                tipItem.innerHTML = `
+                const tipElement = document.createElement('div');
+                tipElement.className = 'tip-item';
+                tipElement.innerHTML = `
                     <div class="tip-number">${index + 1}</div>
                     <div class="tip-content">
                         <div class="tip-header">
-                            <div class="tip-icon">${tip.icon}</div>
+                            <span class="tip-icon">${tip.icon}</span>
                             <h3 class="tip-title">${tip.title}</h3>
                         </div>
                         <p class="tip-description">${tip.description}</p>
                         <div class="tip-details">${tip.details}</div>
                     </div>
                 `;
-                
-                tipsContainer.appendChild(tipItem);
+                container.appendChild(tipElement);
             });
         }
 
-        // Start interview button
-        document.getElementById('startInterviewBtn').addEventListener('click', function() {
-            // Redirect to your interview page (db_vans.py)
-            window.location.href = '/interview'; // This will load your existing interview interface
-        });
-
-        // Helper functions
         function showLoading(show) {
             document.getElementById('loading').classList.toggle('active', show);
             document.getElementById('nextBtn').disabled = show;
@@ -593,4 +651,5 @@
         }
     </script>
 </body>
+
 </html>
