@@ -34,13 +34,13 @@ def get_db_connection():
     """Get MySQL database connection"""
     return mysql.connection
 
-def save_questions_to_db(questions_data, session_id=100, difficulty_level='beginner'):
+def save_questions_to_db(questions_data, resume_id=100, difficulty_level='beginner'):
     """
     Save generated questions to database
     
     Args:
         questions_data: List of question dictionaries
-        session_id: Foreign key to interview_session table
+        resume_id: Foreign key to resumes table
         difficulty_level: beginner/intermediate/advanced
     """
     try:
@@ -55,21 +55,7 @@ def save_questions_to_db(questions_data, session_id=100, difficulty_level='begin
         
         db_level = level_mapping.get(difficulty_level, 'beginner')
         
-        # Insert into interview_session first to satisfy FK constraint
-        # Use difficulty_level (without mapping) for level column in interview_session
-        # Use student_id=1, total_questions=len(questions_data)
-        
-        # Check if session exists
-        check_sql = "SELECT session_id FROM interview_session WHERE session_id = %s"
-        cursor.execute(check_sql, (session_id,))
-        if not cursor.fetchone():
-            session_sql = """
-                INSERT INTO interview_session (session_id, student_id, level, total_questions, status) 
-                VALUES (%s, %s, %s, %s, %s)
-            """
-            cursor.execute(session_sql, (session_id, 1, difficulty_level, len(questions_data), 'ongoing'))
-
-        # Insert each question using mapped db_level (with potential typo)
+        # Insert each question
         for question in questions_data:
             # Extract question text (handle different response formats)
             if isinstance(question, dict):
@@ -86,10 +72,10 @@ def save_questions_to_db(questions_data, session_id=100, difficulty_level='begin
             
             # Insert into database
             sql = """
-                INSERT INTO questions (session_id, question_text, difficulty_level, created_at)
+                INSERT INTO questions (resume_id, question_text, difficulty_level, created_at)
                 VALUES (%s, %s, %s, NOW())
             """
-            cursor.execute(sql, (session_id, question_text, db_level))
+            cursor.execute(sql, (resume_id, question_text, db_level))
         
         mysql.connection.commit()
         cursor.close()
@@ -339,12 +325,8 @@ def generate_questions():
         else:  # advanced
             questions = generate_advanced_questions(resume_text, job_title, company_name)
         
-        # Generate a random integer session_id (100000 - 2000000000)
-        import random
-        session_id = random.randint(100000, 2000000000)
-
         # Save questions to database
-        db_success = save_questions_to_db(questions, session_id=session_id, difficulty_level=level)
+        db_success = save_questions_to_db(questions, resume_id=100, difficulty_level=level)
         
         # Prepare simplified response for frontend
         simplified_questions = []
@@ -368,10 +350,8 @@ def generate_questions():
             'job_title': job_title,
             'company_name': company_name,
             'questions': simplified_questions,
-            'questions': simplified_questions,
             'total_questions': len(questions),
-            'database_saved': db_success,
-            'session_id': session_id
+            'database_saved': db_success
         })
         
     except Exception as e:
@@ -402,7 +382,7 @@ def test_questions():
             questions = generate_advanced_questions(sample_resume, job_title, company_name)
         
         # Save test questions to database
-        db_success = save_questions_to_db(questions, session_id=100, difficulty_level=level)
+        db_success = save_questions_to_db(questions, resume_id=100, difficulty_level=level)
         
         # Simplify for response
         simplified_questions = []
@@ -432,7 +412,7 @@ def view_questions():
         
         # Get all questions
         cursor.execute("""
-            SELECT questions_id, session_id, question_text, 
+            SELECT questions_id, resume_id, question_text, 
                    difficulty_level, created_at 
             FROM questions 
             ORDER BY created_at DESC, questions_id
@@ -482,7 +462,7 @@ def start_interview():
     <html>
         <head>
             <title>Launching Interview...</title>
-            <meta http-equiv="refresh" content="2;url=http://localhost:5000/?session_id={{ request.args.get('session_id', '') }}" />
+            <meta http-equiv="refresh" content="2;url=http://localhost:5000/" />
             <style>
                 body {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -520,7 +500,7 @@ def start_interview():
                 <div class="spinner"></div>
                 <h2>🚀 Launching Interview App...</h2>
                 <p>You will be redirected in 2 seconds.</p>
-                <p>If not redirected, <a href="http://localhost:5000/?session_id={{ request.args.get('session_id', '') }}">click here</a></p>
+                <p>If not redirected, <a href="http://localhost:5000/">click here</a></p>
             </div>
         </body>
     </html>
