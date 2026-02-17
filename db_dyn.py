@@ -9,6 +9,7 @@ import librosa
 import numpy as np
 import os
 import subprocess
+import cv2
 import time
 import uuid
 import mysql.connector
@@ -293,7 +294,7 @@ Generate exactly 15 executive-level questions.
     return clean_json_response(response.text)
 
 
-def save_questions_to_db(questions_data, resume_id=100, difficulty_level='beginner'):
+def save_questions_to_db(questions_data, session_id, difficulty_level='beginner'):
     """
     Save generated questions to database (ported from db_qgen.py)
     """
@@ -329,10 +330,10 @@ def save_questions_to_db(questions_data, resume_id=100, difficulty_level='beginn
             question_text = re.sub(r'^\d+[\.\)\-\s]*', '', question_text.strip())
 
             sql = """
-                INSERT INTO questions (resume_id, question_text, difficulty_level, created_at)
+                INSERT INTO questions (session_id, question_text, difficulty_level, created_at)
                 VALUES (%s, %s, %s, NOW())
             """
-            cursor.execute(sql, (resume_id, question_text, db_level))
+            cursor.execute(sql, (session_id, question_text, db_level))
 
         connection.commit()
         cursor.close()
@@ -434,30 +435,36 @@ def store_voice_feedback(session_id, question_id, question_number, strengths, im
         
         if session_id_exists:
             # Use session_id column
-            cursor.execute("""
-                INSERT INTO voice_feedback 
-                (studentid, session_id, strengths, improvements, q_no)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (
-                1,  # Default student ID
-                session_id,
-                strengths_json,
-                improvements_json,
-                question_number
-            ))
+            try:
+                cursor.execute("""
+                    INSERT INTO voice_feedback 
+                    (studentid, session_id, strengths, improvements, q_no)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    1,  # Default student ID
+                    session_id,
+                    strengths_json,
+                    improvements_json,
+                    int(question_id)
+                ))
+            except Exception as e:
+                print(f"❌ Error inserting into voice_feedback (session_id): {e}")
         else:
             # Use resumeid column
-            cursor.execute("""
-                INSERT INTO voice_feedback 
-                (studentid, resumeid, strengths, improvements, q_no)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (
-                1,  # Default student ID
-                session_id,
-                strengths_json,
-                improvements_json,
-                question_number
-            ))
+            try:
+                cursor.execute("""
+                    INSERT INTO voice_feedback 
+                    (studentid, resumeid, strengths, improvements, q_no)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    1,  # Default student ID
+                    session_id,
+                    strengths_json,
+                    improvements_json,
+                    int(question_id)
+                ))
+            except Exception as e:
+                print(f"❌ Error inserting into voice_feedback (resumeid): {e}")
         
         connection.commit()
         cursor.close()
@@ -507,44 +514,50 @@ def store_content_feedback(session_id, question_id, question_number, response, c
         
         if session_id_exists:
             # Use session_id column
-            cursor.execute("""
-                INSERT INTO content_feedback 
-                (studentid, session_id, response, content_score, overall, relevance, 
-                 structure, improvements, strengths, sample_answer, q_no)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                1,  # Default student ID
-                session_id,
-                response,
-                str(content_score),
-                str(overall_score),
-                str(relevance_score),
-                str(structure_score),
-                improvements_json,
-                strengths_json,
-                sample_answer if sample_answer else "",
-                question_number
-            ))
+            try:
+                cursor.execute("""
+                    INSERT INTO content_feedback 
+                    (studentid, session_id, response, content_score, overall, relevance, 
+                     structure, improvements, strengths, sample_answer, q_no)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    1,  # Default student ID
+                    session_id,
+                    response,
+                    str(content_score),
+                    str(overall_score),
+                    str(relevance_score),
+                    str(structure_score),
+                    improvements_json,
+                    strengths_json,
+                    sample_answer if sample_answer else "",
+                    int(question_id)
+                ))
+            except Exception as e:
+                print(f"❌ Error inserting into content_feedback (session_id): {e}")
         else:
             # Use resumeid column
-            cursor.execute("""
-                INSERT INTO content_feedback 
-                (studentid, resumeid, response, content_score, overall, relevance, 
-                 structure, improvements, strengths, sample_answer, q_no)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                1,  # Default student ID
-                session_id,
-                response,
-                str(content_score),
-                str(overall_score),
-                str(relevance_score),
-                str(structure_score),
-                improvements_json,
-                strengths_json,
-                sample_answer if sample_answer else "",
-                question_number
-            ))
+            try:
+                cursor.execute("""
+                    INSERT INTO content_feedback 
+                    (studentid, resumeid, response, content_score, overall, relevance, 
+                     structure, improvements, strengths, sample_answer, q_no)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    1,  # Default student ID
+                    session_id,
+                    response,
+                    str(content_score),
+                    str(overall_score),
+                    str(relevance_score),
+                    str(structure_score),
+                    improvements_json,
+                    strengths_json,
+                    sample_answer if sample_answer else "",
+                    int(question_id)
+                ))
+            except Exception as e:
+                print(f"❌ Error inserting into content_feedback (resumeid): {e}")
         
         connection.commit()
         cursor.close()
@@ -557,7 +570,7 @@ def store_content_feedback(session_id, question_id, question_number, response, c
         if connection:
             connection.close()
         return False
-
+    
 def store_skipped_question(session_id, question_id, question_number):
     """Store skipped question feedback in database"""
     connection = get_db_connection()
@@ -574,30 +587,36 @@ def store_skipped_question(session_id, question_id, question_number):
         
         if voice_session_id_exists:
             # Use session_id column
-            cursor.execute("""
-                INSERT INTO voice_feedback 
-                (studentid, session_id, strengths, improvements, q_no)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (
-                1,  # Default student ID
-                session_id,
-                json.dumps(["NOT_ANSWERED"]),
-                json.dumps(["Question was skipped"]),
-                question_number
-            ))
+            try:
+                cursor.execute("""
+                    INSERT INTO voice_feedback 
+                    (studentid, session_id, strengths, improvements, q_no)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    1,  # Default student ID
+                    session_id,
+                    json.dumps(["NOT_ANSWERED"]),
+                    json.dumps(["Question was skipped"]),
+                    int(question_id)
+                ))
+            except Exception as e:
+                print(f"❌ Error storing skipped voice_feedback: {e}")
         else:
             # Use resumeid column
-            cursor.execute("""
-                INSERT INTO voice_feedback 
-                (studentid, resumeid, strengths, improvements, q_no)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (
-                1,  # Default student ID
-                session_id,
-                json.dumps(["NOT_ANSWERED"]),
-                json.dumps(["Question was skipped"]),
-                question_number
-            ))
+            try:
+                cursor.execute("""
+                    INSERT INTO voice_feedback 
+                    (studentid, resumeid, strengths, improvements, q_no)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    1,  # Default student ID
+                    session_id,
+                    json.dumps(["NOT_ANSWERED"]),
+                    json.dumps(["Question was skipped"]),
+                    int(question_id)
+                ))
+            except Exception as e:
+                print(f"❌ Error storing skipped voice_feedback (resumeid): {e}")
         
         # Check table structure for content_feedback
         cursor.execute("SHOW COLUMNS FROM content_feedback LIKE 'session_id'")
@@ -605,84 +624,82 @@ def store_skipped_question(session_id, question_id, question_number):
         
         if content_session_id_exists:
             # Use session_id column
-            cursor.execute("""
-                INSERT INTO content_feedback 
-                (studentid, session_id, response, content_score, overall, relevance, 
-                 structure, improvements, strengths, sample_answer, q_no)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                1,  # Default student ID
-                session_id,
-                "NOT_ANSWERED",
-                "0",
-                "0",
-                "0",
-                "0",
-                json.dumps(["Question was skipped"]),
-                json.dumps(["NOT_ANSWERED"]),
-                "",
-                question_number
-            ))
+            try:
+                cursor.execute("""
+                    INSERT INTO content_feedback 
+                    (studentid, session_id, response, content_score, overall, relevance, 
+                     structure, improvements, strengths, sample_answer, q_no)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    1,  # Default student ID
+                    session_id,
+                    "NOT_ANSWERED",
+                    "0",
+                    "0",
+                    "0",
+                    "0",
+                    json.dumps(["Question was skipped"]),
+                    json.dumps(["NOT_ANSWERED"]),
+                    "",
+                    int(question_id)  # Use question_id (PK), not question_number
+                ))
+            except Exception as e:
+                print(f"❌ Error storing skipped content_feedback: {e}")
         else:
             # Use resumeid column
-            cursor.execute("""
-                INSERT INTO content_feedback 
-                (studentid, resumeid, response, content_score, overall, relevance, 
-                 structure, improvements, strengths, sample_answer, q_no)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                1,  # Default student ID
-                session_id,
-                "NOT_ANSWERED",
-                "0",
-                "0",
-                "0",
-                "0",
-                json.dumps(["Question was skipped"]),
-                json.dumps(["NOT_ANSWERED"]),
-                "",
-                question_number
-            ))
-
-        # NEW: also create a “not answered” row in face_feedback
-        try:
-            cursor.execute(
-                """
-                INSERT INTO face_feedback (
-                    resumeid,
-                    posture_quality,
-                    posture_feedback,
-                    alignment,
-                    alignment_feedback,
-                    eye_contact,
-                    eyecontact_feedback,
-                    touch,
-                    touch_feedback,
-                    strength,
-                    improvements,
-                    tips,
-                    qno
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    session_id,              # resumeid
-                    "NOT_ANSWERED",          # posture_quality
-                    "Question was skipped",  # posture_feedback
-                    "NOT_ANSWERED",          # alignment
-                    "Question was skipped",  # alignment_feedback
-                    "NOT_ANSWERED",          # eye_contact
-                    "Question was skipped",  # eyecontact_feedback
-                    "NOT_ANSWERED",          # touch
-                    "Question was skipped",  # touch_feedback
-                    "NOT_ANSWERED",          # strength
-                    "Question was skipped",  # improvements
-                    "Question was skipped",  # tips
-                    question_number,         # qno
-                ),
-            )
-        except Error as face_err:
-            print(f"⚠️ Could not store skipped face_feedback row: {face_err}")
+            try:
+                cursor.execute("""
+                    INSERT INTO content_feedback 
+                    (studentid, resumeid, response, content_score, overall, relevance, 
+                     structure, improvements, strengths, sample_answer, q_no)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    1,  # Default student ID
+                    session_id,
+                    "NOT_ANSWERED",
+                    "0",
+                    "0",
+                    "0",
+                    "0",
+                    json.dumps(["Question was skipped"]),
+                    json.dumps(["NOT_ANSWERED"]),
+                    "",
+                    int(question_id)
+                ))
+            except Exception as e:
+                 print(f"❌ Error storing skipped content_feedback (resumeid): {e}")
+        
+        # Check table structure for face_feedback (for session_id support)
+        cursor.execute("SHOW COLUMNS FROM face_feedback LIKE 'session_id'")
+        face_session_id_exists = cursor.fetchone()
+        
+        if face_session_id_exists:
+            # Use session_id column
+            try:
+                cursor.execute("""
+                    INSERT INTO face_feedback 
+                    (student_id, session_id, posture_quality, posture_feedback, alignment, 
+                     alignment_feedback, eye_contact, eyecontact_feedback, touch, touch_feedback, 
+                     strength, improvements, tips, qno)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    1,  # Default student ID
+                    session_id,
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "NOT_ANSWERED",
+                    "Question was skipped",
+                    "Question was skipped",
+                    int(question_id)  # Fix: Use question_id (PK), not question_number
+                ))
+            except Exception as face_err:
+                print(f"⚠️ Could not store skipped face_feedback row: {face_err}")
         
         connection.commit()
         cursor.close()
@@ -695,7 +712,8 @@ def store_skipped_question(session_id, question_id, question_number):
         print(f"❌ Full error details: {e}")
         if connection:
             connection.close()
-        return False
+        return False               
+        
         # ================================
 # MULTIPROCESSING CONFIGURATION
 # ================================
@@ -733,13 +751,20 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
 
             sample_answer = None
             content_analysis = None
-            with ThreadPoolExecutor(max_workers=3) as executor:
+            face_result = None
+            
+            with ThreadPoolExecutor(max_workers=4) as executor:
                 # Voice Groq (uses GROQ_VOICE_API_KEY via voice_feedback_generator)
                 voice_future = executor.submit(
                     generate_dynamic_voice_feedback,
                     analysis_results,
                     confidence_score
                 )
+                
+                # Face Analysis - Parallelized
+                print(f"🎥 [Process] Submitting face analysis to parallel executor...")
+                face_future = executor.submit(analyze_video, video_path)
+                
                 sample_future = None
                 content_future = None
                 if question and transcribed_text.strip():
@@ -753,9 +778,10 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                     
                 # Wait for results
                 feedback_data = voice_future.result()
-                print(f"✅ [Process] Dynamic feedback generated:")
-                print(f"   Strengths: {len(feedback_data['strengths'])} points")
-                print(f"   Improvements: {len(feedback_data['improvements'])} points")
+                print(f"✅ [Process] Dynamic feedback generated")
+                
+                face_result = face_future.result()
+                print(f"✅ [Process] Face analysis completed")
                 if sample_future is not None:
                     sample_answer = sample_future.result()
                     print(f"📋 [Process] Sample answer generated: {sample_answer is not None}")
@@ -768,21 +794,42 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
             if audio_features['duration'] > 0:
                 speaking_rate = (filler_analysis['word_count'] / audio_features['duration']) * 60
 
+            # STORE FACE FEEDBACK
+            if face_result and session_id and question_id:
+                try:
+                    face_db_success = store_face_feedback(
+                        face_result, 
+                        session_id=session_id, 
+                        qno=int(question_id)
+                    )
+                    if face_db_success:
+                        print(f"✅ [Process] Face feedback stored in database")
+                    else:
+                        print(f"⚠️ [Process] Face feedback storage returned False")
+                except Exception as e:
+                    print(f"⚠️ [Process] Failed to store face feedback: {e}")
+
             # STORE FEEDBACK IN DATABASE
             if session_id and question_id:
+                print(f"📊 [Process] Attempting to store feedback...")
+                print(f"   Session ID: {session_id}")
+                print(f"   Question ID: {question_id}")
+                print(f"   Strengths count: {len(feedback_data.get('strengths', []))}")
+                print(f"   Improvements count: {len(feedback_data.get('improvements', []))}")
                 try:
                     # Store voice feedback
-                    store_voice_feedback(
+                    voice_result = store_voice_feedback(
                         session_id=session_id,
                         question_id=question_id,
                         question_number=int(question_number),
                         strengths=feedback_data['strengths'],
                         improvements=feedback_data['improvements']
                     )
+                    print(f"📊 [Process] store_voice_feedback returned: {voice_result}")
                     
                     # Store content feedback if analysis was performed
                     if content_analysis and transcribed_text.strip():
-                        store_content_feedback(
+                        content_result = store_content_feedback(
                             session_id=session_id,
                             question_id=question_id,
                             question_number=int(question_number),
@@ -790,8 +837,9 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                             content_analysis=content_analysis,
                             sample_answer=sample_answer
                         )
+                        print(f"📊 [Process] store_content_feedback returned: {content_result}")
                     elif transcribed_text.strip():  # If we have transcript but no content analysis
-                        store_content_feedback(
+                        content_result = store_content_feedback(
                             session_id=session_id,
                             question_id=question_id,
                             question_number=int(question_number),
@@ -799,10 +847,13 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                             content_analysis=None,
                             sample_answer=sample_answer
                         )
+                        print(f"📊 [Process] store_content_feedback returned: {content_result}")
                     
                     print(f"✅ [Process] Feedback stored in database for Q{question_number}")
                 except Exception as e:
                     print(f"⚠️ [Process] Failed to store feedback in database: {e}")
+                    import traceback
+                    traceback.print_exc()
 
             # Cleanup
             for p in [audio_path, video_path]:
@@ -1893,6 +1944,14 @@ def generate_questions():
         if not resume_text:
             return jsonify({'error': 'Could not extract text from resume'}), 400
 
+        # Get session_id from form
+        session_id = request.form.get('session_id')
+        if not session_id:
+            session_id = f"session_{int(time.time())}_{uuid.uuid4().hex[:8]}"
+
+        # Ensure session exists as 'ongoing'
+        ensure_session_exists(session_id, level)
+
         # Generate questions based on level
         if level == 'beginner':
             questions = generate_beginner_questions(resume_text, job_title, company_name)
@@ -1902,7 +1961,7 @@ def generate_questions():
             questions = generate_advanced_questions(resume_text, job_title, company_name)
 
         # Save questions to database
-        db_success = save_questions_to_db(questions, resume_id=100, difficulty_level=level)
+        db_success = save_questions_to_db(questions, session_id=session_id, difficulty_level=level)
 
         # Prepare simplified response for frontend
         simplified_questions = []
@@ -1927,7 +1986,8 @@ def generate_questions():
             'company_name': company_name,
             'questions': simplified_questions,
             'total_questions': len(questions),
-            'database_saved': db_success
+            'database_saved': db_success,
+            'session_id': session_id
         })
 
     except Exception as e:
@@ -1959,17 +2019,60 @@ def get_questions(level):
                 'suggestion': f'Please generate at least {QUESTIONS_PER_LEVEL[level]} questions for {level} level first'
             }), 404
         
-        # Get questions for the level
-        questions = get_questions_for_level(level)
+        # Get session_id from query params (Optional now due to fallback)
+        session_id = request.args.get('session_id')
         
-        if not questions or len(questions) == 0:
+        questions = []
+        connection = get_db_connection()
+        if connection:
+            try:
+                cursor = connection.cursor(dictionary=True)
+                # Map level to DB stored value (handle 'intermedite' typo)
+                level_mapping = {'beginner': 'beginner', 'intermediate': 'intermedite', 'advanced': 'advanced'}
+                db_level = level_mapping.get(level, level)
+
+                # 1. Try to get questions for the specific session
+                if session_id:
+                    cursor.execute("""
+                        SELECT questions_id, question_text, difficulty_level, session_id
+                        FROM questions
+                        WHERE difficulty_level = %s AND session_id = %s
+                        ORDER BY questions_id ASC
+                    """, (db_level, session_id))
+                    questions = cursor.fetchall()
+                
+                # 2. Fallback: If no session_id or no questions found for session, get latest questions
+                if not questions:
+                    limit = QUESTIONS_PER_LEVEL.get(level, 10)
+                    print(f"⚠️ No questions found for session '{session_id}'. Falling back to latest {limit} questions for level {level}.")
+                    
+                    cursor.execute("""
+                        SELECT questions_id, question_text, difficulty_level, session_id
+                        FROM questions
+                        WHERE difficulty_level = %s
+                        ORDER BY questions_id DESC
+                        LIMIT %s
+                    """, (db_level, limit))
+                    questions = cursor.fetchall()
+                    
+                    # Reverse to show in correct order (Q1 -> Q10)
+                    questions.reverse()
+
+                cursor.close()
+                connection.close()
+            except Exception as e:
+                print(f"Error fetching questions for level/session: {e}")
+                try:
+                    connection.close()
+                except Exception:
+                    pass
+                return jsonify({'error': f'Database error: {str(e)}'}), 500
+        
+        # Verify we have questions after fallback
+        if not questions:
             return jsonify({
-                'error': f'No questions found for {level} level',
-                'suggestions': [
-                    'Make sure questions have been generated for this level',
-                    'Check database connection',
-                    f'Verify difficulty_level column has {level} values'
-                ]
+                'error': f'No questions found in database for {level} level',
+                'suggestion': 'Please generate questions first'
             }), 404
         
         # Format questions for response
@@ -1994,6 +2097,33 @@ def get_questions(level):
     except Exception as e:
         print(f"Error in get_questions: {str(e)}")
         return jsonify({'error': f'Failed to get questions: {str(e)}'}), 500
+
+def ensure_session_exists(session_id, level='beginner'):
+    """Ensure a session exists in the interview_session table with 'ongoing' status"""
+    if not session_id:
+        return
+    
+    connection = get_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            # Check if session exists
+            cursor.execute("SELECT session_id FROM interview_session WHERE session_id = %s", (session_id,))
+            if not cursor.fetchone():
+                # Create session with 'ongoing' status
+                cursor.execute("""
+                    INSERT INTO interview_session (session_id, student_id, level, total_questions, status)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (session_id, 1, level, 10, 'ongoing'))
+                connection.commit()
+                print(f"🆕 Created ongoing session: {session_id}")
+            cursor.close()
+            connection.close()
+        except Exception as e:
+            print(f"⚠️ Error ensuring session exists: {e}")
+            if connection:
+                connection.close()
+
 
 @app.route('/generate_question_audio', methods=['POST'])
 def generate_question_audio():
@@ -2086,6 +2216,9 @@ def analyze_voice():
     print(f"🎯 Received analysis request for question: {question}")
     print(f"📝 Question ID: {question_id}, Session ID: {session_id}, Question #: {question_number}")
 
+    # Ensure session exists as 'ongoing'
+    ensure_session_exists(session_id)
+
     # If it's the last question, process synchronously (user will wait)
     if is_last_question:
         print(f"⏳ Last question - processing synchronously...")
@@ -2143,6 +2276,9 @@ def skip_question():
         if not session_id:
             return jsonify({'error': 'Session ID is required'}), 400
         
+        # Ensure session exists as 'ongoing'
+        ensure_session_exists(session_id, level)
+        
         print(f"⏭️ Skipping question {question_number} (ID: {question_id}) for session {session_id}")
         
         # Store skipped question in database
@@ -2160,10 +2296,61 @@ def skip_question():
         print(f"❌ Skip question error: {str(e)}")
         return jsonify({'error': f'Failed to skip question: {str(e)}'}), 500
 
-def register_routes(app):
-    @app.route('/start-interview')
-    def interview():
-        return render_template('db_vans_ch.html')
+@app.route('/start-interview')
+def interview():
+    return render_template('db_vans_ch.html')
+
+@app.route('/complete_session', methods=['POST'])
+def complete_session():
+    """Mark a session as completed"""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if not session_id:
+            return jsonify({'error': 'Session ID is required'}), 400
+            
+        connection = get_db_connection()
+        if connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                UPDATE interview_session 
+                SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+                WHERE session_id = %s
+            """, (session_id,))
+            connection.commit()
+            cursor.close()
+            connection.close()
+            print(f"🏁 Session {session_id} marked as completed")
+            return jsonify({'success': True, 'message': 'Session completed'})
+        return jsonify({'error': 'Database connection failed'}), 500
+    except Exception as e:
+        print(f"Error completing session: {e}")
+        return jsonify({'error': str(e)}), 500
+@app.route('/get_latest_ongoing_session', methods=['GET'])
+def get_latest_ongoing_session():
+    """Get the session_id of the most recent 'ongoing' session"""
+    try:
+        connection = get_db_connection()
+        if connection:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT session_id FROM interview_session 
+                WHERE status = 'ongoing' 
+                ORDER BY started_at DESC LIMIT 1
+            """)
+            result = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            
+            if result:
+                return jsonify({'success': True, 'session_id': result['session_id']})
+            return jsonify({'success': False, 'message': 'No ongoing session found'}), 404
+        return jsonify({'error': 'Database connection failed'}), 500
+    except Exception as e:
+        print(f"Error getting latest session: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # ================================
 # DEBUG ROUTE TO CHECK DATABASE
 # ================================
@@ -2180,7 +2367,6 @@ def analyze_interview():
     try:
         cap = cv2.VideoCapture(filepath)
         if not cap.isOpened():
-            import subprocess
             mp4_path = filepath.replace(".webm", ".mp4")
             subprocess.run(
                 ["ffmpeg", "-y", "-i", filepath, "-vcodec", "libx264", mp4_path],
@@ -2193,24 +2379,39 @@ def analyze_interview():
             filepath = mp4_path
 
         cap.release()
+        print(f"🎥 Analyzing video: {filepath}")
         result = analyze_video(filepath)
+        print(f"✅ Video analysis complete. Result structure: {result.keys() if isinstance(result, dict) else type(result)}")
 
         # Question number → qno in face_feedback
         qno_raw = request.form.get("question_number") or request.form.get("qno")
         try:
             qno_val = int(qno_raw) if qno_raw is not None else None
-        except ValueError:
+        except (ValueError, TypeError):
             qno_val = None
 
-        try:
-            store_face_feedback(result, qno=qno_val)
-        except Exception as db_err:
-            print(f"⚠️ Failed to store face feedback: {db_err}")
+
+        # Get session_id
+        session_id = request.form.get("session_id")
+
+        print(f"📊 Parameters: qno={qno_val}, session_id={session_id}")
+        
+        # Store face feedback with error handling
+        if isinstance(result, dict):
+            db_success = store_face_feedback(result, session_id=session_id, qno=qno_val)
+            if db_success:
+                print(f"✅ Face feedback successfully stored in database")
+            else:
+                print(f"⚠️ Face feedback storage returned False")
+        else:
+            print(f"❌ Unexpected result type from analyze_video: {type(result)}")
 
         return jsonify(result)
 
     except Exception as e:
-        print(f"Analysis error: {str(e)}")
+        print(f"❌ Analysis error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
 
 @app.route('/debug_database', methods=['GET'])
@@ -2278,8 +2479,8 @@ if __name__ == '__main__':
         else:
             print("⚠️ Warning: Some tables might be missing")
             print("   If you get database errors, please create these tables:")
-            print("   CREATE TABLE voice_feedback (id INT AUTO_INCREMENT PRIMARY KEY, studentid INT, resumeid VARCHAR(255), strengths JSON, improvements JSON, q_no INT);")
-            print("   CREATE TABLE content_feedback (id INT AUTO_INCREMENT PRIMARY KEY, studentid INT, resumeid VARCHAR(255), response TEXT, content_score VARCHAR(10), overall VARCHAR(10), relevance VARCHAR(10), structure VARCHAR(10), improvements JSON, strengths JSON, sample_answer TEXT, q_no INT);")
+            print("   CREATE TABLE voice_feedback (id INT AUTO_INCREMENT PRIMARY KEY, studentid INT, session_id VARCHAR(100), strengths JSON, improvements JSON, q_no INT);")
+            print("   CREATE TABLE content_feedback (id INT AUTO_INCREMENT PRIMARY KEY, studentid INT, session_id VARCHAR(100), response TEXT, content_score VARCHAR(10), overall VARCHAR(10), relevance VARCHAR(10), structure VARCHAR(10), improvements JSON, strengths JSON, sample_answer TEXT, q_no INT);")
         
         cursor.close()
         connection.close()
