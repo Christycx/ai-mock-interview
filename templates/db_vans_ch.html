@@ -579,10 +579,11 @@
     let currentQuestionIndex = 0;
     let currentLevel = 'beginner';
     let totalQuestions = 10;
-    let currentSessionId = generateSessionId();
+    let currentSessionId = null; // Will be initialized
     let questions = [];
     let currentAudio = null;
-    // Get level from URL if provided
+
+    // Get parameters from URL
     const urlParams = new URLSearchParams(window.location.search);
     const levelParam = urlParams.get('level');
     if (levelParam && ['beginner', 'intermediate', 'advanced'].includes(levelParam)) {
@@ -590,10 +591,13 @@
       totalQuestions = getTotalQuestionsForLevel(currentLevel);
     }
 
+    // Get session ID from URL or generate placeholder
+    currentSessionId = urlParams.get('session_id');
+
     // Initialize
     initializeInterview();
 
-    // Generate unique session ID
+    // Generate unique session ID (fallback only)
     function generateSessionId() {
       return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
@@ -611,8 +615,29 @@
     // Initialize interview by fetching questions
     async function initializeInterview() {
       try {
-        // Fetch questions for the current level
-        const response = await fetch(`/get_questions/${currentLevel}`);
+        // If session ID is missing, try to fetch the latest ongoing one from database
+        if (!currentSessionId) {
+          try {
+            const sessionRes = await fetch('/get_latest_ongoing_session');
+            const sessionData = await sessionRes.json();
+            if (sessionData.success) {
+              currentSessionId = sessionData.session_id;
+              console.log('📡 Retrieved ongoing session from database:', currentSessionId);
+            }
+          } catch (e) {
+            console.warn('Could not fetch ongoing session:', e);
+          }
+        }
+
+        // If still missing (e.g., no ongoing session), generate one
+        if (!currentSessionId) {
+          currentSessionId = generateSessionId();
+          console.log('✨ Generated new session ID:', currentSessionId);
+        }
+
+        // Fetch questions for the current level (include session_id when available)
+        const qs = currentSessionId ? `?session_id=${encodeURIComponent(currentSessionId)}` : '';
+        const response = await fetch(`/get_questions/${currentLevel}${qs}`);
         const data = await response.json();
 
         if (data.error) {
@@ -730,6 +755,12 @@
       }
       const currentQuestion = questions[currentQuestionIndex];
 
+      // Ensure we have a session id before sending skip (backend requires it)
+      if (!currentSessionId) {
+        currentSessionId = generateSessionId();
+        console.warn('No session_id present - generated fallback:', currentSessionId);
+      }
+
       try {
         // Send skip request to backend
         const response = await fetch('/skip_question', {
@@ -738,32 +769,46 @@
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            question_id: currentQuestion.question_id,
+            question_id: currentQuestion.question_id || '0',
             session_id: currentSessionId,
             level: currentLevel,
             question_number: currentQuestionIndex + 1
           })
         });
 
-        const data = await response.json();
-
-        if (data.success) {
-          console.log(`Skipped question ${currentQuestionIndex + 1}`);
-
-          // Move to next question
-          currentQuestionIndex++;
-          if (currentQuestionIndex < totalQuestions) {
-            loadQuestion(currentQuestionIndex);
-          } else {
-            showFinalResults();
-          }
-        } else {
-          console.error('Failed to skip question:', data.error);
-          showError('Failed to skip question. Please try again.');
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (e) {
+          console.warn('Skip response not JSON or empty:', e);
         }
+
+        if (response.ok && data.success) {
+          console.log(`Skipped question ${currentQuestionIndex + 1}`);
+        } else {
+          console.error('Failed to skip question (backend):', data.error || response.statusText);
+          showError('Failed to record skipped question to server. Moving to next question.');
+        }
+
+        // Move to next question regardless of backend success so user can continue
+        currentQuestionIndex++;
+        if (currentQuestionIndex < totalQuestions) {
+          loadQuestion(currentQuestionIndex);
+        } else {
+          showFinalResults();
+        }
+
       } catch (error) {
-        console.error('Skip question error:', error);
-        showError('Network error while skipping question.');
+        console.error('Skip question network error:', error);
+        showError('Network error while skipping question. Moving to next question.');
+
+        // Advance so flow continues even if network failed
+        currentQuestionIndex++;
+        if (currentQuestionIndex < totalQuestions) {
+          loadQuestion(currentQuestionIndex);
+        } else {
+          showFinalResults();
+        }
       }
     }
 
@@ -850,16 +895,7 @@
               resultDiv.style.display = 'none';
             }
 
-            // Also send same video to face analysis backend (fire-and-forget)
-            try {
-              const faceForm = new FormData();
-              faceForm.append('video', blob, 'interview_face.webm');
-              faceForm.append('question_number', currentQuestionIndex + 1);
-              fetch('/analyze_interview', { method: 'POST', body: faceForm })
-                .catch(err => console.error('Face analysis error (non-blocking):', err));
-            } catch (e) {
-              console.error('Failed to trigger face analysis:', e);
-            }
+            // Face analysis is now handled concurrently within /analyze_voice background process
 
             fetch('/analyze_voice', { method: 'POST', body: formData })
               .then(res => res.json())
@@ -972,16 +1008,7 @@
               resultDiv.style.display = 'none';
             }
 
-            // Also send same video to face analysis backend (fire-and-forget)
-            try {
-              const faceForm = new FormData();
-              faceForm.append('video', blob, 'interview_face.webm');
-              faceForm.append('question_number', currentQuestionIndex + 1);
-              fetch('/analyze_interview', { method: 'POST', body: faceForm })
-                .catch(err => console.error('Face analysis error (non-blocking):', err));
-            } catch (e) {
-              console.error('Failed to trigger face analysis:', e);
-            }
+            // Face analysis is now handled concurrently within /analyze_voice background process
 
             fetch('/analyze_voice', { method: 'POST', body: formData })
               .then(res => res.json())
@@ -1254,6 +1281,19 @@
     };
 
     finishBtn.onclick = () => {
+      // Mark session as completed in database
+      fetch('/complete_session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          session_id: currentSessionId
+        }),
+      }).then(res => res.json())
+        .then(data => console.log('Session status updated:', data))
+        .catch(err => console.error('Error completing session:', err));
+
       showFinalResults();
     };
   </script>
