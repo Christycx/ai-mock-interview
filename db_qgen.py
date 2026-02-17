@@ -7,7 +7,9 @@ import json
 import re
 from datetime import datetime
 import os
+import uuid
 from dotenv import load_dotenv
+from flask import Flask, request, jsonify, render_template, render_template_string
 
 # Load environment variables
 load_dotenv()
@@ -34,13 +36,13 @@ def get_db_connection():
     """Get MySQL database connection"""
     return mysql.connection
 
-def save_questions_to_db(questions_data, resume_id=100, difficulty_level='beginner'):
+def save_questions_to_db(questions_data, session_id, difficulty_level='beginner'):
     """
     Save generated questions to database
     
     Args:
         questions_data: List of question dictionaries
-        resume_id: Foreign key to resumes table
+        session_id: Foreign key to interview_session table
         difficulty_level: beginner/intermediate/advanced
     """
     try:
@@ -55,7 +57,24 @@ def save_questions_to_db(questions_data, resume_id=100, difficulty_level='beginn
         
         db_level = level_mapping.get(difficulty_level, 'beginner')
         
-        # Insert each question
+        # Check if session exists
+        check_sql = "SELECT session_id FROM interview_session WHERE session_id = %s"
+        cursor.execute(check_sql, (session_id,))
+        if not cursor.fetchone():
+            # Insert new session with started_at explicit timestamp
+            # We hardcode student_id=1 for now as per existing logic
+            session_sql = """
+                INSERT INTO interview_session (session_id, student_id, level, total_questions, status, started_at) 
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """
+            cursor.execute(session_sql, (session_id, 1, difficulty_level, len(questions_data), 'ongoing'))
+        else:
+            # Optionally update started_at if session exists (e.g. restart)
+            # For now, just ensure it is 'ongoing'
+            update_sql = "UPDATE interview_session SET status='ongoing', started_at=NOW() WHERE session_id=%s"
+            cursor.execute(update_sql, (session_id,))
+
+        # Insert each question using mapped db_level (with potential typo)
         for question in questions_data:
             # Extract question text (handle different response formats)
             if isinstance(question, dict):
@@ -72,10 +91,10 @@ def save_questions_to_db(questions_data, resume_id=100, difficulty_level='beginn
             
             # Insert into database
             sql = """
-                INSERT INTO questions (resume_id, question_text, difficulty_level, created_at)
+                INSERT INTO questions (session_id, question_text, difficulty_level, created_at)
                 VALUES (%s, %s, %s, NOW())
             """
-            cursor.execute(sql, (resume_id, question_text, db_level))
+            cursor.execute(sql, (session_id, question_text, db_level))
         
         mysql.connection.commit()
         cursor.close()
@@ -303,6 +322,12 @@ def generate_questions():
         level = request.form.get('level')
         job_title = request.form.get('job_title', '').strip()
         company_name = request.form.get('company_name', '').strip()
+        # Get session_id from frontend or generate one
+        session_id = request.form.get('session_id')
+        
+        if not session_id:
+            session_id = f"session_{int(datetime.now().timestamp())}_{uuid.uuid4().hex[:8]}"
+        
         
         if not level or level not in ['beginner', 'intermediate', 'advanced']:
             return jsonify({'error': 'Invalid level specified'}), 400
@@ -325,8 +350,8 @@ def generate_questions():
         else:  # advanced
             questions = generate_advanced_questions(resume_text, job_title, company_name)
         
-        # Save questions to database
-        db_success = save_questions_to_db(questions, resume_id=100, difficulty_level=level)
+        # Save questions to database using the specific session_id
+        db_success = save_questions_to_db(questions, session_id=session_id, difficulty_level=level)
         
         # Prepare simplified response for frontend
         simplified_questions = []
@@ -351,7 +376,8 @@ def generate_questions():
             'company_name': company_name,
             'questions': simplified_questions,
             'total_questions': len(questions),
-            'database_saved': db_success
+            'database_saved': db_success,
+            'session_id': session_id
         })
         
     except Exception as e:
@@ -382,7 +408,7 @@ def test_questions():
             questions = generate_advanced_questions(sample_resume, job_title, company_name)
         
         # Save test questions to database
-        db_success = save_questions_to_db(questions, resume_id=100, difficulty_level=level)
+        db_success = save_questions_to_db(questions, session_id="test_session_100", difficulty_level=level)
         
         # Simplify for response
         simplified_questions = []
@@ -412,7 +438,7 @@ def view_questions():
         
         # Get all questions
         cursor.execute("""
-            SELECT questions_id, resume_id, question_text, 
+            SELECT questions_id, session_id, question_text, 
                    difficulty_level, created_at 
             FROM questions 
             ORDER BY created_at DESC, questions_id
@@ -453,16 +479,15 @@ def clear_questions():
         mysql.connection.rollback()
         return jsonify({'error': str(e)}), 500
     
-# Add this ONE route to your existing db_qgen.py file
 @app.route('/start-interview')
 def start_interview():
     """Redirect to the integrated db_dyn interview application."""
     # db_dyn.py is expected to be running on port 5000 and serving db_vans_ch.html at "/"
-    return '''
+    html_content = '''
     <html>
         <head>
             <title>Launching Interview...</title>
-            <meta http-equiv="refresh" content="2;url=http://localhost:5000/" />
+            <meta http-equiv="refresh" content="2;url=http://localhost:5000/?session_id={{ session_id }}" />
             <style>
                 body {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -500,11 +525,14 @@ def start_interview():
                 <div class="spinner"></div>
                 <h2>🚀 Launching Interview App...</h2>
                 <p>You will be redirected in 2 seconds.</p>
-                <p>If not redirected, <a href="http://localhost:5000/">click here</a></p>
+                <p>If not redirected, <a href="http://localhost:5000/?session_id={{ session_id }}">click here</a></p>
             </div>
         </body>
     </html>
     '''
+    from flask import render_template_string
+    session_id = request.args.get('session_id', '')
+    return render_template_string(html_content, session_id=session_id)
 
 if __name__ == '__main__':
     # Create .env file if it doesn't exist
