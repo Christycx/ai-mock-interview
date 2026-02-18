@@ -1318,17 +1318,21 @@
     };
 
     finishBtn.onclick = () => {
-      // Mark session as completed in database
+      // Mark session as completed in database with tracking data
+      const studentId = JSON.parse(localStorage.getItem('currentUser'))?.student_id || 1;
+
       fetch('/complete_session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          session_id: currentSessionId
+          session_id: currentSessionId,
+          student_id: studentId,
+          level: currentLevel
         }),
       }).then(res => res.json())
-        .then(data => console.log('Session status updated:', data))
+        .then(data => console.log('Session status updated and progress tracked:', data))
         .catch(err => console.error('Error completing session:', err));
 
       showFinalResults();
