@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>AI Interview Assistant - Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:900,700,500,400|Roboto:400,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:900,700,500,400|Roboto:400,700&display=swap"
+    rel="stylesheet">
   <style>
-    html, body {
+    html,
+    body {
       min-height: 100vh;
       background: linear-gradient(132deg, #edfbe9 0%, #bff8d2 80%, #fff 100%);
       font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
-      margin: 0; 
-      padding: 0; 
+      margin: 0;
+      padding: 0;
       color: #183820;
       scroll-behavior: smooth;
       line-height: 1.6;
@@ -75,12 +78,17 @@
       font-size: 32px;
       margin-bottom: 20px;
       box-shadow: 0 6px 44px rgba(44, 250, 151, 0.4);
-      animation: orb1 2.6s infinite alternate cubic-bezier(.74,-0.08,.31,1.16);
+      animation: orb1 2.6s infinite alternate cubic-bezier(.74, -0.08, .31, 1.16);
     }
 
     @keyframes orb1 {
-      from { box-shadow: 0 6px 72px rgba(194, 251, 220, 0.4); }
-      to   { box-shadow: 0 13px 98px rgba(78, 167, 35, 0.4); }
+      from {
+        box-shadow: 0 6px 72px rgba(194, 251, 220, 0.4);
+      }
+
+      to {
+        box-shadow: 0 13px 98px rgba(78, 167, 35, 0.4);
+      }
     }
 
     .logo-text {
@@ -117,8 +125,13 @@
     }
 
     @keyframes nameGlow {
-      from { text-shadow: 0 0 10px rgba(34, 188, 102, 0.3); }
-      to { text-shadow: 0 0 20px rgba(34, 188, 102, 0.5); }
+      from {
+        text-shadow: 0 0 10px rgba(34, 188, 102, 0.3);
+      }
+
+      to {
+        text-shadow: 0 0 20px rgba(34, 188, 102, 0.5);
+      }
     }
 
     .subtitle {
@@ -215,11 +228,12 @@
     }
 
     @keyframes pulse {
-      from { 
+      from {
         transform: scale(1);
         box-shadow: 0 10px 40px rgba(126, 233, 108, 0.5);
       }
-      to { 
+
+      to {
         transform: scale(1.05);
         box-shadow: 0 15px 50px rgba(126, 233, 108, 0.7);
       }
@@ -236,9 +250,17 @@
     }
 
     @keyframes glowing2 {
-      0% { box-shadow: 0 4px 28px rgba(198, 255, 201, 0.4); }
-      50% { box-shadow: 0 8px 40px rgba(140, 235, 154, 0.6); }
-      100% { box-shadow: 0 4px 47px rgba(177, 255, 186, 0.4); }
+      0% {
+        box-shadow: 0 4px 28px rgba(198, 255, 201, 0.4);
+      }
+
+      50% {
+        box-shadow: 0 8px 40px rgba(140, 235, 154, 0.6);
+      }
+
+      100% {
+        box-shadow: 0 4px 47px rgba(177, 255, 186, 0.4);
+      }
     }
 
     .login-btn:hover {
@@ -370,15 +392,16 @@
       .login-wrapper {
         max-width: 450px;
       }
-      
-      .login-content, .welcome-screen {
+
+      .login-content,
+      .welcome-screen {
         padding: 40px 30px;
       }
-      
+
       .welcome-text {
         font-size: 32px;
       }
-      
+
       .user-welcome-text {
         font-size: 36px;
       }
@@ -388,31 +411,32 @@
       .container {
         padding: 10px;
       }
-      
+
       .login-wrapper {
         max-width: 100%;
       }
-      
-      .login-content, .welcome-screen {
+
+      .login-content,
+      .welcome-screen {
         padding: 30px 20px;
       }
-      
+
       .welcome-text {
         font-size: 28px;
       }
-      
+
       .user-welcome-text {
         font-size: 32px;
       }
-      
+
       .features-list {
         grid-template-columns: 1fr;
       }
-      
+
       .logo-text {
         font-size: 24px;
       }
-      
+
       .start-btn {
         padding: 18px 40px;
         font-size: 20px;
@@ -420,6 +444,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="login-wrapper">
@@ -429,68 +454,69 @@
           <div class="logo-icon">🤖</div>
           <div class="logo-text">AI Interview Assistant</div>
         </div>
-        
+
         <h1 class="welcome-text">Welcome Back</h1>
-        <p class="subtitle">Sign in to access your personalized interview preparation tools and continue your journey to interview mastery.</p>
-        
+        <p class="subtitle">Sign in to access your personalized interview preparation tools and continue your journey to
+          interview mastery.</p>
+
         <div class="login-form">
           <div id="login-form">
             <div class="form-group">
               <label for="email">Email Address</label>
               <input type="email" id="email" placeholder="you@example.com" required>
             </div>
-            
+
             <div class="form-group">
               <label for="password">Password</label>
               <input type="password" id="password" placeholder="Enter your password" required>
             </div>
-            
+
             <div class="error-message" id="error-message">&nbsp;</div>
-            
+
             <button type="button" class="login-btn" id="login-button">
               Sign In
             </button>
-            
+
             <div class="switch-form">
               <span>New user? </span>
               <button type="button" class="switch-btn" id="switch-to-signup">Create an account</button>
             </div>
           </div>
-          
+
           <div id="signup-form" style="display: none;">
             <div class="form-group">
               <label for="signup-name">Full Name</label>
               <input type="text" id="signup-name" placeholder="Enter your full name" required>
             </div>
-            
+
             <div class="form-group">
               <label for="signup-email">Email Address</label>
               <input type="email" id="signup-email" placeholder="you@example.com" required>
             </div>
-            
+
             <div class="form-group">
               <label for="signup-password">Password</label>
               <input type="password" id="signup-password" placeholder="Create a strong password" required>
             </div>
-            
+
             <div class="form-group">
               <label for="confirm-password">Confirm Password</label>
               <input type="password" id="confirm-password" placeholder="Confirm your password" required>
             </div>
-            
+
             <div class="error-message" id="signup-error-message">&nbsp;</div>
-            
+
             <button type="button" class="login-btn" id="signup-button">
               Create Account
             </button>
-            
+
             <div class="switch-form">
               <span>Already have an account? </span>
               <button type="button" class="switch-btn" id="switch-to-login">Sign in instead</button>
             </div>
           </div>
         </div>
-        
+
         <div class="features-list">
           <div class="feature-item">
             <div class="feature-icon">🎯</div>
@@ -509,26 +535,26 @@
             <div class="feature-text">Secure & Private</div>
           </div>
         </div>
-        
+
         <div class="motivation-text">
           Prepare • Practice • Excel
         </div>
       </div>
-      
+
       <!-- Welcome Screen (Initially Hidden) -->
       <div class="welcome-screen" id="welcome-screen">
         <div class="logo">
           <div class="logo-icon">🤖</div>
           <div class="logo-text">AI Interview Assistant</div>
         </div>
-        
+
         <h1 class="user-welcome-text">Welcome, <span id="user-name" class="user-name">User</span>!</h1>
-        
+
         <p class="welcome-subtitle">
           Your journey to interview excellence begins now.<br>
           Get ready to practice with AI-powered mock interviews tailored just for you.
         </p>
-        
+
         <div class="welcome-features">
           <div class="welcome-feature">
             <div class="welcome-feature-icon">🎯</div>
@@ -549,11 +575,11 @@
             </div>
           </div>
         </div>
-        
+
         <button type="button" class="start-btn" id="start-button">
           Let's Start Your Interview Prep!
         </button>
-        
+
         <div class="motivation-text">
           Prepare • Practice • Excel
         </div>
@@ -563,53 +589,53 @@
 
   <script>
     // Toggle between login and signup forms
-    document.getElementById('switch-to-signup').addEventListener('click', function() {
+    document.getElementById('switch-to-signup').addEventListener('click', function () {
       document.getElementById('login-form').style.display = 'none';
       document.getElementById('signup-form').style.display = 'block';
       document.getElementById('error-message').textContent = ' ';
     });
-    
-    document.getElementById('switch-to-login').addEventListener('click', function() {
+
+    document.getElementById('switch-to-login').addEventListener('click', function () {
       document.getElementById('signup-form').style.display = 'none';
       document.getElementById('login-form').style.display = 'block';
       document.getElementById('signup-error-message').textContent = ' ';
     });
-    
+
     // Show welcome screen function
     function showWelcomeScreen(userName) {
       // Set the user name in welcome screen
       document.getElementById('user-name').textContent = userName;
-      
+
       // Hide login content
       document.getElementById('login-content').style.display = 'none';
-      
+
       // Show welcome screen
       document.getElementById('welcome-screen').style.display = 'flex';
     }
-    
+
     // Login functionality - calls Flask backend
-    document.getElementById('login-button').addEventListener('click', async function() {
+    document.getElementById('login-button').addEventListener('click', async function () {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const errorElement = document.getElementById('error-message');
-      
+
       // Validation
       if (!email || !password) {
         errorElement.textContent = 'Please fill in all fields.';
         return;
       }
-      
+
       if (!isValidEmail(email)) {
         errorElement.textContent = 'Please enter a valid email address.';
         return;
       }
-      
+
       // Disable button during request
       const loginButton = document.getElementById('login-button');
       loginButton.disabled = true;
       loginButton.textContent = 'Signing in...';
       errorElement.textContent = '';
-      
+
       try {
         const response = await fetch('/login', {
           method: 'POST',
@@ -621,18 +647,18 @@
             password: password
           })
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
           // Store current user (without password for security)
-          const currentUser = { 
-            name: data.user.name, 
+          const currentUser = {
+            name: data.user.name,
             email: data.user.email,
             student_id: data.user.student_id
           };
-          localStorage.setItem('aiinterview-current-user', JSON.stringify(currentUser));
-          
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
           // Show welcome screen
           showWelcomeScreen(data.user.name);
         } else {
@@ -646,42 +672,42 @@
         loginButton.textContent = 'Sign In';
       }
     });
-    
+
     // Signup functionality - calls Flask backend
-    document.getElementById('signup-button').addEventListener('click', async function() {
+    document.getElementById('signup-button').addEventListener('click', async function () {
       const name = document.getElementById('signup-name').value.trim();
       const email = document.getElementById('signup-email').value.trim();
       const password = document.getElementById('signup-password').value;
       const confirmPassword = document.getElementById('confirm-password').value;
       const errorElement = document.getElementById('signup-error-message');
-      
+
       // Validation
       if (!name || !email || !password || !confirmPassword) {
         errorElement.textContent = 'Please fill in all fields.';
         return;
       }
-      
+
       if (!isValidEmail(email)) {
         errorElement.textContent = 'Please enter a valid email address.';
         return;
       }
-      
+
       if (password.length < 6) {
         errorElement.textContent = 'Password must be at least 6 characters.';
         return;
       }
-      
+
       if (password !== confirmPassword) {
         errorElement.textContent = 'Passwords do not match.';
         return;
       }
-      
+
       // Disable button during request
       const signupButton = document.getElementById('signup-button');
       signupButton.disabled = true;
       signupButton.textContent = 'Creating account...';
       errorElement.textContent = '';
-      
+
       try {
         const response = await fetch('/signup', {
           method: 'POST',
@@ -694,9 +720,9 @@
             password: password
           })
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
           // After successful signup, automatically log in
           const loginResponse = await fetch('/login', {
@@ -709,18 +735,18 @@
               password: password
             })
           });
-          
+
           const loginData = await loginResponse.json();
-          
+
           if (loginResponse.ok) {
             // Store current user
-            const currentUser = { 
-              name: loginData.user.name, 
+            const currentUser = {
+              name: loginData.user.name,
               email: loginData.user.email,
               student_id: loginData.user.student_id
             };
-            localStorage.setItem('aiinterview-current-user', JSON.stringify(currentUser));
-            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
             // Show welcome screen
             showWelcomeScreen(name);
           } else {
@@ -737,20 +763,20 @@
         signupButton.textContent = 'Create Account';
       }
     });
-    
+
     // Start button functionality - redirect to port 5001
-    document.getElementById('start-button').addEventListener('click', function() {
+    document.getElementById('start-button').addEventListener('click', function () {
       window.location.href = '/qgen';
     });
-    
+
     // Email validation function
     function isValidEmail(email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(email);
     }
-    
+
     // Allow form submission with Enter key
-    document.addEventListener('keypress', function(event) {
+    document.addEventListener('keypress', function (event) {
       if (event.key === 'Enter') {
         if (document.getElementById('login-form').style.display !== 'none') {
           document.getElementById('login-button').click();
@@ -761,4 +787,5 @@
     });
   </script>
 </body>
+
 </html>
