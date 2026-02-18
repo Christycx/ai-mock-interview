@@ -438,7 +438,7 @@ def store_voice_feedback(student_id, session_id, question_id, question_number, s
             try:
                 cursor.execute("""
                     INSERT INTO voice_feedback 
-                    (studentid, session_id, strengths, improvements, q_no)
+                    (student_id, session_id, strengths, improvements, q_no)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
                     student_id,
@@ -454,7 +454,7 @@ def store_voice_feedback(student_id, session_id, question_id, question_number, s
             try:
                 cursor.execute("""
                     INSERT INTO voice_feedback 
-                    (studentid, resumeid, strengths, improvements, q_no)
+                    (student_id, resumeid, strengths, improvements, q_no)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
                     student_id,
@@ -517,7 +517,7 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
             try:
                 cursor.execute("""
                     INSERT INTO content_feedback 
-                    (studentid, session_id, response, content_score, overall, relevance, 
+                    (student_id, session_id, response, content_score, overall, relevance, 
                      structure, improvements, strengths, sample_answer, q_no)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
@@ -540,7 +540,7 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
             try:
                 cursor.execute("""
                     INSERT INTO content_feedback 
-                    (studentid, resumeid, response, content_score, overall, relevance, 
+                    (student_id, resumeid, response, content_score, overall, relevance, 
                      structure, improvements, strengths, sample_answer, q_no)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
@@ -590,7 +590,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number)
             try:
                 cursor.execute("""
                     INSERT INTO voice_feedback 
-                    (studentid, session_id, strengths, improvements, q_no)
+                    (student_id, session_id, strengths, improvements, q_no)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
                     student_id,
@@ -606,7 +606,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number)
             try:
                 cursor.execute("""
                     INSERT INTO voice_feedback 
-                    (studentid, resumeid, strengths, improvements, q_no)
+                    (student_id, resumeid, strengths, improvements, q_no)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
                     student_id,
@@ -627,7 +627,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number)
             try:
                 cursor.execute("""
                     INSERT INTO content_feedback 
-                    (studentid, session_id, response, content_score, overall, relevance, 
+                    (student_id, session_id, response, content_score, overall, relevance, 
                      structure, improvements, strengths, sample_answer, q_no)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
@@ -650,7 +650,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number)
             try:
                 cursor.execute("""
                     INSERT INTO content_feedback 
-                    (studentid, resumeid, response, content_score, overall, relevance, 
+                    (student_id, resumeid, response, content_score, overall, relevance, 
                      structure, improvements, strengths, sample_answer, q_no)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
@@ -2336,10 +2336,12 @@ def interview():
 
 @app.route('/complete_session', methods=['POST'])
 def complete_session():
-    """Mark a session as completed"""
+    """Mark a session as completed and track progress"""
     try:
         data = request.get_json()
         session_id = data.get('session_id')
+        student_id = data.get('student_id')
+        level = data.get('level')
         
         if not session_id:
             return jsonify({'error': 'Session ID is required'}), 400
@@ -2347,16 +2349,30 @@ def complete_session():
         connection = get_db_connection()
         if connection:
             cursor = connection.cursor()
+            
+            # 1. Update session status
             cursor.execute("""
                 UPDATE interview_session 
                 SET status = 'completed', completed_at = CURRENT_TIMESTAMP
                 WHERE session_id = %s
             """, (session_id,))
+            
+            # 2. Add to progress_tracking
+            if student_id and level:
+                try:
+                    cursor.execute("""
+                        INSERT INTO progress_tracking (student_id, session_id, level, completed_at)
+                        VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+                    """, (student_id, session_id, level))
+                    print(f"📈 Progress tracked for Student {student_id} in session {session_id}")
+                except Exception as track_err:
+                    print(f"⚠️ Failed to log progress tracking: {track_err}")
+            
             connection.commit()
             cursor.close()
             connection.close()
             print(f"🏁 Session {session_id} marked as completed")
-            return jsonify({'success': True, 'message': 'Session completed'})
+            return jsonify({'success': True, 'message': 'Session completed and progress tracked'})
         return jsonify({'error': 'Database connection failed'}), 500
     except Exception as e:
         print(f"Error completing session: {e}")
