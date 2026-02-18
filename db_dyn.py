@@ -415,7 +415,7 @@ def check_if_questions_exist_for_level(level):
 
 
 
-def store_voice_feedback(session_id, question_id, question_number, strengths, improvements):
+def store_voice_feedback(student_id, session_id, question_id, question_number, strengths, improvements):
     """Store voice feedback in database"""
     connection = get_db_connection()
     if connection is None:
@@ -441,7 +441,7 @@ def store_voice_feedback(session_id, question_id, question_number, strengths, im
                     (studentid, session_id, strengths, improvements, q_no)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
-                    1,  # Default student ID
+                    student_id,
                     session_id,
                     strengths_json,
                     improvements_json,
@@ -457,7 +457,7 @@ def store_voice_feedback(session_id, question_id, question_number, strengths, im
                     (studentid, resumeid, strengths, improvements, q_no)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
-                    1,  # Default student ID
+                    student_id,
                     session_id,
                     strengths_json,
                     improvements_json,
@@ -478,7 +478,7 @@ def store_voice_feedback(session_id, question_id, question_number, strengths, im
             connection.close()
         return False
 
-def store_content_feedback(session_id, question_id, question_number, response, content_analysis, sample_answer):
+def store_content_feedback(student_id, session_id, question_id, question_number, response, content_analysis, sample_answer):
     """Store content feedback in database"""
     connection = get_db_connection()
     if connection is None:
@@ -521,7 +521,7 @@ def store_content_feedback(session_id, question_id, question_number, response, c
                      structure, improvements, strengths, sample_answer, q_no)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    1,  # Default student ID
+                    student_id,
                     session_id,
                     response,
                     str(content_score),
@@ -544,7 +544,7 @@ def store_content_feedback(session_id, question_id, question_number, response, c
                      structure, improvements, strengths, sample_answer, q_no)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    1,  # Default student ID
+                    student_id,
                     session_id,
                     response,
                     str(content_score),
@@ -571,7 +571,7 @@ def store_content_feedback(session_id, question_id, question_number, response, c
             connection.close()
         return False
     
-def store_skipped_question(session_id, question_id, question_number):
+def store_skipped_question(student_id, session_id, question_id, question_number):
     """Store skipped question feedback in database"""
     connection = get_db_connection()
     if connection is None:
@@ -593,7 +593,7 @@ def store_skipped_question(session_id, question_id, question_number):
                     (studentid, session_id, strengths, improvements, q_no)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
-                    1,  # Default student ID
+                    student_id,
                     session_id,
                     json.dumps(["NOT_ANSWERED"]),
                     json.dumps(["Question was skipped"]),
@@ -609,7 +609,7 @@ def store_skipped_question(session_id, question_id, question_number):
                     (studentid, resumeid, strengths, improvements, q_no)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
-                    1,  # Default student ID
+                    student_id,
                     session_id,
                     json.dumps(["NOT_ANSWERED"]),
                     json.dumps(["Question was skipped"]),
@@ -631,7 +631,7 @@ def store_skipped_question(session_id, question_id, question_number):
                      structure, improvements, strengths, sample_answer, q_no)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    1,  # Default student ID
+                    student_id,
                     session_id,
                     "NOT_ANSWERED",
                     "0",
@@ -654,7 +654,7 @@ def store_skipped_question(session_id, question_id, question_number):
                      structure, improvements, strengths, sample_answer, q_no)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    1,  # Default student ID
+                    student_id,
                     session_id,
                     "NOT_ANSWERED",
                     "0",
@@ -683,7 +683,7 @@ def store_skipped_question(session_id, question_id, question_number):
                      strength, improvements, tips, qno)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    1,  # Default student ID
+                    student_id,
                     session_id,
                     "NOT_ANSWERED",
                     "Question was skipped",
@@ -700,6 +700,9 @@ def store_skipped_question(session_id, question_id, question_number):
                 ))
             except Exception as face_err:
                 print(f"⚠️ Could not store skipped face_feedback row: {face_err}")
+                
+        # Also store the skipped attempt in responses table
+        store_response(session_id, question_id, student_id, "NOT_ANSWERED", "Question was skipped")
         
         connection.commit()
         cursor.close()
@@ -720,11 +723,14 @@ def store_skipped_question(session_id, question_id, question_number):
 MAX_PROCESSES = 2
 process_semaphore = Semaphore(MAX_PROCESSES)
 
-def analyze_answer_process(video_path, question, question_id, session_id, question_number):
+def analyze_answer_process(video_path, question, question_id, session_id, student_id, question_number):
     """
     Background process function - contains exact same analysis logic as before.
     Creates its own DB connection inside the process.
     """
+    # Store video response first - transcript will be updated if needed or left empty
+    store_response(session_id, question_id, student_id, video_path)
+
     with process_semaphore:
         try:
             print(f"🔄 [Process] Starting analysis for Question {question_number}")
@@ -799,6 +805,7 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                 try:
                     face_db_success = store_face_feedback(
                         face_result, 
+                        student_id=student_id,
                         session_id=session_id, 
                         qno=int(question_id)
                     )
@@ -819,6 +826,7 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                 try:
                     # Store voice feedback
                     voice_result = store_voice_feedback(
+                        student_id=student_id,
                         session_id=session_id,
                         question_id=question_id,
                         question_number=int(question_number),
@@ -830,6 +838,7 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                     # Store content feedback if analysis was performed
                     if content_analysis and transcribed_text.strip():
                         content_result = store_content_feedback(
+                            student_id=student_id,
                             session_id=session_id,
                             question_id=question_id,
                             question_number=int(question_number),
@@ -840,6 +849,7 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                         print(f"📊 [Process] store_content_feedback returned: {content_result}")
                     elif transcribed_text.strip():  # If we have transcript but no content analysis
                         content_result = store_content_feedback(
+                            student_id=student_id,
                             session_id=session_id,
                             question_id=question_id,
                             question_number=int(question_number),
@@ -1875,7 +1885,7 @@ def signup():
         "INSERT INTO login (name, email, password) VALUES (%s, %s, %s)",
         (name, email, hashed_pw)
     )
-    mysql.connection.commit()
+    mysql_db.connection.commit()
     cur.close()
 
     return jsonify({"message": "Signup successful"}), 201
@@ -2098,7 +2108,29 @@ def get_questions(level):
         print(f"Error in get_questions: {str(e)}")
         return jsonify({'error': f'Failed to get questions: {str(e)}'}), 500
 
-def ensure_session_exists(session_id, level='beginner'):
+def store_response(session_id, question_id, student_id, video_path, transcript=None):
+    """Store video response in the responses table"""
+    connection = get_db_connection()
+    if connection is None:
+        return False
+    try:
+        cursor = connection.cursor()
+        sql = """
+            INSERT INTO responses (session_id, question_id, student_id, video_path, transcript)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(sql, (session_id, int(question_id), student_id, video_path, transcript))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return True
+    except Exception as e:
+        print(f"❌ Error storing response: {e}")
+        if connection:
+            connection.close()
+        return False
+
+def ensure_session_exists(session_id, student_id=1, level='beginner'):
     """Ensure a session exists in the interview_session table with 'ongoing' status"""
     if not session_id:
         return
@@ -2114,7 +2146,7 @@ def ensure_session_exists(session_id, level='beginner'):
                 cursor.execute("""
                     INSERT INTO interview_session (session_id, student_id, level, total_questions, status)
                     VALUES (%s, %s, %s, %s, %s)
-                """, (session_id, 1, level, 10, 'ongoing'))
+                """, (session_id, student_id, level, 10, 'ongoing'))
                 connection.commit()
                 print(f"🆕 Created ongoing session: {session_id}")
             cursor.close()
@@ -2207,6 +2239,7 @@ def analyze_voice():
     question = request.form.get('question', '').strip()
     question_id = request.form.get('question_id', '0')
     session_id = request.form.get('session_id', '')
+    student_id = request.form.get('student_id', '1')
     question_number = request.form.get('question_number', '1')
     is_last_question = request.form.get('is_last_question', 'false').lower() == 'true'
     
@@ -2214,17 +2247,17 @@ def analyze_voice():
         question = "What are the four pillars of OOPS (Object-Oriented Programming)? Explain each."
 
     print(f"🎯 Received analysis request for question: {question}")
-    print(f"📝 Question ID: {question_id}, Session ID: {session_id}, Question #: {question_number}")
+    print(f"📝 Question ID: {question_id}, Session ID: {session_id}, Student ID: {student_id}, Question #: {question_number}")
 
     # Ensure session exists as 'ongoing'
-    ensure_session_exists(session_id)
+    ensure_session_exists(session_id, student_id=student_id)
 
     # If it's the last question, process synchronously (user will wait)
     if is_last_question:
         print(f"⏳ Last question - processing synchronously...")
         try:
             # Run analysis in current process for last question
-            analyze_answer_process(video_path, question, question_id, session_id, question_number)
+            analyze_answer_process(video_path, question, question_id, session_id, student_id, question_number)
             
             return jsonify({
                 'success': True,
@@ -2241,7 +2274,7 @@ def analyze_voice():
             # Start background process
             process = Process(
                 target=analyze_answer_process,
-                args=(video_path, question, question_id, session_id, question_number)
+                args=(video_path, question, question_id, session_id, student_id, question_number)
             )
             process.daemon = True
             process.start()
@@ -2270,6 +2303,7 @@ def skip_question():
         data = request.get_json()
         question_id = data.get('question_id', '0')
         session_id = data.get('session_id', '')
+        student_id = data.get('student_id', '1')
         level = data.get('level', 'beginner')
         question_number = data.get('question_number', '1')
         
@@ -2277,12 +2311,12 @@ def skip_question():
             return jsonify({'error': 'Session ID is required'}), 400
         
         # Ensure session exists as 'ongoing'
-        ensure_session_exists(session_id, level)
+        ensure_session_exists(session_id, student_id=student_id, level=level)
         
         print(f"⏭️ Skipping question {question_number} (ID: {question_id}) for session {session_id}")
         
         # Store skipped question in database
-        if store_skipped_question(session_id, question_id, int(question_number)):
+        if store_skipped_question(student_id, session_id, question_id, int(question_number)):
             return jsonify({
                 'success': True,
                 'message': f'Question {question_number} marked as skipped',
@@ -2398,7 +2432,8 @@ def analyze_interview():
         
         # Store face feedback with error handling
         if isinstance(result, dict):
-            db_success = store_face_feedback(result, session_id=session_id, qno=qno_val)
+            student_id = request.form.get("student_id") or 1
+            db_success = store_face_feedback(result, student_id=student_id, session_id=session_id, qno=qno_val)
             if db_success:
                 print(f"✅ Face feedback successfully stored in database")
             else:
