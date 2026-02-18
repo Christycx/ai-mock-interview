@@ -771,6 +771,7 @@
           body: JSON.stringify({
             question_id: currentQuestion.question_id || '0',
             session_id: currentSessionId,
+            student_id: JSON.parse(localStorage.getItem('currentUser'))?.student_id || 1,
             level: currentLevel,
             question_number: currentQuestionIndex + 1
           })
@@ -899,13 +900,15 @@
           mediaRecorder.onstop = () => {
             const blob = new Blob(chunks, { type: 'video/webm' });
             const formData = new FormData();
-            formData.append('video', blob, 'interview_answer.webm');
+            const studentId = JSON.parse(localStorage.getItem('currentUser'))?.student_id || 1;
+            formData.append('video', blob, `q${currentQuestionIndex + 1}_${currentSessionId}.webm`);
 
             // Add current question data
             const currentQuestion = questions[currentQuestionIndex];
             formData.append('question', currentQuestion.question_text);
             formData.append('question_id', currentQuestion.question_id);
             formData.append('session_id', currentSessionId);
+            formData.append('student_id', studentId);
             formData.append('level', currentLevel);
             formData.append('question_number', currentQuestionIndex + 1);
             // Check if this is the last question
@@ -1012,12 +1015,14 @@
           mediaRecorder.onstop = () => {
             const blob = new Blob(chunks, { type: 'video/webm' });
             const formData = new FormData();
-            formData.append('video', blob, 'interview_answer.webm');
+            const studentId = JSON.parse(localStorage.getItem('currentUser'))?.student_id || 1;
+            formData.append('video', blob, `q${currentQuestionIndex + 1}_${currentSessionId}.webm`);
 
             const currentQuestion = questions[currentQuestionIndex];
             formData.append('question', currentQuestion.question_text);
             formData.append('question_id', currentQuestion.question_id);
             formData.append('session_id', currentSessionId);
+            formData.append('student_id', studentId);
             formData.append('level', currentLevel);
             formData.append('question_number', currentQuestionIndex + 1);
             // Check if this is the last question
