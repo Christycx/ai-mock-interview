@@ -36,13 +36,14 @@ def get_db_connection():
     """Get MySQL database connection"""
     return mysql.connection
 
-def save_questions_to_db(questions_data, session_id, difficulty_level='beginner'):
+def save_questions_to_db(questions_data, session_id, student_id=1, difficulty_level='beginner'):
     """
     Save generated questions to database
     
     Args:
         questions_data: List of question dictionaries
         session_id: Foreign key to interview_session table
+        student_id: ID of the student
         difficulty_level: beginner/intermediate/advanced
     """
     try:
@@ -62,12 +63,11 @@ def save_questions_to_db(questions_data, session_id, difficulty_level='beginner'
         cursor.execute(check_sql, (session_id,))
         if not cursor.fetchone():
             # Insert new session with started_at explicit timestamp
-            # We hardcode student_id=1 for now as per existing logic
             session_sql = """
                 INSERT INTO interview_session (session_id, student_id, level, total_questions, status, started_at) 
                 VALUES (%s, %s, %s, %s, %s, NOW())
             """
-            cursor.execute(session_sql, (session_id, 1, difficulty_level, len(questions_data), 'ongoing'))
+            cursor.execute(session_sql, (session_id, student_id, difficulty_level, len(questions_data), 'ongoing'))
         else:
             # Optionally update started_at if session exists (e.g. restart)
             # For now, just ensure it is 'ongoing'
@@ -322,6 +322,7 @@ def generate_questions():
         level = request.form.get('level')
         job_title = request.form.get('job_title', '').strip()
         company_name = request.form.get('company_name', '').strip()
+        student_id = request.form.get('student_id', '1')
         # Get session_id from frontend or generate one
         session_id = request.form.get('session_id')
         
@@ -351,7 +352,7 @@ def generate_questions():
             questions = generate_advanced_questions(resume_text, job_title, company_name)
         
         # Save questions to database using the specific session_id
-        db_success = save_questions_to_db(questions, session_id=session_id, difficulty_level=level)
+        db_success = save_questions_to_db(questions, session_id=session_id, student_id=student_id, difficulty_level=level)
         
         # Prepare simplified response for frontend
         simplified_questions = []
