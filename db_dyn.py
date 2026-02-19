@@ -571,7 +571,7 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
             connection.close()
         return False
     
-def store_skipped_question(student_id, session_id, question_id, question_number):
+def store_skipped_question(student_id, session_id, question_id, question_number, sample_answer=""):
     """Store skipped question feedback in database"""
     connection = get_db_connection()
     if connection is None:
@@ -640,7 +640,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number)
                     "0",
                     json.dumps(["Question was skipped"]),
                     json.dumps(["NOT_ANSWERED"]),
-                    "",
+                    sample_answer,
                     int(question_id)  # Use question_id (PK), not question_number
                 ))
             except Exception as e:
@@ -663,7 +663,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number)
                     "0",
                     json.dumps(["Question was skipped"]),
                     json.dumps(["NOT_ANSWERED"]),
-                    "",
+                    sample_answer,
                     int(question_id)
                 ))
             except Exception as e:
@@ -2302,6 +2302,7 @@ def skip_question():
     try:
         data = request.get_json()
         question_id = data.get('question_id', '0')
+        question_text = data.get('question_text', '')
         session_id = data.get('session_id', '')
         student_id = data.get('student_id', '1')
         level = data.get('level', 'beginner')
@@ -2315,13 +2316,23 @@ def skip_question():
         
         print(f"⏭️ Skipping question {question_number} (ID: {question_id}) for session {session_id}")
         
-        # Store skipped question in database
-        if store_skipped_question(student_id, session_id, question_id, int(question_number)):
+        # Generate sample answer if question text is available
+        sample_answer = ""
+        if question_text:
+            try:
+                sample_answer = generate_sample_answer(question_text)
+                print(f"📋 Generated sample answer for skipped question: {len(sample_answer)} chars")
+            except Exception as e:
+                print(f"⚠️ Failed to generate sample answer for skip: {e}")
+        
+        # Store skipped question in database with sample answer
+        if store_skipped_question(student_id, session_id, question_id, int(question_number), sample_answer=sample_answer):
             return jsonify({
                 'success': True,
                 'message': f'Question {question_number} marked as skipped',
                 'question_id': question_id,
-                'question_number': question_number
+                'question_number': question_number,
+                'sample_answer_generated': bool(sample_answer)
             })
         else:
             return jsonify({'error': 'Failed to store skipped question in database'}), 500
