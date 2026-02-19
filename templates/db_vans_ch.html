@@ -770,6 +770,7 @@
           },
           body: JSON.stringify({
             question_id: currentQuestion.question_id || '0',
+            question_text: currentQuestion.question_text || '',
             session_id: currentSessionId,
             student_id: JSON.parse(localStorage.getItem('currentUser'))?.student_id || 1,
             level: currentLevel,
