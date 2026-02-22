@@ -16,6 +16,7 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 from dotenv import load_dotenv
+load_dotenv()
 from flask_mysqldb import MySQL
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
@@ -60,8 +61,6 @@ genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 # ================================
 # DATABASE CONFIGURATION
 # ================================
-
-load_dotenv()
 
 DB_CONFIG = {
     'host': os.getenv('MYSQL_HOST', 'localhost'),
@@ -1869,59 +1868,84 @@ def index():
 @app.route('/signup', methods=['POST'])
 def signup():
     """User signup"""
-    data = request.json
-    name = data['name']
-    email = data['email']
-    password = data['password']
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+            
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not all([name, email, password]):
+            return jsonify({"error": "Missing required fields"}), 400
 
-    hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
+        hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
 
-    cur = mysql_db.connection.cursor()
-    cur.execute("SELECT * FROM login WHERE email=%s", (email,))
-    if cur.fetchone():
-        return jsonify({"error": "User already exists"}), 409
+        cur = mysql_db.connection.cursor()
+        cur.execute("SELECT * FROM login WHERE email=%s", (email,))
+        if cur.fetchone():
+            cur.close()
+            return jsonify({"error": "User already exists"}), 409
 
-    cur.execute(
-        "INSERT INTO login (name, email, password) VALUES (%s, %s, %s)",
-        (name, email, hashed_pw)
-    )
-    mysql_db.connection.commit()
-    cur.close()
+        cur.execute(
+            "INSERT INTO login (name, email, password) VALUES (%s, %s, %s)",
+            (name, email, hashed_pw)
+        )
+        mysql_db.connection.commit()
+        cur.close()
 
-    return jsonify({"message": "Signup successful"}), 201
+        return jsonify({"message": "Signup successful"}), 201
+    except Exception as e:
+        print(f"Signup error: {str(e)}")
+        return jsonify({"error": "An internal error occurred during signup"}), 500
 
 
 @app.route('/login', methods=['POST'])
 def login():
     """User login"""
-    data = request.json
-    email = data['email']
-    password = data['password']
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+            
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not all([email, password]):
+            return jsonify({"error": "Email and password are required"}), 400
 
-    cur = mysql_db.connection.cursor()
-    cur.execute(
-        "SELECT student_id, name, email, password FROM login WHERE email=%s",
-        (email,)
-    )
-    user = cur.fetchone()
-    cur.close()
+        if not mysql_db.connection:
+            print("Database connection not available")
+            return jsonify({"error": "Database connection error"}), 500
 
-    if not user:
-        return jsonify({"error": "Invalid email or password"}), 401
+        cur = mysql_db.connection.cursor()
+        cur.execute(
+            "SELECT student_id, name, email, password FROM login WHERE email=%s",
+            (email,)
+        )
+        user = cur.fetchone()
+        cur.close()
 
-    student_id, name, email, hashed_pw = user
+        if not user:
+            return jsonify({"error": "Invalid email or password"}), 401
 
-    if not bcrypt.check_password_hash(hashed_pw, password):
-        return jsonify({"error": "Invalid email or password"}), 401
+        student_id, name, email, hashed_pw = user
 
-    return jsonify({
-        "message": "Login successful",
-        "user": {
-            "student_id": student_id,
-            "name": name,
-            "email": email
-        }
-    }), 200
+        if not bcrypt.check_password_hash(hashed_pw, password):
+            return jsonify({"error": "Invalid email or password"}), 401
+
+        return jsonify({
+            "message": "Login successful",
+            "user": {
+                "student_id": student_id,
+                "name": name,
+                "email": email
+            }
+        }), 200
+    except Exception as e:
+        print(f"Login error: {str(e)}")
+        return jsonify({"error": "An internal error occurred during login"}), 500
 
 
 @app.route('/qgen')
