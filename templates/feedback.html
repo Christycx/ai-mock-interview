@@ -645,33 +645,6 @@
                             <li>Slow down speaking pace</li>
                         </ul>
                     </div>
-                    <hr class="divider" />
-                    <div class="metric-grid">
-                        <div class="metric-row">
-                            <div class="metric-label-txt">Pace:</div>
-                            <div class="prog-track">
-                                <div class="prog-fill" id="prog-pace" style="width:75%"></div>
-                            </div>
-                        </div>
-                        <div class="metric-row">
-                            <div class="metric-label-txt">Pitch:</div>
-                            <div class="prog-track">
-                                <div class="prog-fill" id="prog-pitch" style="width:70%"></div>
-                            </div>
-                        </div>
-                        <div class="metric-row">
-                            <div class="metric-label-txt">Energy:</div>
-                            <div class="prog-track">
-                                <div class="prog-fill" id="prog-energy" style="width:80%"></div>
-                            </div>
-                        </div>
-                        <div class="metric-row">
-                            <div class="metric-label-txt">Clarity:</div>
-                            <div class="prog-track">
-                                <div class="prog-fill" id="prog-clarity" style="width:85%"></div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -759,10 +732,6 @@
             document.getElementById('voiceStatus').textContent = d.voice.status;
             setList('voiceStrengths', d.voice.strengths);
             setList('voiceImprovements', d.voice.improvements);
-            setBar('prog-pace', d.voice.pace);
-            setBar('prog-pitch', d.voice.pitch);
-            setBar('prog-energy', d.voice.energy);
-            setBar('prog-clarity', d.voice.clarity);
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
