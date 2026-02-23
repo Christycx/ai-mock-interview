@@ -47,7 +47,7 @@ def get_feedback():
     
     # Fallback to default session if not provided
     if not session_id:
-        session_id = 'session_1771476339723_bat1ooco5'
+        session_id = 'session_1771766105079_sy41hzikg'
         print(f"⚠️ No session_id provided, using default: {session_id}")
     
     print(f"🔍 Fetching feedback for session: {session_id}")
@@ -109,19 +109,33 @@ def get_feedback():
                 if not val: return default
                 if isinstance(val, (list, tuple)): return list(val)
                 
-                # Check for JSON format
-                if val.startswith('[') and val.endswith(']'):
+                # CLEAN string - remove outer quotes if double quoted
+                if isinstance(val, str):
+                    val = val.strip()
+                    if val.startswith('"') and val.endswith('"'):
+                        val = val[1:-1].strip()
+
+                # CRITICAL: Prioritize JSON format detection before string splitting
+                if isinstance(val, str) and ((val.startswith('[') and val.endswith(']')) or (val.startswith('{') and val.endswith('}'))):
                     try:
                         res = json.loads(val)
-                        return res if isinstance(res, list) else [res]
+                        if isinstance(res, list): return res
+                        if isinstance(res, dict): return [str(v) for v in res.values()]
+                        return [str(res)]
                     except:
                         pass
                 
-                # Try pipe-separated first, then comma-separated
-                if '|' in val:
-                    items = [i.strip() for i in val.split('|') if i.strip()]
+                # Fallback to string splitting
+                if isinstance(val, str):
+                    # Check for separators
+                    if '|' in val:
+                        items = [i.strip() for i in val.split('|') if i.strip()]
+                    elif ',' in val:
+                        items = [i.strip() for i in val.split(',') if i.strip()]
+                    else:
+                        items = [val.strip()]
                 else:
-                    items = [i.strip() for i in val.split(',') if i.strip()]
+                    items = [str(val)]
                 
                 # Clean up items (remove leading numbers, bullets, etc.)
                 cleaned = []
@@ -146,8 +160,10 @@ def get_feedback():
             if db_video_path and not is_skipped:
                 video_url = db_video_path.replace('\\', '/')
             
-            # Prioritize response column from content_feedback as requested
-            transcript = "question was skipped" if is_skipped else cf.get('response', resp_item.get('transcript', ''))
+            # Prioritize response column from content_feedback, then responses table
+            transcript = cf.get('response', resp_item.get('transcript', ''))
+            if not transcript and is_skipped:
+                transcript = "question was skipped"
 
             feedback_data[q_num_label] = {
                 "q": q_text,
@@ -155,29 +171,32 @@ def get_feedback():
                 "video_path": video_url,
                 "is_skipped": is_skipped,
                 "content": {
-                    "status": "Excellent" if parse_metric(cf.get('overall'), 0) >= 8 else "Good" if parse_metric(cf.get('overall'), 0) >= 6 else "Needs Improvement",
-                    "strengths": parse_list(cf.get('strengths'), ["Good professional effort"]),
-                    "improvements": parse_list(cf.get('improvements'), ["Continue practicing key concepts"]),
+                    "status": "Excellent" if parse_metric(cf.get('overall'), 0) >= 8 else "Good" if parse_metric(cf.get('overall'), 0) >= 6 else "Needs Improvement" if cf.get('overall') else "Not Evaluated",
+                    # User: strengths column in content_feedback
+                    "strengths": parse_list(cf.get('strengths'), []),
+                    # User: improvements column in content_feedback
+                    "improvements": parse_list(cf.get('improvements'), []),
                     "sample": cf.get('sample_answer', "")
                 },
                 "facial": {
-                    "status": "Excellent" if ff.get('strength') else "Good",
-                    "eye": parse_metric(ff.get('eye_contact'), 70),
-                    "expr": parse_metric(ff.get('touch'), 75), 
-                    "posture": parse_metric(ff.get('posture_quality'), 70),
-                    "engagement": parse_metric(ff.get('alignment'), 65),
-                    "strengths": parse_list(ff.get('strength'), ["Maintain steady eye contact"]),
-                    "improvements": parse_list(ff.get('improvements'), ["Stay focused on the camera"])
+                    "status": "Excellent" if ff.get('strength') else "Good" if ff.get('eye_contact') else "Not Evaluated",
+                    "eye": parse_metric(ff.get('eye_contact'), 0),
+                    "expr": parse_metric(ff.get('touch'), 0), 
+                    "posture": parse_metric(ff.get('posture_quality'), 0),
+                    "engagement": parse_metric(ff.get('alignment'), 0),
+                    # User requested 'face_analysis' table (missing), using face_feedback as best fallback
+                    "strengths": parse_list(ff.get('strength'), []),
+                    "improvements": parse_list(ff.get('improvements'), [])
                 },
                 "voice": {
-                    "status": "Excellent" if vf.get('overall_score', 0) >= 80 else "Good",
-                    "pace": parse_metric(vf.get('pace'), 75),
-                    "pitch": parse_metric(vf.get('pitch'), 70),
-                    "energy": parse_metric(vf.get('energy'), 80),
-                    "clarity": parse_metric(vf.get('clarity'), 85),
-                    # Fetch strengths and improvements from face_feedback as explicitly requested
-                    "strengths": parse_list(ff.get('strength'), ["Clear articulation"]),
-                    "improvements": parse_list(ff.get('improvements'), ["Reduce filler words"])
+                    "status": "Excellent" if vf.get('overall_score', 0) >= 80 else "Good" if vf.get('overall_score') else "Not Evaluated",
+                    "pace": parse_metric(vf.get('pace'), 0),
+                    "pitch": parse_metric(vf.get('pitch'), 0),
+                    "energy": parse_metric(vf.get('energy'), 0),
+                    "clarity": parse_metric(vf.get('clarity'), 0),
+                    # User explicitly requested strengths/improvements from face_feedback table for Voice
+                    "strengths": parse_list(ff.get('strength'), []),
+                    "improvements": parse_list(ff.get('improvements'), [])
                 }
             }
 
@@ -198,6 +217,6 @@ if __name__ == '__main__':
     print("\n" + "="*50)
     print("🚀  Interview Feedback Server (DB Linked)")
     print("="*50)
-    print("Feedback Page : http://localhost:5000/feedback")
+    print("Feedback Page : http://localhost:5001/feedback")
     print("="*50 + "\n")
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
