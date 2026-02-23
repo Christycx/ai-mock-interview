@@ -189,10 +189,6 @@ def get_feedback():
                 },
                 "voice": {
                     "status": "Excellent" if vf.get('overall_score', 0) >= 80 else "Good" if vf.get('overall_score') else "Not Evaluated",
-                    "pace": parse_metric(vf.get('pace'), 0),
-                    "pitch": parse_metric(vf.get('pitch'), 0),
-                    "energy": parse_metric(vf.get('energy'), 0),
-                    "clarity": parse_metric(vf.get('clarity'), 0),
                     # Data correctly fetched from voice_feedback table (vf)
                     "strengths": parse_list(vf.get('strengths'), []),
                     "improvements": parse_list(vf.get('improvements'), [])
