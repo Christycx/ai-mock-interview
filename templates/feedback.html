@@ -253,6 +253,41 @@
             }
         }
 
+        /* FACIAL METRIC BOXES */
+        .facial-metrics-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .f-box {
+            flex: 1;
+            min-width: 160px;
+            background: #FFF8F0;
+            border: 1px solid #FFE0B2;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .f-box-h {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #E65100;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .f-box-c {
+            font-size: 0.88rem;
+            color: #4E342E;
+            line-height: 1.5;
+        }
+
         /* ANALYSIS CARD */
         .a-card {
             background: var(--card);
@@ -550,30 +585,22 @@
                     <div class="status-pill" id="facialStatus">Needs Improvement</div>
                 </div>
                 <div class="a-body">
-                    <div>
-                        <div class="metric-row">
-                            <div class="metric-label-txt">Eye Contact:</div>
-                            <div class="prog-track">
-                                <div class="prog-fill prog-red" id="prog-eye" style="width:40%"></div>
-                            </div>
+                    <div class="facial-metrics-row">
+                        <div class="f-box">
+                            <div class="f-box-h">Posture</div>
+                            <div class="f-box-c" id="f-posture">Loading...</div>
                         </div>
-                        <div class="metric-row">
-                            <div class="metric-label-txt">Expression:</div>
-                            <div class="prog-track">
-                                <div class="prog-fill prog-green" id="prog-expr" style="width:75%"></div>
-                            </div>
+                        <div class="f-box">
+                            <div class="f-box-h">Alignment</div>
+                            <div class="f-box-c" id="f-alignment">Loading...</div>
                         </div>
-                        <div class="metric-row">
-                            <div class="metric-label-txt">Posture:</div>
-                            <div class="prog-track">
-                                <div class="prog-fill prog-green" id="prog-post" style="width:70%"></div>
-                            </div>
+                        <div class="f-box">
+                            <div class="f-box-h">Eye Contact</div>
+                            <div class="f-box-c" id="f-eye">Loading...</div>
                         </div>
-                        <div class="metric-row">
-                            <div class="metric-label-txt">Engagement:</div>
-                            <div class="prog-track">
-                                <div class="prog-fill prog-yellow" id="prog-eng" style="width:60%"></div>
-                            </div>
+                        <div class="f-box">
+                            <div class="f-box-h">Touch on Face</div>
+                            <div class="f-box-c" id="f-touch">Loading...</div>
                         </div>
                     </div>
                     <hr class="divider" />
@@ -720,10 +747,11 @@
 
             // Facial Analysis
             document.getElementById('facialStatus').textContent = d.facial.status;
-            setBar('prog-eye', d.facial.eye);
-            setBar('prog-expr', d.facial.expr);
-            setBar('prog-post', d.facial.posture);
-            setBar('prog-eng', d.facial.engagement);
+            document.getElementById('f-posture').textContent = d.facial.posture_feedback || "None";
+            document.getElementById('f-alignment').textContent = d.facial.alignment_feedback || "None";
+            document.getElementById('f-eye').textContent = d.facial.eyecontact_feedback || "None";
+            document.getElementById('f-touch').textContent = d.facial.touch_feedback || "None";
+
             setList('facialStrengths', d.facial.strengths);
             setList('facialImprovements', d.facial.improvements);
 
