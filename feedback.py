@@ -194,9 +194,9 @@ def get_feedback():
                     "pitch": parse_metric(vf.get('pitch'), 0),
                     "energy": parse_metric(vf.get('energy'), 0),
                     "clarity": parse_metric(vf.get('clarity'), 0),
-                    # User explicitly requested strengths/improvements from face_feedback table for Voice
-                    "strengths": parse_list(ff.get('strength'), []),
-                    "improvements": parse_list(ff.get('improvements'), [])
+                    # Data correctly fetched from voice_feedback table (vf)
+                    "strengths": parse_list(vf.get('strengths'), []),
+                    "improvements": parse_list(vf.get('improvements'), [])
                 }
             }
 
