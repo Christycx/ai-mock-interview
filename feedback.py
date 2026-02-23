@@ -180,11 +180,10 @@ def get_feedback():
                 },
                 "facial": {
                     "status": "Excellent" if ff.get('strength') else "Good" if ff.get('eye_contact') else "Not Evaluated",
-                    "eye": parse_metric(ff.get('eye_contact'), 0),
-                    "expr": parse_metric(ff.get('touch'), 0), 
-                    "posture": parse_metric(ff.get('posture_quality'), 0),
-                    "engagement": parse_metric(ff.get('alignment'), 0),
-                    # User requested 'face_analysis' table (missing), using face_feedback as best fallback
+                    "posture_feedback": ff.get('posture_feedback', ''),
+                    "alignment_feedback": ff.get('alignment_feedback', ''),
+                    "eyecontact_feedback": ff.get('eyecontact_feedback', ''),
+                    "touch_feedback": ff.get('touch_feedback', ''),
                     "strengths": parse_list(ff.get('strength'), []),
                     "improvements": parse_list(ff.get('improvements'), [])
                 },
