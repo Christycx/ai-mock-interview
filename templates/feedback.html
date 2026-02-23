@@ -2,787 +2,787 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interview Feedback</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap"
-    rel="stylesheet" />
-  <style>
-    :root {
-      --blue: #1565C0;
-      --blue-lt: #E3F0FF;
-      --orange: #E65100;
-      --orange-lt: #FFF3E0;
-      --green: #2E7D32;
-      --green-lt: #E8F5E9;
-      --bg: #F4F6F9;
-      --card: #FFFFFF;
-      --border: #E0E4EA;
-      --text: #1A1A2E;
-      --muted: #6B7280;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 24px 20px 60px;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 28px;
-    }
-
-    .topbar-title {
-      font-family: 'Sora', sans-serif;
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.02em;
-    }
-
-    .topbar-title span {
-      color: var(--blue);
-    }
-
-    .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: white;
-      border: 1.5px solid var(--border);
-      color: var(--blue);
-      font-size: 0.88rem;
-      font-weight: 600;
-      padding: 8px 18px;
-      border-radius: 8px;
-      text-decoration: none;
-      transition: all .2s;
-    }
-
-    .back-btn:hover {
-      background: var(--blue-lt);
-      border-color: var(--blue);
-    }
-
-    /* TABS */
-    .tabs-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-    }
-
-    .q-tab {
-      min-width: 60px;
-      padding: 10px 18px;
-      border-radius: 10px 10px 0 0;
-      border: none;
-      color: white;
-      font-family: 'Sora', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      position: relative;
-      transition: transform .18s, box-shadow .18s;
-    }
-
-    .q-tab:nth-child(1) {
-      background: #2E7D32;
-    }
-
-    .q-tab:nth-child(2) {
-      background: #E65100;
-    }
-
-    .q-tab:nth-child(3) {
-      background: #C62828;
-    }
-
-    .q-tab:nth-child(4) {
-      background: #F9A825;
-      color: #333;
-    }
-
-    .q-tab:nth-child(5) {
-      background: #558B2F;
-    }
-
-    .q-tab:nth-child(6) {
-      background: #827717;
-    }
-
-    .q-tab:nth-child(7) {
-      background: #BF360C;
-    }
-
-    .q-tab:nth-child(8) {
-      background: #00695C;
-    }
-
-    .q-tab:nth-child(9) {
-      background: #D84315;
-    }
-
-    .q-tab:nth-child(10) {
-      background: #33691E;
-    }
-
-    .q-tab:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
-    }
-
-    .q-tab.active {
-      transform: translateY(-6px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, .22);
-    }
-
-    /* SKIPPED TAB */
-    .q-tab.skipped {
-      background: #9E9E9E !important;
-      color: #FFF !important;
-      opacity: 0.7;
-    }
-
-    .q-tab.skipped.active {
-      opacity: 1;
-      border: 3px solid #616161;
-    }
-
-    /* SECTION CARD */
-    .section-card {
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      padding: 22px 26px;
-      margin-bottom: 18px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
-    }
-
-    .question-line {
-      font-size: 1.05rem;
-      color: var(--text);
-    }
-
-    .question-line strong {
-      font-weight: 700;
-      margin-right: 6px;
-    }
-
-    .response-label {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 14px;
-    }
-
-    /* VIDEO */
-    .video-wrap {
-      width: 340px;
-      border-radius: 10px;
-      overflow: hidden;
-      background: #111;
-      margin-bottom: 16px;
-    }
-
-    .video-placeholder {
-      width: 100%;
-      height: 220px;
-      background: linear-gradient(135deg, #1c2b4a 0%, #253d5b 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      color: rgba(255, 255, 255, .7);
-      font-size: 0.85rem;
-    }
-
-    .play-btn {
-      width: 52px;
-      height: 52px;
-      background: rgba(255, 255, 255, .2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      border: 2px solid rgba(255, 255, 255, .3);
-      cursor: pointer;
-    }
-
-    /* TRANSCRIPT */
-    .transcript-box {
-      background: #FAFBFC;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 18px;
-      font-size: 0.97rem;
-      line-height: 1.75;
-      color: #444;
-    }
-
-    /* ANALYSIS GRID */
-    .analysis-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 18px;
-    }
-
-    @media(max-width:1100px) {
-      .analysis-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    @media(max-width:720px) {
-      .analysis-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* ANALYSIS CARD */
-    .a-card {
-      background: var(--card);
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1.5px solid var(--border);
-      box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .a-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 18px;
-      color: white;
-    }
-
-    .a-header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-family: 'Sora', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-    }
-
-    .a-header-icon {
-      width: 32px;
-      height: 32px;
-      background: rgba(255, 255, 255, .2);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-    }
-
-    .status-pill {
-      background: rgba(255, 255, 255, .25);
-      padding: 4px 14px;
-      border-radius: 20px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .content-card .a-header {
-      background: #1565C0;
-    }
-
-    .facial-card .a-header {
-      background: #E65100;
-    }
-
-    .voice-card .a-header {
-      background: #2E7D32;
-    }
-
-    .a-body {
-      padding: 18px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    /* SUB HEADINGS */
-    .sub-heading {
-      display: inline-block;
-      font-size: 0.85rem;
-      font-weight: 700;
-      padding: 5px 14px;
-      border-radius: 20px;
-      margin-bottom: 10px;
-    }
-
-    .content-card .sub-heading {
-      background: #E3F0FF;
-      color: #1565C0;
-    }
-
-    .facial-card .sub-heading {
-      background: #FFF3E0;
-      color: #E65100;
-    }
-
-    .voice-card .sub-heading {
-      background: #E8F5E9;
-      color: #2E7D32;
-    }
-
-    /* BULLET LIST */
-    .bullet-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .bullet-list li {
-      font-size: 0.93rem;
-      color: #555;
-      padding-left: 16px;
-      position: relative;
-      line-height: 1.5;
-    }
-
-    .bullet-list li::before {
-      content: '•';
-      position: absolute;
-      left: 0;
-      font-size: 1.1rem;
-      line-height: 1.3;
-    }
-
-    .content-card .bullet-list li::before {
-      color: #1565C0;
-    }
-
-    .voice-card .bullet-list li::before {
-      color: #2E7D32;
-    }
-
-    /* SAMPLE ANSWER */
-    .sample-box {
-      background: #F8FBFF;
-      border: 1.5px solid #C5D8F5;
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: 0.91rem;
-      color: #444;
-      line-height: 1.7;
-    }
-
-    /* PROGRESS BARS */
-    .metric-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .metric-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .metric-label-txt {
-      width: 110px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #444;
-      flex-shrink: 0;
-    }
-
-    .prog-track {
-      flex: 1;
-      height: 18px;
-      background: #E8ECF0;
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
-    .prog-fill {
-      height: 100%;
-      border-radius: 20px;
-      transition: width 0.6s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    .prog-red {
-      background: linear-gradient(90deg, #EF5350, #EF9A9A);
-    }
-
-    .prog-orange {
-      background: linear-gradient(90deg, #FF9800, #FFB74D);
-    }
-
-    .prog-yellow {
-      background: linear-gradient(90deg, #FDD835, #FFF176);
-    }
-
-    .prog-green {
-      background: linear-gradient(90deg, #43A047, #81C784);
-    }
-
-    .prog-teal {
-      background: linear-gradient(90deg, #00897B, #4DB6AC);
-    }
-
-    /* SUGGESTION BOX */
-    .suggestion-box {
-      background: #FFF8F0;
-      border-left: 3px solid #FF9800;
-      border-radius: 0 6px 6px 0;
-      padding: 10px 14px;
-      font-size: 0.91rem;
-      color: #555;
-      line-height: 1.6;
-    }
-
-    .divider {
-      border: none;
-      border-top: 1.5px solid var(--border);
-      margin: 2px 0;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interview Feedback</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --blue: #1565C0;
+            --blue-lt: #E3F0FF;
+            --orange: #E65100;
+            --orange-lt: #FFF3E0;
+            --green: #2E7D32;
+            --green-lt: #E8F5E9;
+            --bg: #F4F6F9;
+            --card: #FFFFFF;
+            --border: #E0E4EA;
+            --text: #1A1A2E;
+            --muted: #6B7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px 20px 60px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .topbar-title {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+
+        .topbar-title span {
+            color: var(--blue);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            border: 1.5px solid var(--border);
+            color: var(--blue);
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all .2s;
+        }
+
+        .back-btn:hover {
+            background: var(--blue-lt);
+            border-color: var(--blue);
+        }
+
+        /* TABS */
+        .tabs-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .q-tab {
+            min-width: 60px;
+            padding: 10px 18px;
+            border-radius: 10px 10px 0 0;
+            border: none;
+            color: white;
+            font-family: 'Sora', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            position: relative;
+            transition: transform .18s, box-shadow .18s;
+        }
+
+        .q-tab:nth-child(1) {
+            background: #2E7D32;
+        }
+
+        .q-tab:nth-child(2) {
+            background: #E65100;
+        }
+
+        .q-tab:nth-child(3) {
+            background: #C62828;
+        }
+
+        .q-tab:nth-child(4) {
+            background: #F9A825;
+            color: #333;
+        }
+
+        .q-tab:nth-child(5) {
+            background: #558B2F;
+        }
+
+        .q-tab:nth-child(6) {
+            background: #827717;
+        }
+
+        .q-tab:nth-child(7) {
+            background: #BF360C;
+        }
+
+        .q-tab:nth-child(8) {
+            background: #00695C;
+        }
+
+        .q-tab:nth-child(9) {
+            background: #D84315;
+        }
+
+        .q-tab:nth-child(10) {
+            background: #33691E;
+        }
+
+        .q-tab:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+        }
+
+        .q-tab.active {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .22);
+        }
+
+        /* SKIPPED TAB */
+        .q-tab.skipped {
+            background: #9E9E9E !important;
+            color: #FFF !important;
+            opacity: 0.7;
+        }
+
+        .q-tab.skipped.active {
+            opacity: 1;
+            border: 3px solid #616161;
+        }
+
+        /* SECTION CARD */
+        .section-card {
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 22px 26px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+        }
+
+        .question-line {
+            font-size: 1.05rem;
+            color: var(--text);
+        }
+
+        .question-line strong {
+            font-weight: 700;
+            margin-right: 6px;
+        }
+
+        .response-label {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 14px;
+        }
+
+        /* VIDEO */
+        .video-wrap {
+            width: 340px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #111;
+            margin-bottom: 16px;
+        }
+
+        .video-placeholder {
+            width: 100%;
+            height: 220px;
+            background: linear-gradient(135deg, #1c2b4a 0%, #253d5b 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: rgba(255, 255, 255, .7);
+            font-size: 0.85rem;
+        }
+
+        .play-btn {
+            width: 52px;
+            height: 52px;
+            background: rgba(255, 255, 255, .2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            border: 2px solid rgba(255, 255, 255, .3);
+            cursor: pointer;
+        }
+
+        /* TRANSCRIPT */
+        .transcript-box {
+            background: #FAFBFC;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-size: 0.97rem;
+            line-height: 1.75;
+            color: #444;
+        }
+
+        /* ANALYSIS GRID */
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 18px;
+        }
+
+        @media(max-width:1100px) {
+            .analysis-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media(max-width:720px) {
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ANALYSIS CARD */
+        .a-card {
+            background: var(--card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1.5px solid var(--border);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .a-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            color: white;
+        }
+
+        .a-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Sora', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .a-header-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, .2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .status-pill {
+            background: rgba(255, 255, 255, .25);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .content-card .a-header {
+            background: #1565C0;
+        }
+
+        .facial-card .a-header {
+            background: #E65100;
+        }
+
+        .voice-card .a-header {
+            background: #2E7D32;
+        }
+
+        .a-body {
+            padding: 18px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* SUB HEADINGS */
+        .sub-heading {
+            display: inline-block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 5px 14px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        .content-card .sub-heading {
+            background: #E3F0FF;
+            color: #1565C0;
+        }
+
+        .facial-card .sub-heading {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+
+        .voice-card .sub-heading {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        /* BULLET LIST */
+        .bullet-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .bullet-list li {
+            font-size: 0.93rem;
+            color: #555;
+            padding-left: 16px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .bullet-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            font-size: 1.1rem;
+            line-height: 1.3;
+        }
+
+        .content-card .bullet-list li::before {
+            color: #1565C0;
+        }
+
+        .voice-card .bullet-list li::before {
+            color: #2E7D32;
+        }
+
+        /* SAMPLE ANSWER */
+        .sample-box {
+            background: #F8FBFF;
+            border: 1.5px solid #C5D8F5;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 0.91rem;
+            color: #444;
+            line-height: 1.7;
+        }
+
+        /* PROGRESS BARS */
+        .metric-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .metric-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .metric-label-txt {
+            width: 110px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #444;
+            flex-shrink: 0;
+        }
+
+        .prog-track {
+            flex: 1;
+            height: 18px;
+            background: #E8ECF0;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .prog-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.6s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .prog-red {
+            background: linear-gradient(90deg, #EF5350, #EF9A9A);
+        }
+
+        .prog-orange {
+            background: linear-gradient(90deg, #FF9800, #FFB74D);
+        }
+
+        .prog-yellow {
+            background: linear-gradient(90deg, #FDD835, #FFF176);
+        }
+
+        .prog-green {
+            background: linear-gradient(90deg, #43A047, #81C784);
+        }
+
+        .prog-teal {
+            background: linear-gradient(90deg, #00897B, #4DB6AC);
+        }
+
+        /* SUGGESTION BOX */
+        .suggestion-box {
+            background: #FFF8F0;
+            border-left: 3px solid #FF9800;
+            border-radius: 0 6px 6px 0;
+            padding: 10px 14px;
+            font-size: 0.91rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1.5px solid var(--border);
+            margin: 2px 0;
+        }
+    </style>
 </head>
 
 <body>
-  <div style="max-width:1400px; margin:0 auto;">
+    <div style="max-width:1400px; margin:0 auto;">
 
-    <div class="topbar">
-      <div class="topbar-title">🎯 Interview Feedback</div>
-      <a href="/" class="back-btn">← Back to Interview</a>
+        <div class="topbar">
+            <div class="topbar-title">🎯 Interview Feedback</div>
+            <a href="/" class="back-btn">← Back to Interview</a>
+        </div>
+
+        <!-- QUESTION TABS -->
+        <div class="tabs-row" id="tabsRow">
+            <!-- Tabs will be injected here dynamically -->
+        </div>
+
+        <!-- QUESTION LINE -->
+        <div class="section-card" style="padding:16px 24px;">
+            <div class="question-line">
+                <strong>Question:</strong>
+                <span id="qText">Explain your final year project.</span>
+            </div>
+        </div>
+
+        <!-- YOUR RESPONSE -->
+        <div class="section-card">
+            <div class="response-label">Your Response:</div>
+            <div class="video-wrap" id="videoContainer">
+                <video id="responseVideo" controls style="width:100%; height:auto; display:none;">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-placeholder" id="videoPlaceholder">
+                    <div class="play-btn">▶</div>
+                    <span>Video Response</span>
+                </div>
+            </div>
+            <div class="transcript-box" id="transcript">
+                Interactive transcript will appear here...
+            </div>
+        </div>
+
+        <!-- SAMPLE ANSWER SECTION -->
+        <div class="section-card" id="sampleAnswerSection">
+            <div class="response-label">Sample Answer:</div>
+            <div class="transcript-box" style="background:#F0F7FF; border-color:#BCD8F5;" id="sampleAnswerDisp">
+                Suggested sample answer will appear here...
+            </div>
+        </div>
+
+        <!-- ANALYSIS CARDS -->
+        <div class="analysis-grid">
+
+            <!-- CONTENT ANALYSIS -->
+            <div class="a-card content-card">
+                <div class="a-header">
+                    <div class="a-header-left">
+                        <div class="a-header-icon">📝</div>
+                        Content Analysis
+                    </div>
+                    <div class="status-pill" id="contentStatus">Good</div>
+                </div>
+                <div class="a-body">
+                    <div>
+                        <div class="sub-heading">Strengths</div>
+                        <ul class="bullet-list" id="contentStrengths">
+                            <li>Well-explained project goal</li>
+                            <li>Clear structure of the answer</li>
+                        </ul>
+                    </div>
+                    <hr class="divider" />
+                    <div>
+                        <div class="sub-heading">Areas to Improve</div>
+                        <ul class="bullet-list" id="contentImprovements">
+                            <li>Include more technical details</li>
+                            <li>Mention the specific tools used</li>
+                        </ul>
+                    </div>
+                    <hr class="divider" />
+                </div>
+            </div>
+
+            <!-- FACIAL ANALYSIS -->
+            <div class="a-card facial-card">
+                <div class="a-header">
+                    <div class="a-header-left">
+                        <div class="a-header-icon">😊</div>
+                        Facial Analysis
+                    </div>
+                    <div class="status-pill" id="facialStatus">Needs Improvement</div>
+                </div>
+                <div class="a-body">
+                    <div>
+                        <div class="metric-row">
+                            <div class="metric-label-txt">Eye Contact:</div>
+                            <div class="prog-track">
+                                <div class="prog-fill prog-red" id="prog-eye" style="width:40%"></div>
+                            </div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label-txt">Expression:</div>
+                            <div class="prog-track">
+                                <div class="prog-fill prog-green" id="prog-expr" style="width:75%"></div>
+                            </div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label-txt">Posture:</div>
+                            <div class="prog-track">
+                                <div class="prog-fill prog-green" id="prog-post" style="width:70%"></div>
+                            </div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label-txt">Engagement:</div>
+                            <div class="prog-track">
+                                <div class="prog-fill prog-yellow" id="prog-eng" style="width:60%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="divider" />
+                    <div>
+                        <div class="sub-heading">Strengths</div>
+                        <ul class="bullet-list" id="facialStrengths">
+                            <li>Strong eye contact maintained</li>
+                        </ul>
+                    </div>
+                    <hr class="divider" />
+                    <div>
+                        <div class="sub-heading">Areas to Improve</div>
+                        <ul class="bullet-list" id="facialImprovements">
+                            <li>Try to sit more upright</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VOICE ANALYSIS -->
+            <div class="a-card voice-card">
+                <div class="a-header">
+                    <div class="a-header-left">
+                        <div class="a-header-icon">🎤</div>
+                        Voice Analysis
+                    </div>
+                    <div class="status-pill" id="voiceStatus">Excellent</div>
+                </div>
+                <div class="a-body">
+                    <div>
+                        <div class="sub-heading">Strengths</div>
+                        <ul class="bullet-list" id="voiceStrengths">
+                            <li>Clear pronunciation</li>
+                            <li>Confident tone</li>
+                        </ul>
+                    </div>
+                    <hr class="divider" />
+                    <div>
+                        <div class="sub-heading">Areas to Improve</div>
+                        <ul class="bullet-list" id="voiceImprovements">
+                            <li>Reduce filler words</li>
+                            <li>Slow down speaking pace</li>
+                        </ul>
+                    </div>
+                    <hr class="divider" />
+                    <div class="metric-grid">
+                        <div class="metric-row">
+                            <div class="metric-label-txt">Pace:</div>
+                            <div class="prog-track">
+                                <div class="prog-fill" id="prog-pace" style="width:75%"></div>
+                            </div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label-txt">Pitch:</div>
+                            <div class="prog-track">
+                                <div class="prog-fill" id="prog-pitch" style="width:70%"></div>
+                            </div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label-txt">Energy:</div>
+                            <div class="prog-track">
+                                <div class="prog-fill" id="prog-energy" style="width:80%"></div>
+                            </div>
+                        </div>
+                        <div class="metric-row">
+                            <div class="metric-label-txt">Clarity:</div>
+                            <div class="prog-track">
+                                <div class="prog-fill" id="prog-clarity" style="width:85%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /analysis-grid -->
     </div>
 
-    <!-- QUESTION TABS -->
-    <div class="tabs-row" id="tabsRow">
-      <!-- Tabs will be injected here dynamically -->
-    </div>
+    <script>
+        /* ================================================================
+           DATA OBJECT — will be filled from the server
+        ================================================================ */
+        const DATA = {};
 
-    <!-- QUESTION LINE -->
-    <div class="section-card" style="padding:16px 24px;">
-      <div class="question-line">
-        <strong>Question:</strong>
-        <span id="qText">Explain your final year project.</span>
-      </div>
-    </div>
-
-    <!-- YOUR RESPONSE -->
-    <div class="section-card">
-      <div class="response-label">Your Response:</div>
-      <div class="video-wrap" id="videoContainer">
-        <video id="responseVideo" controls style="width:100%; height:auto; display:none;">
-          Your browser does not support the video tag.
-        </video>
-        <div class="video-placeholder" id="videoPlaceholder">
-          <div class="play-btn">▶</div>
-          <span>Video Response</span>
-        </div>
-      </div>
-      <div class="transcript-box" id="transcript">
-        Interactive transcript will appear here...
-      </div>
-    </div>
-
-    <!-- SAMPLE ANSWER SECTION -->
-    <div class="section-card" id="sampleAnswerSection">
-      <div class="response-label">Sample Answer:</div>
-      <div class="transcript-box" style="background:#F0F7FF; border-color:#BCD8F5;" id="sampleAnswerDisp">
-        Suggested sample answer will appear here...
-      </div>
-    </div>
-
-    <!-- ANALYSIS CARDS -->
-    <div class="analysis-grid">
-
-      <!-- CONTENT ANALYSIS -->
-      <div class="a-card content-card">
-        <div class="a-header">
-          <div class="a-header-left">
-            <div class="a-header-icon">📝</div>
-            Content Analysis
-          </div>
-          <div class="status-pill" id="contentStatus">Good</div>
-        </div>
-        <div class="a-body">
-          <div>
-            <div class="sub-heading">Strengths</div>
-            <ul class="bullet-list" id="contentStrengths">
-              <li>Well-explained project goal</li>
-              <li>Clear structure of the answer</li>
-            </ul>
-          </div>
-          <hr class="divider" />
-          <div>
-            <div class="sub-heading">Areas to Improve</div>
-            <ul class="bullet-list" id="contentImprovements">
-              <li>Include more technical details</li>
-              <li>Mention the specific tools used</li>
-            </ul>
-          </div>
-          <hr class="divider" />
-        </div>
-      </div>
-
-      <!-- FACIAL ANALYSIS -->
-      <div class="a-card facial-card">
-        <div class="a-header">
-          <div class="a-header-left">
-            <div class="a-header-icon">😊</div>
-            Facial Analysis
-          </div>
-          <div class="status-pill" id="facialStatus">Needs Improvement</div>
-        </div>
-        <div class="a-body">
-          <div>
-            <div class="metric-row">
-              <div class="metric-label-txt">Eye Contact:</div>
-              <div class="prog-track">
-                <div class="prog-fill prog-red" id="prog-eye" style="width:40%"></div>
-              </div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label-txt">Expression:</div>
-              <div class="prog-track">
-                <div class="prog-fill prog-green" id="prog-expr" style="width:75%"></div>
-              </div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label-txt">Posture:</div>
-              <div class="prog-track">
-                <div class="prog-fill prog-green" id="prog-post" style="width:70%"></div>
-              </div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label-txt">Engagement:</div>
-              <div class="prog-track">
-                <div class="prog-fill prog-yellow" id="prog-eng" style="width:60%"></div>
-              </div>
-            </div>
-          </div>
-          <hr class="divider" />
-          <div>
-            <div class="sub-heading">Strengths</div>
-            <ul class="bullet-list" id="facialStrengths">
-              <li>Strong eye contact maintained</li>
-            </ul>
-          </div>
-          <hr class="divider" />
-          <div>
-            <div class="sub-heading">Areas to Improve</div>
-            <ul class="bullet-list" id="facialImprovements">
-              <li>Try to sit more upright</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- VOICE ANALYSIS -->
-      <div class="a-card voice-card">
-        <div class="a-header">
-          <div class="a-header-left">
-            <div class="a-header-icon">🎤</div>
-            Voice Analysis
-          </div>
-          <div class="status-pill" id="voiceStatus">Excellent</div>
-        </div>
-        <div class="a-body">
-          <div>
-            <div class="sub-heading">Strengths</div>
-            <ul class="bullet-list" id="voiceStrengths">
-              <li>Clear pronunciation</li>
-              <li>Confident tone</li>
-            </ul>
-          </div>
-          <hr class="divider" />
-          <div>
-            <div class="sub-heading">Areas to Improve</div>
-            <ul class="bullet-list" id="voiceImprovements">
-              <li>Reduce filler words</li>
-              <li>Slow down speaking pace</li>
-            </ul>
-          </div>
-          <hr class="divider" />
-          <div class="metric-grid">
-            <div class="metric-row">
-              <div class="metric-label-txt">Pace:</div>
-              <div class="prog-track">
-                <div class="prog-fill" id="prog-pace" style="width:75%"></div>
-              </div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label-txt">Pitch:</div>
-              <div class="prog-track">
-                <div class="prog-fill" id="prog-pitch" style="width:70%"></div>
-              </div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label-txt">Energy:</div>
-              <div class="prog-track">
-                <div class="prog-fill" id="prog-energy" style="width:80%"></div>
-              </div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label-txt">Clarity:</div>
-              <div class="prog-track">
-                <div class="prog-fill" id="prog-clarity" style="width:85%"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /analysis-grid -->
-  </div>
-
-  <script>
-    /* ================================================================
-       DATA OBJECT — will be filled from the server
-    ================================================================ */
-    const DATA = {};
-
-    /* HELPERS */
-    function colorClass(v) {
-      if (v >= 80) return 'prog-green';
-      if (v >= 65) return 'prog-teal';
-      if (v >= 50) return 'prog-yellow';
-      if (v >= 35) return 'prog-orange';
-      return 'prog-red';
-    }
-    function setBar(id, pct) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.style.width = pct + '%';
-      el.className = 'prog-fill ' + colorClass(pct);
-    }
-    function setList(id, items) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.innerHTML = (items || []).map(t => `<li>${t}</li>`).join('');
-    }
-
-    /* MAIN LOADER */
-    function loadQ(n, btn) {
-      const d = DATA[String(n)];
-      if (!d) return;
-
-      // Update active tab UI
-      document.querySelectorAll('.q-tab').forEach(t => t.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-
-      // Update Question and Transcript
-      document.getElementById('qText').textContent = d.q;
-      document.getElementById('transcript').textContent = d.transcript || "No transcript available.";
-
-      // Update Video
-      const videoWrap = document.getElementById('videoContainer');
-      const videoObj = document.getElementById('responseVideo');
-      const placeholder = document.getElementById('videoPlaceholder');
-
-      if (d.is_skipped) {
-        videoWrap.style.display = 'none';
-      } else {
-        videoWrap.style.display = 'block';
-        if (d.video_path) {
-          videoObj.src = d.video_path.startsWith('/') ? d.video_path : '/' + d.video_path;
-          videoObj.style.display = 'block';
-          placeholder.style.display = 'none';
-        } else {
-          videoObj.style.display = 'none';
-          placeholder.style.display = 'flex';
+        /* HELPERS */
+        function colorClass(v) {
+            if (v >= 80) return 'prog-green';
+            if (v >= 65) return 'prog-teal';
+            if (v >= 50) return 'prog-yellow';
+            if (v >= 35) return 'prog-orange';
+            return 'prog-red';
         }
-      }
+        function setBar(id, pct) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.style.width = pct + '%';
+            el.className = 'prog-fill ' + colorClass(pct);
+        }
+        function setList(id, items) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = (items || []).map(t => `<li>${t}</li>`).join('');
+        }
 
-      // Content Analysis
-      document.getElementById('contentStatus').textContent = d.content.status;
-      setList('contentStrengths', d.content.strengths);
-      setList('contentImprovements', d.content.improvements);
+        /* MAIN LOADER */
+        function loadQ(n, btn) {
+            const d = DATA[String(n)];
+            if (!d) return;
 
-      // Update Sample Answer Box (Main one)
-      const sampleText = d.content.sample || "No sample answer generated for this question.";
-      document.getElementById('sampleAnswerDisp').textContent = sampleText;
+            // Update active tab UI
+            document.querySelectorAll('.q-tab').forEach(t => t.classList.remove('active'));
+            if (btn) btn.classList.add('active');
 
-      // Facial Analysis
-      document.getElementById('facialStatus').textContent = d.facial.status;
-      setBar('prog-eye', d.facial.eye);
-      setBar('prog-expr', d.facial.expr);
-      setBar('prog-post', d.facial.posture);
-      setBar('prog-eng', d.facial.engagement);
-      setList('facialStrengths', d.facial.strengths);
-      setList('facialImprovements', d.facial.improvements);
+            // Update Question and Transcript
+            document.getElementById('qText').textContent = d.q;
+            document.getElementById('transcript').textContent = d.transcript || "No transcript available.";
 
-      // Voice Analysis
-      document.getElementById('voiceStatus').textContent = d.voice.status;
-      setList('voiceStrengths', d.voice.strengths);
-      setList('voiceImprovements', d.voice.improvements);
-      setBar('prog-pace', d.voice.pace);
-      setBar('prog-pitch', d.voice.pitch);
-      setBar('prog-energy', d.voice.energy);
-      setBar('prog-clarity', d.voice.clarity);
+            // Update Video
+            const videoWrap = document.getElementById('videoContainer');
+            const videoObj = document.getElementById('responseVideo');
+            const placeholder = document.getElementById('videoPlaceholder');
 
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    /* ON PAGE LOAD — Fetch data based on session_id from URL */
-    window.addEventListener('DOMContentLoaded', () => {
-      const params = new URLSearchParams(window.location.search);
-      let sid = params.get('session_id');
-
-      // Default session ID fallback
-      if (!sid) {
-        sid = 'session_1771766105079_sy41hzikg';
-        console.log('Using default session ID:', sid);
-      }
-
-      fetch(`/get_feedback?session_id=${sid}`)
-        .then(r => r.json())
-        .then(serverData => {
-          if (serverData && Object.keys(serverData).length > 0) {
-            Object.assign(DATA, serverData);
-
-            // Dynamically generate tabs
-            const tabsRow = document.getElementById('tabsRow');
-            tabsRow.innerHTML = '';
-            const sortedKeys = Object.keys(DATA).sort((a, b) => parseInt(a) - parseInt(b));
-
-            sortedKeys.forEach(k => {
-              const b = document.createElement('button');
-              b.className = 'q-tab' + (DATA[k].is_skipped ? ' skipped' : '');
-              b.textContent = 'Q' + k;
-              b.onclick = (e) => loadQ(k, e.target);
-              tabsRow.appendChild(b);
-            });
-
-            // Load first question automatically
-            if (sortedKeys.length > 0) {
-              loadQ(sortedKeys[0], tabsRow.firstChild);
+            if (d.is_skipped) {
+                videoWrap.style.display = 'none';
+            } else {
+                videoWrap.style.display = 'block';
+                if (d.video_path) {
+                    videoObj.src = d.video_path.startsWith('/') ? d.video_path : '/' + d.video_path;
+                    videoObj.style.display = 'block';
+                    placeholder.style.display = 'none';
+                } else {
+                    videoObj.style.display = 'none';
+                    placeholder.style.display = 'flex';
+                }
             }
-          } else {
-            document.getElementById('qText').textContent = "No interview data found for this session.";
-          }
-        })
-        .catch(err => {
-          console.error('Fetch error:', err);
-          document.getElementById('qText').textContent = "Failed to load feedback from server.";
+
+            // Content Analysis
+            document.getElementById('contentStatus').textContent = d.content.status;
+            setList('contentStrengths', d.content.strengths);
+            setList('contentImprovements', d.content.improvements);
+
+            // Update Sample Answer Box (Main one)
+            const sampleText = d.content.sample || "No sample answer generated for this question.";
+            document.getElementById('sampleAnswerDisp').textContent = sampleText;
+
+            // Facial Analysis
+            document.getElementById('facialStatus').textContent = d.facial.status;
+            setBar('prog-eye', d.facial.eye);
+            setBar('prog-expr', d.facial.expr);
+            setBar('prog-post', d.facial.posture);
+            setBar('prog-eng', d.facial.engagement);
+            setList('facialStrengths', d.facial.strengths);
+            setList('facialImprovements', d.facial.improvements);
+
+            // Voice Analysis
+            document.getElementById('voiceStatus').textContent = d.voice.status;
+            setList('voiceStrengths', d.voice.strengths);
+            setList('voiceImprovements', d.voice.improvements);
+            setBar('prog-pace', d.voice.pace);
+            setBar('prog-pitch', d.voice.pitch);
+            setBar('prog-energy', d.voice.energy);
+            setBar('prog-clarity', d.voice.clarity);
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* ON PAGE LOAD — Fetch data based on session_id from URL */
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            let sid = params.get('session_id');
+
+            // Default session ID fallback
+            if (!sid) {
+                sid = 'session_1771766105079_sy41hzikg';
+                console.log('Using default session ID:', sid);
+            }
+
+            fetch(`/get_feedback?session_id=${sid}`)
+                .then(r => r.json())
+                .then(serverData => {
+                    if (serverData && Object.keys(serverData).length > 0) {
+                        Object.assign(DATA, serverData);
+
+                        // Dynamically generate tabs
+                        const tabsRow = document.getElementById('tabsRow');
+                        tabsRow.innerHTML = '';
+                        const sortedKeys = Object.keys(DATA).sort((a, b) => parseInt(a) - parseInt(b));
+
+                        sortedKeys.forEach(k => {
+                            const b = document.createElement('button');
+                            b.className = 'q-tab' + (DATA[k].is_skipped ? ' skipped' : '');
+                            b.textContent = 'Q' + k;
+                            b.onclick = (e) => loadQ(k, e.target);
+                            tabsRow.appendChild(b);
+                        });
+
+                        // Load first question automatically
+                        if (sortedKeys.length > 0) {
+                            loadQ(sortedKeys[0], tabsRow.firstChild);
+                        }
+                    } else {
+                        document.getElementById('qText').textContent = "No interview data found for this session.";
+                    }
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    document.getElementById('qText').textContent = "Failed to load feedback from server.";
+                });
         });
-    });
-  </script>
+    </script>
 </body>
 
 </html>
