@@ -205,7 +205,7 @@ def get_feedback():
 
 @app.route('/clear_feedback', methods=['POST'])
 def clear_feedback():
-    # Since we are db linked, clear feedback logic might change or remain for session
+    # Since we are  db linked, clear feedback logic might change or remain for session
     return jsonify({"success": True})
 
 if __name__ == '__main__':
