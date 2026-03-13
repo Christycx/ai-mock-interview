@@ -24,3 +24,5 @@ db_vans.py
 db_vans_ch.py
 check_db_status.py
 voice_feed.py
+uploads
+static/audio
