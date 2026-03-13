@@ -2565,8 +2565,8 @@ def get_feedback():
             if db_video_path and not is_skipped:
                 video_url = db_video_path.replace('\\\\', '/')
             
-            # Prioritize response column from content_feedback, then responses table
-            transcript = cf.get('response', resp_item.get('transcript', ''))
+            # Prioritize response column from content_feedback, never from responses table based on user request
+            transcript = cf.get('response', '')
             if not transcript and is_skipped:
                 transcript = "question was skipped"
 
