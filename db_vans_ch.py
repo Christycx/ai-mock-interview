@@ -474,7 +474,7 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                     print(f"⚠️ [Process] Failed to store feedback in database: {e}")
 
             # Cleanup
-            for p in [audio_path, video_path]:
+            for p in [audio_path]:
                 try:
                     if os.path.exists(p):
                         os.remove(p)
@@ -487,12 +487,14 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
             print(f"❌ [Process] Analysis error: {str(e)}")
             
             # Cleanup on error
-            for p in [video_path]:
-                try:
-                    if os.path.exists(p):
-                        os.remove(p)
-                except Exception:
-                    pass
+            # We preserve the video_path for debugging or retry if needed,
+            # or we could delete it. Here we just comment it out to be safe.
+            # for p in [video_path]:
+            #     try:
+            #         if os.path.exists(p):
+            #             os.remove(p)
+            #     except Exception:
+            #         pass
 
 # ===============================
 # GROQ API CONFIGURATION
@@ -1847,7 +1849,7 @@ if __name__ == '__main__':
     else:
         print("⚠️ Database connection failed - check DB_CONFIG settings")
     
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5000)
     #18.1788
     #1710add
     #remove 1410 4 lines
