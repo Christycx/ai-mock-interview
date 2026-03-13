@@ -738,6 +738,9 @@ def analyze_answer_process(video_path, question, question_id, session_id, studen
             audio_path = extract_audio(video_path)
             transcribed_text = transcribe_text(audio_path)
             
+            # Update the responses table with the transcribed text
+            update_response_transcript(session_id, question_id, student_id, transcribed_text)
+            
             print(f"📝 [Process] Transcribed text: {transcribed_text}")
             
             # VOICE ANALYSIS (using existing tools)
@@ -2151,6 +2154,35 @@ def store_response(session_id, question_id, student_id, video_path, transcript=N
         return True
     except Exception as e:
         print(f"❌ Error storing response: {e}")
+        if connection:
+            connection.close()
+        return False
+
+def update_response_transcript(session_id, question_id, student_id, transcript):
+    """Update the transcript column in the responses table after transcription"""
+    if not transcript:
+        return False
+        
+    connection = get_db_connection()
+    if connection is None:
+        return False
+    try:
+        cursor = connection.cursor()
+        # Truncate to 1000 characters as per user's table schema
+        truncated_transcript = transcript[:1000]
+        
+        sql = """
+            UPDATE responses 
+            SET transcript = %s 
+            WHERE session_id = %s AND question_id = %s AND student_id = %s
+        """
+        cursor.execute(sql, (truncated_transcript, session_id, int(question_id), student_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return True
+    except Exception as e:
+        print(f"❌ Error updating transcript in responses: {e}")
         if connection:
             connection.close()
         return False
