@@ -719,7 +719,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
         # ================================
 # MULTIPROCESSING CONFIGURATION
 # ================================
-MAX_PROCESSES = 2
+MAX_PROCESSES = 5
 process_semaphore = Semaphore(MAX_PROCESSES)
 
 def analyze_answer_process(video_path, question, question_id, session_id, student_id, question_number):
@@ -773,16 +773,17 @@ def analyze_answer_process(video_path, question, question_id, session_id, studen
                 print(f"🎥 [Process] Submitting face analysis to parallel executor...")
                 face_future = executor.submit(analyze_video, video_path)
                 
-                sample_future = None
-                content_future = None
-                if question and transcribed_text.strip():
-                    # Content Groq (uses GROQ_API_KEY in this file)
+                if question:
+                    # Always generate sample answer
                     sample_future = executor.submit(generate_sample_answer, question)
-                    content_future = executor.submit(
-                        analyze_answer_content,
-                        question,
-                        transcribed_text
-                    )
+                    
+                    # Only analyze content if we have a transcript
+                    if transcribed_text.strip():
+                        content_future = executor.submit(
+                            analyze_answer_content,
+                            question,
+                            transcribed_text
+                        )
                     
                 # Wait for results
                 feedback_data = voice_future.result()
@@ -837,29 +838,18 @@ def analyze_answer_process(video_path, question, question_id, session_id, studen
                     )
                     print(f"📊 [Process] store_voice_feedback returned: {voice_result}")
                     
-                    # Store content feedback if analysis was performed
-                    if content_analysis and transcribed_text.strip():
-                        content_result = store_content_feedback(
-                            student_id=student_id,
-                            session_id=session_id,
-                            question_id=question_id,
-                            question_number=int(question_number),
-                            response=transcribed_text,
-                            content_analysis=content_analysis,
-                            sample_answer=sample_answer
-                        )
-                        print(f"📊 [Process] store_content_feedback returned: {content_result}")
-                    elif transcribed_text.strip():  # If we have transcript but no content analysis
-                        content_result = store_content_feedback(
-                            student_id=student_id,
-                            session_id=session_id,
-                            question_id=question_id,
-                            question_number=int(question_number),
-                            response=transcribed_text,
-                            content_analysis=None,
-                            sample_answer=sample_answer
-                        )
-                        print(f"📊 [Process] store_content_feedback returned: {content_result}")
+                    # Always store content feedback to ensure sample_answer is present
+                    content_result = store_content_feedback(
+                        student_id=student_id,
+                        session_id=session_id,
+                        question_id=question_id,
+                        question_number=int(question_number),
+                        response=transcribed_text,
+                        content_analysis=content_analysis,
+                        sample_answer=sample_answer if sample_answer else "Sample answer generation failed."
+                    )
+                    print(f"📊 [Process] store_content_feedback returned: {content_result}")
+
                     
                     print(f"✅ [Process] Feedback stored in database for Q{question_number}")
                 except Exception as e:
@@ -2309,45 +2299,29 @@ def analyze_voice():
     # Ensure session exists as 'ongoing'
     ensure_session_exists(session_id, student_id=student_id)
 
-    # If it's the last question, process synchronously (user will wait)
-    if is_last_question:
-        print(f"⏳ Last question - processing synchronously...")
-        try:
-            # Run analysis in current process for last question
-            analyze_answer_process(video_path, question, question_id, session_id, student_id, question_number)
-            
-            return jsonify({
-                'success': True,
-                'message': 'Analysis completed',
-                'processing_mode': 'synchronous',
-                'question_number': question_number
-            })
-        except Exception as e:
-            print(f"❌ Analysis error: {str(e)}")
-            return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
-    else:
-        # For non-last questions, process in background
-        try:
-            # Start background process
-            process = Process(
-                target=analyze_answer_process,
-                args=(video_path, question, question_id, session_id, student_id, question_number)
-            )
-            process.daemon = True
-            process.start()
-            
-            print(f"✅ Background process started for Question {question_number}")
-            
-            # Return immediately
-            return jsonify({
-                'success': True,
-                'message': 'Analysis started in background',
-                'processing_mode': 'asynchronous',
-                'question_number': question_number
-            })
-        except Exception as e:
-            print(f"❌ Failed to start background process: {str(e)}")
-            return jsonify({'error': f'Failed to start analysis: {str(e)}'}), 500
+    # Process all questions in background
+    try:
+        # Start background process
+        process = Process(
+            target=analyze_answer_process,
+            args=(video_path, question, question_id, session_id, student_id, question_number)
+        )
+        process.daemon = True
+        process.start()
+        
+        print(f"✅ Background process started for Question {question_number}{' (Last Question)' if is_last_question else ''}")
+        
+        # Return immediately
+        return jsonify({
+            'success': True,
+            'message': 'Analysis started in background',
+            'processing_mode': 'asynchronous',
+            'question_number': question_number,
+            'is_last_question': is_last_question
+        })
+    except Exception as e:
+        print(f"❌ Failed to start background process: {str(e)}")
+        return jsonify({'error': f'Failed to start analysis: {str(e)}'}), 500
 
 # ================================
 # ROUTE FOR SKIPPED QUESTIONS
