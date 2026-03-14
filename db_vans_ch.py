@@ -378,7 +378,7 @@ def store_skipped_question(session_id, question_id, question_number):
         # ================================
 # MULTIPROCESSING CONFIGURATION
 # ================================
-MAX_PROCESSES = 2
+MAX_PROCESSES = 5
 process_semaphore = Semaphore(MAX_PROCESSES)
 
 def analyze_answer_process(video_path, question, question_id, session_id, question_number):
@@ -415,7 +415,7 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
             sample_answer = None
             content_analysis = None
             
-            if question and transcribed_text.strip():
+            if question:
                 print("🚀 [Process] Starting content analysis...")
                 
                 # Add small delay to avoid rate limits
@@ -425,12 +425,13 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                 sample_answer = generate_sample_answer(question)
                 print(f"📋 [Process] Sample answer generated: {sample_answer is not None}")
                 
-                # Add delay between API calls
-                time.sleep(0.5)
-                
-                # Analyze user's answer using Groq
-                content_analysis = analyze_answer_content(question, transcribed_text)
-                print(f"📊 [Process] Content analysis completed: {content_analysis is not None}")
+                if transcribed_text.strip():
+                    # Add delay between API calls
+                    time.sleep(0.5)
+                    
+                    # Analyze user's answer using Groq
+                    content_analysis = analyze_answer_content(question, transcribed_text)
+                    print(f"📊 [Process] Content analysis completed: {content_analysis is not None}")
 
             # Calculate speaking rate for metrics
             speaking_rate = 0
@@ -449,25 +450,15 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                         improvements=feedback_data['improvements']
                     )
                     
-                    # Store content feedback if analysis was performed
-                    if content_analysis and transcribed_text.strip():
-                        store_content_feedback(
-                            session_id=session_id,
-                            question_id=question_id,
-                            question_number=int(question_number),
-                            response=transcribed_text,
-                            content_analysis=content_analysis,
-                            sample_answer=sample_answer
-                        )
-                    elif transcribed_text.strip():  # If we have transcript but no content analysis
-                        store_content_feedback(
-                            session_id=session_id,
-                            question_id=question_id,
-                            question_number=int(question_number),
-                            response=transcribed_text,
-                            content_analysis=None,
-                            sample_answer=sample_answer
-                        )
+                    # Always store content feedback to ensure sample_answer is present
+                    store_content_feedback(
+                        session_id=session_id,
+                        question_id=question_id,
+                        question_number=int(question_number),
+                        response=transcribed_text,
+                        content_analysis=content_analysis,
+                        sample_answer=sample_answer if sample_answer else "Sample answer generation failed."
+                    )
                     
                     print(f"✅ [Process] Feedback stored in database for Q{question_number}")
                 except Exception as e:
@@ -1694,45 +1685,29 @@ def analyze_voice():
     print(f"🎯 Received analysis request for question: {question}")
     print(f"📝 Question ID: {question_id}, Session ID: {session_id}, Question #: {question_number}")
 
-    # If it's the last question, process synchronously (user will wait)
-    if is_last_question:
-        print(f"⏳ Last question - processing synchronously...")
-        try:
-            # Run analysis in current process for last question
-            analyze_answer_process(video_path, question, question_id, session_id, question_number)
-            
-            return jsonify({
-                'success': True,
-                'message': 'Analysis completed',
-                'processing_mode': 'synchronous',
-                'question_number': question_number
-            })
-        except Exception as e:
-            print(f"❌ Analysis error: {str(e)}")
-            return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
-    else:
-        # For non-last questions, process in background
-        try:
-            # Start background process
-            process = Process(
-                target=analyze_answer_process,
-                args=(video_path, question, question_id, session_id, question_number)
-            )
-            process.daemon = True
-            process.start()
-            
-            print(f"✅ Background process started for Question {question_number}")
-            
-            # Return immediately
-            return jsonify({
-                'success': True,
-                'message': 'Analysis started in background',
-                'processing_mode': 'asynchronous',
-                'question_number': question_number
-            })
-        except Exception as e:
-            print(f"❌ Failed to start background process: {str(e)}")
-            return jsonify({'error': f'Failed to start analysis: {str(e)}'}), 500
+    # Process all questions in background
+    try:
+        # Start background process
+        process = Process(
+            target=analyze_answer_process,
+            args=(video_path, question, question_id, session_id, question_number)
+        )
+        process.daemon = True
+        process.start()
+        
+        print(f"✅ Background process started for Question {question_number}{' (Last Question)' if is_last_question else ''}")
+        
+        # Return immediately
+        return jsonify({
+            'success': True,
+            'message': 'Analysis started in background',
+            'processing_mode': 'asynchronous',
+            'question_number': question_number,
+            'is_last_question': is_last_question
+        })
+    except Exception as e:
+        print(f"❌ Failed to start background process: {str(e)}")
+        return jsonify({'error': f'Failed to start analysis: {str(e)}'}), 500
 
 # ================================
 # ROUTE FOR SKIPPED QUESTIONS
