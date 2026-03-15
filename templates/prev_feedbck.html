@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Interview Feedback</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f8f9fc;
+            margin: 0;
+        }
+
+        /* TOP BAR */
+
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .logo-icon {
+            background: #ff6f91;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user {
+            width: 40px;
+            height: 40px;
+            background: #ff8ea3;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* PAGE */
+
+        .container {
+            width: 85%;
+            margin: auto;
+            margin-top: 110px;
+        }
+
+        /* BACK BUTTON */
+
+        .back {
+            color: #ff6f91;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* SESSION CARD */
+
+        .session {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        /* HEADER */
+
+        .session-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* JOB ICON */
+
+        .job {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .job-icon {
+            background: #eef1f4;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        /* TITLE */
+
+        .job-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        /* BADGE */
+
+        .level {
+            background: #eef1f4;
+            color: #666;
+            padding: 7px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* META ROW */
+
+        .meta {
+            margin-top: 10px;
+            display: flex;
+            gap: 25px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* FEEDBACK BOX */
+
+        .feedback {
+            margin-top: 20px;
+            background: #f7f7f7;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        /* PROGRESS */
+
+        .progress-group {
+            margin-bottom: 15px;
+        }
+
+        .progress-title {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .progress {
+            height: 12px;
+            background: #ddd;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .bar {
+            height: 12px;
+        }
+
+        /* COLORS */
+
+        .green {
+            background: #4CAF50;
+        }
+
+        .orange {
+            background: #ff9800;
+        }
+
+        .red {
+            background: #e53935;
+        }
+
+        .grey {
+            background: #bdc3c7;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <!-- TOP BAR -->
+
+    <div class="topbar">
+
+        <div class="logo">
+            <div class="logo-icon">🤖</div>
+            Interview Assistant
+        </div>
+
+        <div class="user">C</div>
+
+    </div>
+
+
+    <div class="container" id="sessions-container">
+        <div class="back" onclick="location.href='/dashboard'">
+            ← Back to Dashboard
+        </div>
+
+        <div id="loading-message" style="text-align: center; margin-top: 50px; color: #666;">
+            Loading your interview history...
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('sessions-container');
+            const loading = document.getElementById('loading-message');
+            
+            // 1. Update user initials
+            const userStr = localStorage.getItem('currentUser');
+            let studentId = 1; // Default
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    studentId = user.student_id;
+                    console.log("Logged in studentId:", studentId);
+                    if (user.name) {
+                        const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                        document.querySelector('.user').textContent = initials || 'U';
+                    }
+                } catch (e) { 
+                    console.error("Error parsing user from localStorage:", e); 
+                }
+            } else {
+                console.warn("No user found in localStorage, using default studentId: 1");
+            }
+
+            try {
+                const response = await fetch(`/get_user_sessions?student_id=${studentId}`);
+                const sessions = await response.json();
+                
+                loading.style.display = 'none';
+
+                if (!sessions || !Array.isArray(sessions) || sessions.length === 0) {
+                    console.log("No sessions found or invalid response:", sessions);
+                    let studentMsg = (studentId === 1) ? 
+                        "<p style='color:#e53935;'>⚠️ Note: You are currently viewing history for a default guest account (ID 1). This happens if you aren't logged in correctly on this port.</p>" : "";
+                    
+                    container.innerHTML += `
+                        <div style="text-align: center; margin-top: 50px; color: #888;">
+                            <div style="font-size: 50px; margin-bottom: 20px;">📝</div>
+                            <h3>No interview sessions found yet</h3>
+                            ${studentMsg}
+                            <p>Complete your first interview at <b>http://localhost:5000/qgen</b> to see your progress here!</p>
+                            <p style="font-size: 13px;">(Ensure you are logged in and using the same URL origin)</p>
+                            <button class="level" style="cursor:pointer; margin-top: 15px; background: #ff6f91; color: white; border: none;" onclick="location.href='/qgen'">
+                                Start Your First Interview
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                sessions.forEach(session => {
+                    const ansCount = session.stats.answered || 0;
+                    const skipCount = session.stats.skipped || 0;
+
+                    // 1. Valid Responses Logic
+                    let ansColor = 'red';
+                    if (ansCount >= 8) ansColor = 'green';
+                    else if (ansCount >= 4) ansColor = 'orange';
+                    const ansWidth = Math.min(ansCount * 10, 100);
+
+                    // 2. Skipped Questions Logic (Always Grey)
+                    let skipColor = 'grey';
+                    const skipWidth = Math.min(skipCount * 10, 100);
+
+                    const sessionHtml = `
+                        <div class="session">
+                            <div class="session-header">
+                                <div class="job">
+                                    <div class="job-icon">💼</div>
+                                    <div>
+                                        <div class="job-title">${session.job_title} · ${session.company_name}</div>
+                                        <div class="meta">
+                                            <span>❓ ${session.total_questions || 10} Questions</span>
+                                            <span>📅 ${session.date}</span>
+                                            <span>⏱ ${session.duration} min</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="level">${session.level.charAt(0).toUpperCase() + session.level.slice(1)}</div>
+                            </div>
+
+                            <div class="feedback">
+                                <div class="progress-group">
+                                    <div class="progress-title">Answered Properly : ${ansCount}</div>
+                                    <div class="progress">
+                                        <div class="bar ${ansColor}" style="width:${ansWidth}%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-group">
+                                    <div class="progress-title">Skipped Questions : ${skipCount}</div>
+                                    <div class="progress">
+                                        <div class="bar ${skipColor}" style="width:${skipWidth}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', sessionHtml);
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                loading.textContent = '❌ Error loading history. Please try again later.';
+            }
+        });
+    </script>
+</body>
+
+</html>
