@@ -545,6 +545,9 @@
             <div class="transcript-box" style="background:#F0F7FF; border-color:#BCD8F5;" id="sampleAnswerDisp">
                 Suggested sample answer will appear here...
             </div>
+            <div id="reloadWarning" style="color: red; font-weight: bold; margin-top: 10px; display: none;">
+                we are analysing your answer
+            </div>
         </div>
 
         <!-- ANALYSIS CARDS -->
@@ -660,6 +663,7 @@
            DATA OBJECT — will be filled from the server
         ================================================================ */
         const DATA = {};
+        let reloadTimer = null;
 
         /* HELPERS */
         function colorClass(v) {
@@ -726,6 +730,25 @@
             // Update Sample Answer Box (Main one)
             const sampleText = d.content.sample || "No sample answer generated for this question.";
             document.getElementById('sampleAnswerDisp').textContent = sampleText;
+
+            // Handle Auto-Reload Logic
+            const warnEl = document.getElementById('reloadWarning');
+            if (reloadTimer) {
+                clearTimeout(reloadTimer);
+                reloadTimer = null;
+            }
+
+            // If analysis is pending (No sample answer) and NOT skipped, show warning and set reload
+            const isPending = sampleText.includes("No sample answer generated for this question");
+            if (isPending && !d.is_skipped) {
+                warnEl.style.display = 'block';
+                console.log(`⏳ Analysis pending for Q${n}. Reloading in 15s...`);
+                reloadTimer = setTimeout(() => {
+                    window.location.reload();
+                }, 15000);
+            } else {
+                warnEl.style.display = 'none';
+            }
 
             // Facial Analysis
             document.getElementById('facialStatus').textContent = d.facial.status || "Not Evaluated";
