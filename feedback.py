@@ -166,6 +166,7 @@ def get_feedback():
                 transcript = "question was skipped"
 
             feedback_data[q_num_label] = {
+                "id": q_id,
                 "q": q_text,
                 "transcript": transcript,
                 "video_path": video_url,
@@ -179,7 +180,12 @@ def get_feedback():
                     "sample": cf.get('sample_answer', "")
                 },
                 "facial": {
-                    "status": "Excellent" if ff.get('strength') else "Good" if ff.get('eye_contact') else "Not Evaluated",
+                    "status": (
+                        "Excellent" if all(ff.get(k) == 'good' for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
+                        "Needs Improvement" if any(ff.get(k) == 'needs_improvement' for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
+                        "Good" if any(ff.get(k) in ['good', 'average'] for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
+                        "Not Evaluated"
+                    ),
                     "posture_feedback": ff.get('posture_feedback', ''),
                     "alignment_feedback": ff.get('alignment_feedback', ''),
                     "eyecontact_feedback": ff.get('eyecontact_feedback', ''),
