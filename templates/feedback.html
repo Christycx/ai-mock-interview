@@ -85,6 +85,10 @@
         }
 
         .q-tab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
             min-width: 60px;
             padding: 10px 18px;
             border-radius: 10px 10px 0 0;
@@ -685,6 +689,11 @@
             // Update active tab UI
             document.querySelectorAll('.q-tab').forEach(t => t.classList.remove('active'));
             if (btn) btn.classList.add('active');
+            else {
+                // If no btn provided, find it by question number
+                const targetBtn = Array.from(document.querySelectorAll('.q-tab')).find(t => t.textContent === 'Q' + n);
+                if (targetBtn) targetBtn.classList.add('active');
+            }
 
             // Update Question and Transcript
             document.getElementById('qText').textContent = d.q;
@@ -719,14 +728,14 @@
             document.getElementById('sampleAnswerDisp').textContent = sampleText;
 
             // Facial Analysis
-            document.getElementById('facialStatus').textContent = d.facial.status;
-            document.getElementById('f-posture').textContent = d.facial.posture_feedback || "None";
-            document.getElementById('f-alignment').textContent = d.facial.alignment_feedback || "None";
-            document.getElementById('f-eye').textContent = d.facial.eyecontact_feedback || "None";
-            document.getElementById('f-touch').textContent = d.facial.touch_feedback || "None";
+            document.getElementById('facialStatus').textContent = d.facial.status || "Not Evaluated";
+            document.getElementById('f-posture').textContent = d.facial.posture_feedback || "No posture data";
+            document.getElementById('f-alignment').textContent = d.facial.alignment_feedback || "No alignment data";
+            document.getElementById('f-eye').textContent = d.facial.eyecontact_feedback || "No eye contact data";
+            document.getElementById('f-touch').textContent = d.facial.touch_feedback || "No touch data";
 
-            setList('facialStrengths', d.facial.strengths);
-            setList('facialImprovements', d.facial.improvements);
+            setList('facialStrengths', d.facial.strengths || []);
+            setList('facialImprovements', d.facial.improvements || []);
 
             // Voice Analysis
             document.getElementById('voiceStatus').textContent = d.voice.status;
@@ -740,6 +749,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             let sid = params.get('session_id');
+            const qid = params.get('qid');
 
             // Default session ID fallback
             if (!sid) {
@@ -758,18 +768,38 @@
                         tabsRow.innerHTML = '';
                         const sortedKeys = Object.keys(DATA).sort((a, b) => parseInt(a) - parseInt(b));
 
+                        let targetQKey = sortedKeys[0]; // Default to first
+
                         sortedKeys.forEach(k => {
-                            const b = document.createElement('button');
-                            b.className = 'q-tab' + (DATA[k].is_skipped ? ' skipped' : '');
-                            b.textContent = 'Q' + k;
-                            b.onclick = (e) => loadQ(k, e.target);
-                            tabsRow.appendChild(b);
+                            const qItem = DATA[k];
+                            const link = document.createElement('a');
+                            const q_id = qItem.id || '';
+                            const q_no = k;
+                            
+                            // Build URL with both qid and qno for max compatibility
+                            link.href = `?session_id=${sid}&qid=${q_id}&qno=${q_no}`;
+                            link.className = 'q-tab' + (qItem.is_skipped ? ' skipped' : '');
+                            link.textContent = 'Q' + k;
+                            
+                            // Target detection: prioritze qid, fallback to qno
+                            if (qid && String(qItem.id) === String(qid)) {
+                                targetQKey = k;
+                            } else if (!qid && params.get('qno') === String(k)) {
+                                targetQKey = k;
+                            }
+
+                            link.onclick = (e) => {
+                                e.preventDefault();
+                                const newUrl = `${window.location.pathname}?session_id=${sid}&qid=${q_id}&qno=${q_no}`;
+                                window.history.pushState({path: newUrl}, '', newUrl);
+                                loadQ(k, e.target);
+                            };
+                            tabsRow.appendChild(link);
                         });
 
-                        // Load first question automatically
-                        if (sortedKeys.length > 0) {
-                            loadQ(sortedKeys[0], tabsRow.firstChild);
-                        }
+                        // Load target question
+                        const targetTab = Array.from(tabsRow.children).find(t => t.textContent === 'Q' + targetQKey);
+                        loadQ(targetQKey, targetTab);
                     } else {
                         document.getElementById('qText').textContent = "No interview data found for this session.";
                     }
