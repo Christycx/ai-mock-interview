@@ -761,74 +761,87 @@ def analyze_answer_process(video_path, question, question_id, session_id, studen
             content_analysis = None
             face_result = None
             
+            # PHASE 1: Fast Parallel Tasks (Face, Sample, Voice Feedback)
             with ThreadPoolExecutor(max_workers=4) as executor:
-                # Voice Groq (uses GROQ_VOICE_API_KEY via voice_feedback_generator)
+                # 1. Voice Feedback Generation (Fast)
                 voice_future = executor.submit(
                     generate_dynamic_voice_feedback,
                     analysis_results,
                     confidence_score
                 )
                 
-                # Face Analysis - Parallelized
-                print(f"🎥 [Process] Submitting face analysis to parallel executor...")
+                # 2. Face Analysis (Parallel)
+                print(f"🎥 [Process] Submitting face analysis...")
                 face_future = executor.submit(analyze_video, video_path)
                 
+                # 3. Sample Answer Generation (Fast)
+                sample_future = None
                 if question:
-                    # Always generate sample answer
                     sample_future = executor.submit(generate_sample_answer, question)
-                    
-                    # Only analyze content if we have a transcript
-                    if transcribed_text.strip():
-                        content_future = executor.submit(
-                            analyze_answer_content,
-                            question,
-                            transcribed_text
-                        )
-                    
-                # Wait for results
-                feedback_data = voice_future.result()
-                print(f"✅ [Process] Dynamic feedback generated")
                 
-                face_result = face_future.result()
-                print(f"✅ [Process] Face analysis completed")
-                if sample_future is not None:
-                    sample_answer = sample_future.result()
-                    print(f"📋 [Process] Sample answer generated: {sample_answer is not None}")
-                if content_future is not None:
+                # 4. Content Analysis (Slowest)
+                content_future = None
+                if question and transcribed_text.strip():
+                    content_future = executor.submit(
+                        analyze_answer_content,
+                        question,
+                        transcribed_text
+                    )
+                
+                # INCREMENTAL STORAGE: Save Face Feedback ASAP
+                try:
+                    face_result = face_future.result()
+                    print(f"✅ [Process] Face analysis completed")
+                    if face_result and session_id and question_id:
+                        store_face_feedback(
+                            face_result, 
+                            student_id=student_id,
+                            session_id=session_id, 
+                            qno=int(question_id)
+                        )
+                        print(f"✅ [Process] Face feedback stored")
+                except Exception as e:
+                    print(f"⚠️ [Process] Face analysis/storage error: {e}")
+
+                # INCREMENTAL STORAGE: Save Sample Answer ASAP
+                try:
+                    if sample_future:
+                        sample_answer = sample_future.result()
+                        print(f"📋 [Process] Sample answer generated")
+                        if session_id and question_id:
+                            # Partially store content feedback with just the sample answer
+                            store_content_feedback(
+                                student_id=student_id,
+                                session_id=session_id,
+                                question_id=question_id,
+                                question_number=int(question_number),
+                                response=transcribed_text,
+                                content_analysis=None, # Not ready yet
+                                sample_answer=sample_answer if sample_answer else "Sample answer generation failed."
+                            )
+                            print(f"✅ [Process] Sample answer stored")
+                except Exception as e:
+                    print(f"⚠️ [Process] Sample answer error: {e}")
+
+                # Wait for remaining tasks...
+                feedback_data = voice_future.result()
+                print(f"✅ [Process] Voice feedback ready")
+                
+                content_analysis = None
+                if content_future:
                     content_analysis = content_future.result()
-                    print(f"📊 [Process] Content analysis completed: {content_analysis is not None}")
+                    print(f"📊 [Process] Content analysis ready")
 
             # Calculate speaking rate for metrics
             speaking_rate = 0
             if audio_features['duration'] > 0:
                 speaking_rate = (filler_analysis['word_count'] / audio_features['duration']) * 60
 
-            # STORE FACE FEEDBACK
-            if face_result and session_id and question_id:
-                try:
-                    face_db_success = store_face_feedback(
-                        face_result, 
-                        student_id=student_id,
-                        session_id=session_id, 
-                        qno=int(question_id)
-                    )
-                    if face_db_success:
-                        print(f"✅ [Process] Face feedback stored in database")
-                    else:
-                        print(f"⚠️ [Process] Face feedback storage returned False")
-                except Exception as e:
-                    print(f"⚠️ [Process] Failed to store face feedback: {e}")
-
-            # STORE FEEDBACK IN DATABASE
+            # FINAL STORAGE: Update with slow tasks (Voice & Content evaluations)
             if session_id and question_id:
-                print(f"📊 [Process] Attempting to store feedback...")
-                print(f"   Session ID: {session_id}")
-                print(f"   Question ID: {question_id}")
-                print(f"   Strengths count: {len(feedback_data.get('strengths', []))}")
-                print(f"   Improvements count: {len(feedback_data.get('improvements', []))}")
                 try:
-                    # Store voice feedback
-                    voice_result = store_voice_feedback(
+                    # Update/Store voice feedback
+                    store_voice_feedback(
                         student_id=student_id,
                         session_id=session_id,
                         question_id=question_id,
@@ -836,10 +849,9 @@ def analyze_answer_process(video_path, question, question_id, session_id, studen
                         strengths=feedback_data['strengths'],
                         improvements=feedback_data['improvements']
                     )
-                    print(f"📊 [Process] store_voice_feedback returned: {voice_result}")
                     
-                    # Always store content feedback to ensure sample_answer is present
-                    content_result = store_content_feedback(
+                    # Store final content feedback (will overwrite/update existing row with scores)
+                    store_content_feedback(
                         student_id=student_id,
                         session_id=session_id,
                         question_id=question_id,
@@ -848,14 +860,12 @@ def analyze_answer_process(video_path, question, question_id, session_id, studen
                         content_analysis=content_analysis,
                         sample_answer=sample_answer if sample_answer else "Sample answer generation failed."
                     )
-                    print(f"📊 [Process] store_content_feedback returned: {content_result}")
-
                     
-                    print(f"✅ [Process] Feedback stored in database for Q{question_number}")
+                    print(f"✅ [Process] Full analysis stored for Q{question_number}")
                 except Exception as e:
                     print(f"⚠️ [Process] Failed to store feedback in database: {e}")
                     import traceback
-                    traceback.print_exc()
+                    traceback.print_exc() 
 
             # Cleanup
             for p in [audio_path]:
@@ -2577,6 +2587,7 @@ def get_feedback():
                 transcript = "question was skipped"
 
             feedback_data[q_num_label] = {
+                "id": q_id,
                 "q": q_text,
                 "transcript": transcript,
                 "video_path": video_url,
@@ -2590,7 +2601,12 @@ def get_feedback():
                     "sample": cf.get('sample_answer', "")
                 },
                 "facial": {
-                    "status": "Excellent" if ff.get('strength') else "Good" if ff.get('eye_contact') else "Not Evaluated",
+                    "status": (
+                        "Excellent" if all(ff.get(k) == 'good' for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
+                        "Needs Improvement" if any(ff.get(k) == 'needs_improvement' for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
+                        "Good" if any(ff.get(k) in ['good', 'average'] for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
+                        "Not Evaluated"
+                    ),
                     "posture_feedback": ff.get('posture_feedback', ''),
                     "alignment_feedback": ff.get('alignment_feedback', ''),
                     "eyecontact_feedback": ff.get('eyecontact_feedback', ''),
