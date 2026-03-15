@@ -19,6 +19,8 @@ from gtts import gTTS
 import os
 import uuid
 from multiprocessing import Process, Semaphore
+from face import analyze_video, store_face_feedback
+from concurrent.futures import ThreadPoolExecutor
 
 AUDIO_FOLDER = "static/audio"
 
@@ -190,7 +192,7 @@ def store_voice_feedback(session_id, question_id, question_number, strengths, im
             connection.close()
         return False
 
-def store_content_feedback(session_id, question_id, question_number, response, content_analysis, sample_answer):
+def store_content_feedback(student_id, session_id, question_id, question_number, response, content_analysis, sample_answer):
     """Store content feedback in database"""
     connection = get_db_connection()
     if connection is None:
@@ -232,7 +234,7 @@ def store_content_feedback(session_id, question_id, question_number, response, c
                  structure, improvements, strengths, sample_answer, q_no)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                1,  # Default student ID
+                student_id if student_id else 1,
                 session_id,
                 response,
                 str(content_score),
@@ -245,14 +247,14 @@ def store_content_feedback(session_id, question_id, question_number, response, c
                 question_number
             ))
         else:
-            # Use resumeid column
+            # Fallback to old schema if needed
             cursor.execute("""
                 INSERT INTO content_feedback 
                 (studentid, resumeid, response, content_score, overall, relevance, 
                  structure, improvements, strengths, sample_answer, q_no)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                1,  # Default student ID
+                student_id if student_id else 1,  # Dynamic student ID
                 session_id,
                 response,
                 str(content_score),
@@ -270,11 +272,38 @@ def store_content_feedback(session_id, question_id, question_number, response, c
         connection.close()
         print(f"✅ Content feedback stored for question {question_id}")
         return True
-        
     except Error as e:
         print(f"❌ Error storing content feedback: {e}")
         if connection:
             connection.close()
+        return False
+
+def update_response_transcript(session_id, question_id, student_id, transcript):
+    """Update the transcript column in the responses table after transcription"""
+    if not transcript:
+        return False
+        
+    connection = get_db_connection()
+    if connection is None:
+        return False
+    try:
+        cursor = connection.cursor()
+        # Truncate to 1000 characters as per user's table schema
+        truncated_transcript = transcript[:1000]
+        
+        sql = """
+            UPDATE responses 
+            SET transcript = %s 
+            WHERE session_id = %s AND (question_id = %s OR q_no = %s)
+        """
+        # We try to match by question_id or q_no for robustness
+        cursor.execute(sql, (truncated_transcript, session_id, question_id, question_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return True
+    except Exception as e:
+        print(f"Error updating response transcript: {e}")
         return False
 
 def store_skipped_question(session_id, question_id, question_number):
@@ -390,13 +419,31 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
         try:
             print(f"🔄 [Process] Starting analysis for Question {question_number}")
             
-            # Audio processing for voice analysis
+            # 1. Fetch student_id early
+            student_id = None 
+            try:
+                conn = get_db_connection()
+                if conn:
+                    cur = conn.cursor(dictionary=True)
+                    cur.execute("SELECT student_id FROM interview_session WHERE session_id = %s", (session_id,))
+                    row = cur.fetchone()
+                    if row:
+                        student_id = row['student_id']
+                    cur.close()
+                    conn.close()
+            except:
+                pass
+
+            # 2. Audio processing for voice analysis
             audio_path = extract_audio(video_path)
             transcribed_text = transcribe_text(audio_path)
-            
             print(f"📝 [Process] Transcribed text: {transcribed_text}")
             
-            # VOICE ANALYSIS (using existing tools)
+            # Update the responses table with the transcribed text AS SOON AS READY
+            if transcribed_text.strip():
+                update_response_transcript(session_id, question_id, student_id, transcribed_text)
+
+            # 3. Analyze audio features
             audio_features = analyze_audio_features(audio_path)
             pause_analysis = analyze_pauses_enhanced(audio_path)
             filler_analysis = analyze_filler_patterns(transcribed_text)
@@ -408,40 +455,68 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
             }
             
             confidence_score = calculate_advanced_confidence(analysis_results)
-            confidence_category = get_confidence_category(confidence_score)
-            feedback_data = generate_simple_feedback(analysis_results, confidence_score)
-
-            # CONTENT ANALYSIS (using Groq API)
-            sample_answer = None
-            content_analysis = None
             
-            if question:
-                print("🚀 [Process] Starting content analysis...")
+            # PHASE 1: Fast Parallel Tasks
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                # A. Voice Feedback Generation (Fast)
+                voice_future = executor.submit(generate_simple_feedback, analysis_results, confidence_score)
                 
-                # Add small delay to avoid rate limits
-                time.sleep(0.5)
+                # B. Face Analysis (Parallel)
+                print(f"🎥 [Process] Submitting face analysis...")
+                face_future = executor.submit(analyze_video, video_path)
                 
-                # Generate sample answer using Groq
-                sample_answer = generate_sample_answer(question)
-                print(f"📋 [Process] Sample answer generated: {sample_answer is not None}")
-                
-                if transcribed_text.strip():
-                    # Add delay between API calls
-                    time.sleep(0.5)
-                    
-                    # Analyze user's answer using Groq
-                    content_analysis = analyze_answer_content(question, transcribed_text)
-                    print(f"📊 [Process] Content analysis completed: {content_analysis is not None}")
+                # C. Sample Answer & Content Analysis
+                sample_future = None
+                content_future = None
+                if question:
+                    sample_future = executor.submit(generate_sample_answer, question)
+                    if transcribed_text.strip():
+                        content_future = executor.submit(analyze_answer_content, question, transcribed_text)
 
-            # Calculate speaking rate for metrics
-            speaking_rate = 0
-            if audio_features['duration'] > 0:
-                speaking_rate = (filler_analysis['word_count'] / audio_features['duration']) * 60
+                # INCREMENTAL STORAGE: Save Face Feedback ASAP
+                try:
+                    face_result = face_future.result()
+                    print(f"✅ [Process] Face analysis completed")
+                    if face_result and session_id and question_id:
+                        store_face_feedback(
+                            face_result, 
+                            student_id=student_id, 
+                            session_id=session_id, 
+                            qno=int(question_id)
+                        )
+                        print(f"✅ [Process] Face feedback stored")
+                except Exception as e:
+                    print(f"⚠️ [Process] Face analysis/storage error: {e}")
 
-            # STORE FEEDBACK IN DATABASE
+                # INCREMENTAL STORAGE: Save Sample Answer ASAP
+                sample_answer = None
+                try:
+                    if sample_future:
+                        sample_answer = sample_future.result()
+                        print(f"📋 [Process] Sample answer generated")
+                        if session_id and question_id:
+                            store_content_feedback(
+                                student_id=student_id,
+                                session_id=session_id,
+                                question_id=question_id,
+                                question_number=int(question_number),
+                                response=transcribed_text,
+                                content_analysis=None, # Not ready yet
+                                sample_answer=sample_answer if sample_answer else "Sample answer generation failed."
+                            )
+                            print(f"✅ [Process] Initial content feedback stored")
+                except Exception as e:
+                    print(f"⚠️ [Process] Sample answer error: {e}")
+
+                # Wait for remaining slow tasks
+                feedback_data = voice_future.result()
+                content_analysis = content_future.result() if content_future else None
+                print(f"✅ [Process] Detail analysis completed")
+
+            # FINAL STORAGE: Update with evaluations
             if session_id and question_id:
                 try:
-                    # Store voice feedback
+                    # Update voice feedback
                     store_voice_feedback(
                         session_id=session_id,
                         question_id=question_id,
@@ -450,8 +525,9 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                         improvements=feedback_data['improvements']
                     )
                     
-                    # Always store content feedback to ensure sample_answer is present
+                    # Update content feedback with full analysis
                     store_content_feedback(
+                        student_id=student_id,
                         session_id=session_id,
                         question_id=question_id,
                         question_number=int(question_number),
@@ -459,7 +535,6 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                         content_analysis=content_analysis,
                         sample_answer=sample_answer if sample_answer else "Sample answer generation failed."
                     )
-                    
                     print(f"✅ [Process] Feedback stored in database for Q{question_number}")
                 except Exception as e:
                     print(f"⚠️ [Process] Failed to store feedback in database: {e}")
