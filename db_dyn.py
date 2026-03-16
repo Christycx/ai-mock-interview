@@ -19,7 +19,6 @@ from dotenv import load_dotenv
 load_dotenv()
 from flask_mysqldb import MySQL
 from flask_bcrypt import Bcrypt
-from flask_cors import CORS
 import fitz  # PyMuPDF for resume parsing
 import google.generativeai as genai
 from gtts import gTTS
@@ -834,8 +833,15 @@ def analyze_answer_process(video_path, question, question_id, session_id, studen
 
             # Calculate speaking rate for metrics
             speaking_rate = 0
-            if audio_features['duration'] > 0:
-                speaking_rate = (filler_analysis['word_count'] / audio_features['duration']) * 60
+            try:
+                # Ensure we are dealing with numbers
+                word_count = filler_analysis.get('word_count', 0) if isinstance(filler_analysis, dict) else 0
+                duration = audio_features.get('duration', 0) if isinstance(audio_features, dict) else 0
+                
+                if duration > 0:
+                    speaking_rate = (word_count / duration) * 60
+            except Exception as rate_err:
+                print(f"⚠️ [Process] Error calculating speaking rate: {rate_err}")
 
             # FINAL STORAGE: Update with slow tasks (Voice & Content evaluations)
             if session_id and question_id:
@@ -1869,6 +1875,18 @@ def index():
     return render_template('login.html')
 
 
+@app.route('/dashboard')
+def dashboard():
+    """Dashboard page"""
+    return render_template('dashboard.html')
+
+
+@app.route('/feedback_sessions')
+def feedback_sessions():
+    """Previous feedback sessions page"""
+    return render_template('prev_feedbck.html')
+
+
 @app.route('/signup', methods=['POST'])
 def signup():
     """User signup"""
@@ -1987,8 +2005,11 @@ def generate_questions():
         if not session_id:
             session_id = f"session_{int(time.time())}_{uuid.uuid4().hex[:8]}"
 
+        # Get student_id from form
+        student_id = request.form.get('student_id', 1)
+
         # Ensure session exists as 'ongoing'
-        ensure_session_exists(session_id, level)
+        ensure_session_exists(session_id, student_id=student_id, level=level, job_title=job_title, company=company_name)
 
         # Generate questions based on level
         if level == 'beginner':
@@ -2136,6 +2157,55 @@ def get_questions(level):
         print(f"Error in get_questions: {str(e)}")
         return jsonify({'error': f'Failed to get questions: {str(e)}'}), 500
 
+@app.route('/get_user_sessions', methods=['GET'])
+def get_user_sessions():
+    """Fetch all sessions for a specific student with statistics"""
+    try:
+        student_id = request.args.get('student_id')
+        if not student_id:
+            return jsonify({"error": "Student ID is required"}), 400
+
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({"error": "Database connection failed"}), 500
+
+        cursor = connection.cursor(dictionary=True)
+        
+        # Fetch sessions
+        cursor.execute("""
+            SELECT session_id, student_id, level, total_questions, status, 
+                   started_at, completed_at, job_title, company, skipped, answered
+            FROM interview_session 
+            WHERE student_id = %s 
+            ORDER BY COALESCE(completed_at, started_at) DESC
+        """, (student_id,))
+        sessions = cursor.fetchall()
+
+        results = []
+        for session in sessions:
+            results.append({
+                "session_id": session['session_id'],
+                "job_title": session['job_title'] or "General Interview",
+                "company_name": session['company'] or "AI Assistant",
+                "level": session['level'],
+                "total_questions": session['total_questions'],
+                "status": session['status'],
+                "date": session['completed_at'].strftime('%d %b %Y') if session['completed_at'] else session['started_at'].strftime('%d %b %Y'),
+                "duration": round((session['completed_at'] - session['started_at']).total_seconds() / 60) if session['completed_at'] and session['started_at'] else 0,
+                "stats": {
+                    "skipped": session['skipped'] or 0,
+                    "answered": session['answered'] or 0
+                }
+            })
+
+        cursor.close()
+        connection.close()
+        return jsonify(results)
+
+    except Exception as e:
+        print(f"Error fetching user sessions: {e}")
+        return jsonify({"error": str(e)}), 500
+
 def store_response(session_id, question_id, student_id, video_path, transcript=None):
     """Store video response in the responses table"""
     connection = get_db_connection()
@@ -2187,7 +2257,7 @@ def update_response_transcript(session_id, question_id, student_id, transcript):
             connection.close()
         return False
 
-def ensure_session_exists(session_id, student_id=1, level='beginner'):
+def ensure_session_exists(session_id, student_id=1, level='beginner', job_title=None, company=None):
     """Ensure a session exists in the interview_session table with 'ongoing' status"""
     if not session_id:
         return
@@ -2201,11 +2271,11 @@ def ensure_session_exists(session_id, student_id=1, level='beginner'):
             if not cursor.fetchone():
                 # Create session with 'ongoing' status
                 cursor.execute("""
-                    INSERT INTO interview_session (session_id, student_id, level, total_questions, status)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (session_id, student_id, level, 10, 'ongoing'))
+                    INSERT INTO interview_session (session_id, student_id, level, total_questions, status, job_title, company)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (session_id, student_id, level, 10, 'ongoing', job_title, company))
                 connection.commit()
-                print(f"🆕 Created ongoing session: {session_id}")
+                print(f"🆕 Created ongoing session: {session_id} for {job_title} at {company}")
             cursor.close()
             connection.close()
         except Exception as e:
@@ -2402,14 +2472,29 @@ def complete_session():
         if connection:
             cursor = connection.cursor()
             
-            # 1. Update session status
+            # 1. Calculate skipped and answered counts from responses table
+            cursor.execute("SELECT video_path FROM responses WHERE session_id = %s", (session_id,))
+            responses = cursor.fetchall()
+            
+            skipped_count = 0
+            answered_count = 0
+            for resp in responses:
+                if resp[0] == 'NOT_ANSWERED':
+                    skipped_count += 1
+                else:
+                    answered_count += 1
+
+            # 2. Update session status and counts
             cursor.execute("""
                 UPDATE interview_session 
-                SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+                SET status = 'completed', 
+                    completed_at = CURRENT_TIMESTAMP,
+                    skipped = %s,
+                    answered = %s
                 WHERE session_id = %s
-            """, (session_id,))
+            """, (skipped_count, answered_count, session_id))
             
-            # 2. Add to progress_tracking
+            # 3. Add to progress_tracking
             if student_id and level:
                 try:
                     cursor.execute("""

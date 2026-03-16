@@ -660,7 +660,7 @@
 
       } catch (error) {
         console.error('Initialization error:', error);
-        showError('Failed to initialize interview. Please try again.');
+        showError(`Failed to initialize interview: ${error.message}`);
       }
     }
 
@@ -1282,11 +1282,6 @@
         <div class="confidence-display">
           <div class="confidence-card">
             <div class="confidence-category">🎉 Interview Completed!</div>
-            <div class="confidence-score">You have answered all ${totalQuestions} questions</div>
-            <div class="confidence-percentage">100%</div>
-            <p style="margin-top: 20px; opacity: 0.9;">
-              Great job! You've completed the ${currentLevel} level interview.
-            </p>
             <div style="margin-top: 30px;">
               <button onclick="window.location.href='/feedback?session_id=' + currentSessionId" style="
                 background: linear-gradient(to right, #4a6fa5, #3a4f7a);

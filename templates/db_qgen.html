@@ -607,11 +607,21 @@
             formData.append('level', currentLevel);
             formData.append('session_id', window.currentSessionId);
             const userStr = localStorage.getItem('currentUser');
+            console.log("DEBUG: currentUser from localStorage:", userStr);
             if (userStr) {
-                const user = JSON.parse(userStr);
-                if (user && user.student_id) {
-                    formData.append('student_id', user.student_id);
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user && user.student_id) {
+                        formData.append('student_id', user.student_id);
+                        console.log("DEBUG: Appended student_id:", user.student_id);
+                    } else {
+                        console.warn("DEBUG: student_id missing in user object");
+                    }
+                } catch (e) {
+                    console.error("DEBUG: Error parsing currentUser:", e);
                 }
+            } else {
+                console.warn("DEBUG: No currentUser in localStorage. Are you logged in on this port/origin?");
             }
 
             document.getElementById('formSection').style.display = 'none';
@@ -644,10 +654,17 @@
 
         // Start interview button
         document.getElementById('startInterviewBtn').addEventListener('click', function () {
-            // Redirect to interview page with session_id
+            // Redirect to interview page with session_id and level
             let url = '/start-interview';
+            let params = [];
             if (window.currentSessionId) {
-                url += `?session_id=${window.currentSessionId}`;
+                params.push(`session_id=${window.currentSessionId}`);
+            }
+            if (currentLevel) {
+                params.push(`level=${currentLevel}`);
+            }
+            if (params.length > 0) {
+                url += '?' + params.join('&');
             }
             window.location.href = url;
         });

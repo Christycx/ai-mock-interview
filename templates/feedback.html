@@ -102,45 +102,31 @@
             transition: transform .18s, box-shadow .18s;
         }
 
-        .q-tab:nth-child(1) {
-            background: #2E7D32;
+        .q-tab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            min-width: 60px;
+            padding: 10px 18px;
+            border-radius: 10px 10px 0 0;
+            border: none;
+            background: #FFD1DC; /* Light Pink */
+            color: #444;
+            font-family: 'Sora', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            position: relative;
+            transition: transform .18s, box-shadow .18s;
+            margin-bottom: 5px;
         }
 
-        .q-tab:nth-child(2) {
-            background: #E65100;
-        }
-
-        .q-tab:nth-child(3) {
-            background: #C62828;
-        }
-
-        .q-tab:nth-child(4) {
-            background: #F9A825;
-            color: #333;
-        }
-
-        .q-tab:nth-child(5) {
-            background: #558B2F;
-        }
-
-        .q-tab:nth-child(6) {
-            background: #827717;
-        }
-
-        .q-tab:nth-child(7) {
-            background: #BF360C;
-        }
-
-        .q-tab:nth-child(8) {
-            background: #00695C;
-        }
-
-        .q-tab:nth-child(9) {
-            background: #D84315;
-        }
-
-        .q-tab:nth-child(10) {
-            background: #33691E;
+        .q-tab.active {
+            background: #FF6F91;
+            color: white;
+            transform: translateY(-6px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .22);
         }
 
         .q-tab:hover {
@@ -163,6 +149,13 @@
         .q-tab.skipped.active {
             opacity: 1;
             border: 3px solid #616161;
+        }
+
+
+
+        /* SKIPPED CARD HEADER */
+        .a-card.skipped .a-header {
+            background: #9E9E9E !important;
         }
 
         /* SECTION CARD */
@@ -332,24 +325,14 @@
         }
 
         .status-pill {
-            background: rgba(255, 255, 255, .25);
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            white-space: nowrap;
+            display: none !important; /* Hidden as requested */
         }
 
-        .content-card .a-header {
-            background: #1565C0;
-        }
-
-        .facial-card .a-header {
-            background: #E65100;
-        }
-
+        .content-card .a-header,
+        .facial-card .a-header,
         .voice-card .a-header {
-            background: #2E7D32;
+            background: #FFD1DC;
+            color: #5D4037;
         }
 
         .a-body {
@@ -370,19 +353,11 @@
             margin-bottom: 10px;
         }
 
-        .content-card .sub-heading {
-            background: #E3F0FF;
-            color: #1565C0;
-        }
-
-        .facial-card .sub-heading {
-            background: #FFF3E0;
-            color: #E65100;
-        }
-
+        .content-card .sub-heading,
+        .facial-card .sub-heading,
         .voice-card .sub-heading {
-            background: #E8F5E9;
-            color: #2E7D32;
+            background: #FFF0F3;
+            color: #D81B60;
         }
 
         /* BULLET LIST */
@@ -506,7 +481,7 @@
 
         <div class="topbar">
             <div class="topbar-title">🎯 Interview Feedback</div>
-            <a href="/" class="back-btn">← Back to Interview</a>
+            <a href="/feedback_sessions" class="back-btn">← Back to your performances</a>
         </div>
 
         <!-- QUESTION TABS -->
@@ -723,7 +698,36 @@
             }
 
             // Content Analysis
+            const isNoResponse = !d.transcript || d.transcript.toLowerCase().includes("no transcript") || d.transcript.toLowerCase().includes("question was skipped") ? false : (d.transcript.trim() === "");
+            // But wait, the detection should be: answered but empty transcript.
+            // If d.is_skipped is true, it's grey.
+            // If d.is_skipped is false AND transcript is empty or just whitespace or "No transcript available."
+            const transcriptText = (d.transcript || "").trim();
+            const actuallyNoResponse = !d.is_skipped && (transcriptText === "" || transcriptText.toLowerCase() === "no transcript available.");
+
+            const contentCard = document.querySelector('.content-card');
+            const voiceCard = document.querySelector('.voice-card');
+            const facialCard = document.querySelector('.facial-card');
+            
+            // Hide or show status pills based on skipped status
+            const statusPills = document.querySelectorAll('.status-pill');
+            if (d.is_skipped) {
+                statusPills.forEach(p => p.style.display = 'none');
+                contentCard.classList.add('skipped');
+                voiceCard.classList.add('skipped');
+                facialCard.classList.add('skipped');
+            } else {
+                statusPills.forEach(p => p.style.display = 'block');
+                contentCard.classList.remove('skipped');
+                voiceCard.classList.remove('skipped');
+                facialCard.classList.remove('skipped');
+            }
+
             document.getElementById('contentStatus').textContent = d.content.status;
+            document.getElementById('voiceStatus').textContent = d.voice.status;
+            contentCard.classList.remove('no-response');
+            voiceCard.classList.remove('no-response');
+
             setList('contentStrengths', d.content.strengths);
             setList('contentImprovements', d.content.improvements);
 
@@ -760,8 +764,6 @@
             setList('facialStrengths', d.facial.strengths || []);
             setList('facialImprovements', d.facial.improvements || []);
 
-            // Voice Analysis
-            document.getElementById('voiceStatus').textContent = d.voice.status;
             setList('voiceStrengths', d.voice.strengths);
             setList('voiceImprovements', d.voice.improvements);
 
@@ -801,7 +803,14 @@
                             
                             // Build URL with both qid and qno for max compatibility
                             link.href = `?session_id=${sid}&qid=${q_id}&qno=${q_no}`;
-                            link.className = 'q-tab' + (qItem.is_skipped ? ' skipped' : '');
+                            
+                            const qTranscript = (qItem.transcript || "").trim();
+                            const qNoRes = !qItem.is_skipped && (qTranscript === "" || qTranscript.toLowerCase() === "no transcript available.");
+                            
+                            link.className = 'q-tab' + 
+                                (qItem.is_skipped ? ' skipped' : '') + 
+                                (qNoRes ? ' no-response' : '');
+                                
                             link.textContent = 'Q' + k;
                             
                             // Target detection: prioritze qid, fallback to qno

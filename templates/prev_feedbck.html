@@ -131,6 +131,26 @@
             font-weight: 600;
         }
 
+        .review-btn {
+            margin-top: 20px;
+            width: 100%;
+            background: #ff6f91;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+        }
+
+        .review-btn:hover {
+            background: #ff527b;
+        }
+
         /* META ROW */
 
         .meta {
@@ -223,7 +243,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const container = document.getElementById('sessions-container');
             const loading = document.getElementById('loading-message');
-            
+
             // 1. Update user initials
             const userStr = localStorage.getItem('currentUser');
             let studentId = 1; // Default
@@ -236,8 +256,8 @@
                         const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
                         document.querySelector('.user').textContent = initials || 'U';
                     }
-                } catch (e) { 
-                    console.error("Error parsing user from localStorage:", e); 
+                } catch (e) {
+                    console.error("Error parsing user from localStorage:", e);
                 }
             } else {
                 console.warn("No user found in localStorage, using default studentId: 1");
@@ -246,20 +266,20 @@
             try {
                 const response = await fetch(`/get_user_sessions?student_id=${studentId}`);
                 const sessions = await response.json();
-                
+
                 loading.style.display = 'none';
 
                 if (!sessions || !Array.isArray(sessions) || sessions.length === 0) {
                     console.log("No sessions found or invalid response:", sessions);
-                    let studentMsg = (studentId === 1) ? 
+                    let studentMsg = (studentId === 1) ?
                         "<p style='color:#e53935;'>⚠️ Note: You are currently viewing history for a default guest account (ID 1). This happens if you aren't logged in correctly on this port.</p>" : "";
-                    
+
                     container.innerHTML += `
                         <div style="text-align: center; margin-top: 50px; color: #888;">
                             <div style="font-size: 50px; margin-bottom: 20px;">📝</div>
                             <h3>No interview sessions found yet</h3>
                             ${studentMsg}
-                            <p>Complete your first interview at <b>http://localhost:5000/qgen</b> to see your progress here!</p>
+                            <p>Complete your first interview to see your progress here!</p>
                             <p style="font-size: 13px;">(Ensure you are logged in and using the same URL origin)</p>
                             <button class="level" style="cursor:pointer; margin-top: 15px; background: #ff6f91; color: white; border: none;" onclick="location.href='/qgen'">
                                 Start Your First Interview
@@ -279,8 +299,10 @@
                     else if (ansCount >= 4) ansColor = 'orange';
                     const ansWidth = Math.min(ansCount * 10, 100);
 
-                    // 2. Skipped Questions Logic (Always Grey)
-                    let skipColor = 'grey';
+                    // 2. Skipped Questions Logic
+                    let skipColor = 'green';
+                    if (skipCount >= 8) skipColor = 'red';
+                    else if (skipCount >= 4) skipColor = 'orange';
                     const skipWidth = Math.min(skipCount * 10, 100);
 
                     const sessionHtml = `
@@ -315,6 +337,7 @@
                                     </div>
                                 </div>
                             </div>
+                            <a href="/feedback?session_id=${session.session_id}" class="review-btn">Review Your Performance</a>
                         </div>
                     `;
                     container.insertAdjacentHTML('beforeend', sessionHtml);

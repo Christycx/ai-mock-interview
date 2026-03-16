@@ -541,49 +541,7 @@
         </div>
       </div>
 
-      <!-- Welcome Screen (Initially Hidden) -->
-      <div class="welcome-screen" id="welcome-screen">
-        <div class="logo">
-          <div class="logo-icon">🤖</div>
-          <div class="logo-text">AI Interview Assistant</div>
-        </div>
-
-        <h1 class="user-welcome-text">Welcome, <span id="user-name" class="user-name">User</span>!</h1>
-
-        <p class="welcome-subtitle">
-          Your journey to interview excellence begins now.<br>
-          Get ready to practice with AI-powered mock interviews tailored just for you.
-        </p>
-
-        <div class="welcome-features">
-          <div class="welcome-feature">
-            <div class="welcome-feature-icon">🎯</div>
-            <div class="welcome-feature-text">
-              <strong>Personalized Questions:</strong> Based on your resume and job preferences
-            </div>
-          </div>
-          <div class="welcome-feature">
-            <div class="welcome-feature-icon">⚡</div>
-            <div class="welcome-feature-text">
-              <strong>Real-time Feedback:</strong> Get instant analysis on your answers
-            </div>
-          </div>
-          <div class="welcome-feature">
-            <div class="welcome-feature-icon">📈</div>
-            <div class="welcome-feature-text">
-              <strong>Progress Tracking:</strong> Monitor your improvement over time
-            </div>
-          </div>
-        </div>
-
-        <button type="button" class="start-btn" id="start-button">
-          Let's Start Your Interview Prep!
-        </button>
-
-        <div class="motivation-text">
-          Prepare • Practice • Excel
-        </div>
-      </div>
+      <!-- Welcome Screen removed (redirecting to dashboard instead) -->
     </div>
   </div>
 
@@ -601,16 +559,10 @@
       document.getElementById('signup-error-message').textContent = ' ';
     });
 
-    // Show welcome screen function
+    // Show welcome screen function - Redirect to dashboard
     function showWelcomeScreen(userName) {
-      // Set the user name in welcome screen
-      document.getElementById('user-name').textContent = userName;
-
-      // Hide login content
-      document.getElementById('login-content').style.display = 'none';
-
-      // Show welcome screen
-      document.getElementById('welcome-screen').style.display = 'flex';
+      // Redirect to dashboard
+      window.location.href = '/dashboard';
     }
 
     // Login functionality - calls Flask backend
