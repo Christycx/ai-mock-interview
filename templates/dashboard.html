@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>AI Interview Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f8f9fc;
+            margin: 0;
+        }
+
+        /* FIXED TOP BAR */
+
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+        }
+
+        /* LOGO SECTION */
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .logo-icon {
+            background: #ff6f91;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        /* USER ICON */
+
+        .user {
+            width: 40px;
+            height: 40px;
+            background: #ff8ea3;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 20px; /* Move more to the left from the edge */
+        }
+
+        /* HERO SECTION */
+
+        .header {
+            margin-top: 70px;
+            background: linear-gradient(90deg, #f8a6b8, #ff8ea3);
+            color: white;
+            padding: 40px 60px;
+            font-size: 28px;
+            font-weight: bold;
+            width: 100%; /* Spans horizontally full screen */
+            box-sizing: border-box;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .header span {
+            font-size: 18px;
+            display: block;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        /* MAIN CONTAINER */
+
+        .container {
+            width: 90%;
+            margin: auto;
+            margin-top: 40px;
+        }
+
+        /* GREETING */
+
+        .greeting {
+            font-size: 22px;
+            margin-bottom: 30px;
+        }
+
+        /* FLEX BOX FOR SIDE BY SIDE */
+
+        .box-container {
+            display: flex;
+            gap: 30px;
+        }
+
+        /* BOX STYLE */
+
+        .box {
+            flex: 1;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.08);
+            min-height: 220px;
+        }
+
+        .box h2 {
+            margin-bottom: 10px;
+        }
+
+        .box p {
+            color: #555;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        /* BUTTON */
+
+        .btn {
+            background: #ff6f91;
+            border: none;
+            padding: 12px 25px;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .btn:hover {
+            background: #ff4c78;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <!-- TOP NAVBAR -->
+
+    <div class="topbar">
+
+        <div class="logo">
+            <div class="logo-icon">🤖</div>
+            Interview Assistant
+        </div>
+
+        <div class="user">
+            C
+        </div>
+
+    </div>
+
+
+    <!-- HERO SECTION -->
+
+    <div class="header">
+        🤖 Your AI Interview Assistant
+        <span>Prepare smarter, practice confidently, and track your interview progress.</span>
+    </div>
+
+
+    <div class="container">
+
+        <div class="greeting">
+            Hi <b>Christy</b>, welcome 👋
+        </div>
+
+
+        <div class="box-container">
+
+            <!-- START INTERVIEW BOX -->
+
+            <div class="box">
+
+                <h2>Start Your Interview Preparation</h2>
+
+                <p>
+                    Practice mock interviews generated from your resume and target job role for your dream company.
+                </p>
+
+                <button class="btn" onclick="location.href='/qgen'">
+                    Let's Start Your Interview
+                </button>
+
+            </div>
+
+
+            <!-- REVIEW FEEDBACK BOX -->
+
+            <div class="box">
+
+                <h2>Review Your Interview Feedback</h2>
+
+                <p>
+                    Analyze your past interview sessions and track your improvement using AI-generated feedback.
+                </p>
+
+                <button class="btn" onclick="location.href='/feedback_sessions'">
+                    View Previous Interview Sessions
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Load user data from localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('currentUser');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user && user.name) {
+                        // Extract first name for the circular icon if possible
+                        const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                        document.querySelector('.user').textContent = initials || 'U';
+
+                        // Update greeting
+                        document.querySelector('.greeting b').textContent = user.name;
+                    }
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
