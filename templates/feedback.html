@@ -34,8 +34,60 @@
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            padding: 24px 20px 60px;
+            padding: 94px 20px 60px;
         }
+
+        /* FIXED TOP NAVBAR */
+        .navbar-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a202c;
+            text-decoration: none;
+        }
+
+        .navbar-logo-icon {
+            background: #ff6f91;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .navbar-user {
+            width: 40px;
+            height: 40px;
+            background: #ff8ea3;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+
 
         .topbar {
             display: flex;
@@ -477,6 +529,21 @@
 </head>
 
 <body>
+    <!-- FIXED TOP NAVBAR -->
+    <div class="navbar-fixed">
+        <a href="/dashboard" class="navbar-logo">
+            <div class="navbar-logo-icon">🤖</div>
+            Interview Assistant
+        </a>
+        <div class="navbar-user" id="navbarUser">CX</div>
+    </div>
+    <script>
+        (function() {
+            const u = localStorage.getItem('currentUser');
+            if (u) { try { const obj = JSON.parse(u); if (obj && obj.name) { document.getElementById('navbarUser').textContent = obj.name.split(' ').map(n=>n[0]).join('').toUpperCase() || 'U'; } } catch(e){} }
+        })();
+    </script>
+
     <div style="max-width:1400px; margin:0 auto;">
 
         <div class="topbar">

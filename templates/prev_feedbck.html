@@ -293,17 +293,19 @@
                     const ansCount = session.stats.answered || 0;
                     const skipCount = session.stats.skipped || 0;
 
+                    const totalQ = session.total_questions || 10;
+                    
                     // 1. Valid Responses Logic
                     let ansColor = 'red';
-                    if (ansCount >= 8) ansColor = 'green';
-                    else if (ansCount >= 4) ansColor = 'orange';
-                    const ansWidth = Math.min(ansCount * 10, 100);
+                    if (ansCount >= totalQ * 0.8) ansColor = 'green';
+                    else if (ansCount >= totalQ * 0.4) ansColor = 'orange';
+                    const ansWidth = Math.min((ansCount / totalQ) * 100, 100);
 
                     // 2. Skipped Questions Logic
                     let skipColor = 'green';
-                    if (skipCount >= 8) skipColor = 'red';
-                    else if (skipCount >= 4) skipColor = 'orange';
-                    const skipWidth = Math.min(skipCount * 10, 100);
+                    if (skipCount >= totalQ * 0.8) skipColor = 'red';
+                    else if (skipCount >= totalQ * 0.4) skipColor = 'orange';
+                    const skipWidth = Math.min((skipCount / totalQ) * 100, 100);
 
                     const sessionHtml = `
                         <div class="session">

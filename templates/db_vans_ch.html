@@ -13,13 +13,84 @@
     }
 
     body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #fff0f3;
       min-height: 100vh;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      justify-content: flex-start;
       align-items: center;
-      padding: 20px;
+      padding: 90px 20px 20px;
     }
+
+    /* FIXED TOP BAR */
+    .topbar-fixed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 70px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 1000;
+    }
+
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #1a202c;
+      text-decoration: none;
+    }
+
+    .topbar-logo-icon {
+      background: #ff6f91;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+    }
+
+    .topbar-user {
+      width: 40px;
+      height: 40px;
+      background: #ff8ea3;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      margin-right: 20px;
+    }
+
+    /* NARROW PASTEL BANNER */
+    .page-banner {
+      background: linear-gradient(135deg, #ffbcb0 0%, #ff9aad 50%, #ffbccb 100%);
+      color: white;
+      padding: 18px 32px;
+      border-radius: 12px;
+      display: inline-block;
+      margin-bottom: 20px;
+      align-self: flex-start;
+      max-width: 600px;
+    }
+
+    .page-banner p {
+      font-size: 16px;
+      font-weight: 600;
+      opacity: 1;
+    }
+
 
     .container {
       background: white;
@@ -44,10 +115,7 @@
     }
 
     .header {
-      background: linear-gradient(to right, #4a6fa5, #3a4f7a);
-      color: white;
-      padding: 30px;
-      text-align: center;
+      display: none;
     }
 
     .header h1 {
@@ -532,6 +600,20 @@
 </head>
 
 <body>
+  <!-- FIXED TOP NAVBAR -->
+  <div class="topbar-fixed">
+    <a href="/dashboard" class="topbar-logo">
+      <div class="topbar-logo-icon">🤖</div>
+      Interview Assistant
+    </a>
+    <div class="topbar-user" id="topbarUser">CX</div>
+  </div>
+
+  <!-- NARROW PASTEL BANNER -->
+  <div class="page-banner">
+    <p>Stay calm, structure your thoughts, and speak clearly.</p>
+  </div>
+
   <div class="container">
     <div class="header">
       <h1>🎤 AI Mock Interview Practice</h1>
@@ -540,7 +622,7 @@
 
     <!-- Question Section -->
     <div class="question-section">
-      <div class="question-counter" id="questionCounter">Question 1 of 10</div>
+      <div class="question-counter" id="questionCounter">Loading...</div>
       <div class="question-text" id="questionDisplay">
         🎯 Loading question...
       </div>
@@ -563,6 +645,20 @@
   </div>
 
   <script>
+    // Load user initials in topbar
+    (function() {
+      const userStr = localStorage.getItem('currentUser');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user && user.name) {
+            const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            document.getElementById('topbarUser').textContent = initials || 'U';
+          }
+        } catch(e) {}
+      }
+    })();
+
     let mediaRecorder, chunks = [];
     const videoElement = document.getElementById('video');
     const startBtn = document.getElementById('startBtn');
@@ -578,7 +674,7 @@
     // Interview state
     let currentQuestionIndex = 0;
     let currentLevel = 'beginner';
-    let totalQuestions = 10;
+    let totalQuestions = 0;
     let currentSessionId = null; // Will be initialized
     let questions = [];
     let currentAudio = null;
