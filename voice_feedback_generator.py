@@ -418,7 +418,7 @@ EXCELLENT Severity (outstanding):
 - Each section analyzed (pace, pauses, fillers, repetition, energy, tone) should appear in either strengths OR improvements
 - Provide 2-4 points total for strengths (only include actual good things)
 - Provide 2-4 points total for improvements (only include actual issues)
-- the number of points should not be more than 4 in both strengths and improvements
+- the number of points should not be more than 4 in both strengths and improvements (it should be strictly followed)
 
 **CRITICAL FORMATTING RULES:**
 ✓ Each point = ONE clear sentence (max 2 short sentences if absolutely needed)

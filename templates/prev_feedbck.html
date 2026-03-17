@@ -57,6 +57,7 @@
             justify-content: center;
             color: white;
             font-weight: bold;
+            margin-right: 50px;
         }
 
         /* PAGE */
@@ -294,7 +295,7 @@
                     const skipCount = session.stats.skipped || 0;
 
                     const totalQ = session.total_questions || 10;
-                    
+
                     // 1. Valid Responses Logic
                     let ansColor = 'red';
                     if (ansCount >= totalQ * 0.8) ansColor = 'green';
