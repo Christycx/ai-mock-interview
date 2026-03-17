@@ -2069,53 +2069,26 @@ def get_questions(level):
         if level not in ['beginner', 'intermediate', 'advanced']:
             return jsonify({'error': 'Invalid level. Use beginner, intermediate, or advanced'}), 400
         
-        # Check if we have enough questions for this level
-        has_enough_questions = check_if_questions_exist_for_level(level)
-        
-        if not has_enough_questions:
-            return jsonify({
-                'error': f'Not enough questions found for {level} level',
-                'suggestion': f'Please generate at least {QUESTIONS_PER_LEVEL[level]} questions for {level} level first'
-            }), 404
-        
-        # Get session_id from query params (Optional now due to fallback)
+        # session_id is required; we only return questions for this session (no fallback to another session)
         session_id = request.args.get('session_id')
+        if not session_id:
+            return jsonify({'error': 'session_id is required'}), 400
         
         questions = []
         connection = get_db_connection()
         if connection:
             try:
                 cursor = connection.cursor(dictionary=True)
-                # Map level to DB stored value (handle 'intermedite' typo)
                 level_mapping = {'beginner': 'beginner', 'intermediate': 'intermedite', 'advanced': 'advanced'}
                 db_level = level_mapping.get(level, level)
 
-                # 1. Try to get questions for the specific session
-                if session_id:
-                    cursor.execute("""
-                        SELECT questions_id, question_text, difficulty_level, session_id
-                        FROM questions
-                        WHERE difficulty_level = %s AND session_id = %s
-                        ORDER BY questions_id ASC
-                    """, (db_level, session_id))
-                    questions = cursor.fetchall()
-                
-                # 2. Fallback: If no session_id or no questions found for session, get latest questions
-                if not questions:
-                    limit = QUESTIONS_PER_LEVEL.get(level, 10)
-                    print(f"⚠️ No questions found for session '{session_id}'. Falling back to latest {limit} questions for level {level}.")
-                    
-                    cursor.execute("""
-                        SELECT questions_id, question_text, difficulty_level, session_id
-                        FROM questions
-                        WHERE difficulty_level = %s
-                        ORDER BY questions_id DESC
-                        LIMIT %s
-                    """, (db_level, limit))
-                    questions = cursor.fetchall()
-                    
-                    # Reverse to show in correct order (Q1 -> Q10)
-                    questions.reverse()
+                cursor.execute("""
+                    SELECT questions_id, question_text, difficulty_level, session_id
+                    FROM questions
+                    WHERE difficulty_level = %s AND session_id = %s
+                    ORDER BY questions_id ASC
+                """, (db_level, session_id))
+                questions = cursor.fetchall()
 
                 cursor.close()
                 connection.close()
@@ -2127,11 +2100,12 @@ def get_questions(level):
                     pass
                 return jsonify({'error': f'Database error: {str(e)}'}), 500
         
-        # Verify we have questions after fallback
+        # No questions for this session yet (frontend will show loading and reload every 5s)
         if not questions:
             return jsonify({
-                'error': f'No questions found in database for {level} level',
-                'suggestion': 'Please generate questions first'
+                'error': f'No questions found for this session yet',
+                'session_id': session_id,
+                'level': level
             }), 404
         
         # Format questions for response

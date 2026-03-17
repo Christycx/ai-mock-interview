@@ -678,6 +678,7 @@
     let currentSessionId = null; // Will be initialized
     let questions = [];
     let currentAudio = null;
+    let currentAudioGenerationId = 0;
 
     // Get parameters from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -687,13 +688,30 @@
       totalQuestions = getTotalQuestionsForLevel(currentLevel);
     }
 
-    // Get session ID from URL or generate placeholder
+    // Get session ID and level from URL (required; no fallback to another session)
     currentSessionId = urlParams.get('session_id');
+
+    let questionsReloadTimer = null;
+
+    function clearQuestionsReloadTimer() {
+      if (questionsReloadTimer) {
+        clearTimeout(questionsReloadTimer);
+        questionsReloadTimer = null;
+      }
+    }
+
+    // Reload this page in 5s (same URL: start-interview?session_id=...&level=...)
+    function scheduleQuestionsReload() {
+      clearQuestionsReloadTimer();
+      const url = window.location.pathname + window.location.search;
+      questionsReloadTimer = setTimeout(() => {
+        window.location.href = url;
+      }, 5000);
+    }
 
     // Initialize
     initializeInterview();
 
-    // Generate unique session ID (fallback only)
     function generateSessionId() {
       return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
@@ -708,45 +726,40 @@
       return questionsPerLevel[level] || 10;
     }
 
-    // Initialize interview by fetching questions
+    // Initialize interview by fetching questions for current session_id only
     async function initializeInterview() {
       try {
-        // If session ID is missing, try to fetch the latest ongoing one from database
         if (!currentSessionId) {
-          try {
-            const sessionRes = await fetch('/get_latest_ongoing_session');
-            const sessionData = await sessionRes.json();
-            if (sessionData.success) {
-              currentSessionId = sessionData.session_id;
-              console.log('📡 Retrieved ongoing session from database:', currentSessionId);
-            }
-          } catch (e) {
-            console.warn('Could not fetch ongoing session:', e);
-          }
-        }
-
-        // If still missing (e.g., no ongoing session), generate one
-        if (!currentSessionId) {
-          currentSessionId = generateSessionId();
-          console.log('✨ Generated new session ID:', currentSessionId);
-        }
-
-        // Fetch questions for the current level (include session_id when available)
-        const qs = currentSessionId ? `?session_id=${encodeURIComponent(currentSessionId)}` : '';
-        const response = await fetch(`/get_questions/${currentLevel}${qs}`);
-        const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        questions = data.questions || [];
-
-        if (questions.length === 0) {
-          showError('No questions found for this level. Please generate questions first.');
+          showError('Missing session_id. Please open: /start-interview?session_id=YOUR_SESSION&level=beginner');
           return;
         }
 
+        const qs = `?session_id=${encodeURIComponent(currentSessionId)}`;
+        const response = await fetch(`/get_questions/${currentLevel}${qs}`);
+        let data = {};
+        try {
+          data = await response.json();
+        } catch (e) {
+          data = {};
+        }
+
+        // No questions for this session yet: show loading and reload same page every 5s
+        if (!response.ok || data.error || !data.questions || data.questions.length === 0) {
+          const msg = (data && data.error) ? data.error : 'Questions are loading for this session...';
+          resultDiv.style.display = 'block';
+          resultDiv.innerHTML = `
+            <div class="loading">
+              <div class="spinner"></div>
+              <p style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">${msg}</p>
+              <p style="margin-top: 10px; font-size: 14px; opacity: 0.85;">Reloading in 5 seconds...</p>
+            </div>
+          `;
+          scheduleQuestionsReload();
+          return;
+        }
+
+        clearQuestionsReloadTimer();
+        questions = data.questions;
         totalQuestions = questions.length;
         updateQuestionCounter();
         loadQuestion(currentQuestionIndex);
@@ -802,6 +815,7 @@
           currentAudio.currentTime = 0;
           currentAudio = null;
         }
+        const generationId = ++currentAudioGenerationId;
         // Request audio generation from backend
         const response = await fetch('/generate_question_audio', {
           method: 'POST',
@@ -814,6 +828,9 @@
         });
 
         const data = await response.json();
+
+        // If another audio generation has been started, discard this one
+        if (generationId !== currentAudioGenerationId) return;
 
         if (data.success && data.audio_url) {
           // Create audio element and play
@@ -833,6 +850,10 @@
               skipBtn.disabled = false;
             }
           });
+        } else {
+          // Re-enable if audio fails to generate properly
+          startBtn.disabled = false;
+          skipBtn.disabled = false;
         }
       } catch (error) {
         console.error('Error generating question audio:', error);
@@ -843,6 +864,10 @@
 
     // Skip question function
     async function skipCurrentQuestion() {
+      // Prevent double skipping
+      if (skipBtn.disabled) return;
+      skipBtn.disabled = true;
+
       // Stop current audio playback
       if (currentAudio) {
         currentAudio.pause();
@@ -851,10 +876,9 @@
       }
       const currentQuestion = questions[currentQuestionIndex];
 
-      // Ensure we have a session id before sending skip (backend requires it)
       if (!currentSessionId) {
-        currentSessionId = generateSessionId();
-        console.warn('No session_id present - generated fallback:', currentSessionId);
+        showError('Missing session_id. Please reopen the interview with a valid session_id in the URL.');
+        return;
       }
 
       try {
