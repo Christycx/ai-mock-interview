@@ -921,13 +921,7 @@
           currentQuestionIndex++;
           loadQuestion(currentQuestionIndex);
         } else {
-          // Last question skipped (network error case)
-          finishBtn.style.display = 'flex';
-          finishBtn.disabled = false;
-          startBtn.style.display = 'none';
-          stopBtn.style.display = 'none';
-          skipBtn.style.display = 'none';
-          nextBtn.style.display = 'none';
+          showFinalResults();
         }
       }
     }
@@ -1024,18 +1018,7 @@
                   throw new Error(data.error);
                 }
                 if (isLastQuestion) {
-                  resultDiv.innerHTML = `
-                  <div class="loading">
-                    <p style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
-                      🚀 Background Analysis Started!
-                    </p>
-                    <p style="color: #7f8c8d;">
-                      <small>Your final response has been uploaded and analysis is running in the background. You can finish the interview now.</small>
-                    </p>
-                  </div>
-                `;
-                  finishBtn.style.display = 'flex';
-                  finishBtn.disabled = false;
+                  showFinalResults();
                 } else {
                   console.log(`✅ Analysis started in background for Question ${currentQuestionIndex + 1}`);
                 }
