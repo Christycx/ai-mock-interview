@@ -27,3 +27,5 @@ check_db_status.py
 voice_feed.py
 uploads
 static/audio
+vans.py
+dyn.py
