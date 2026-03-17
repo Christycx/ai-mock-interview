@@ -416,8 +416,9 @@ EXCELLENT Severity (outstanding):
 - EXCELLENT/GOOD severity → STRENGTHS only
 - HIGH/MODERATE/MINOR severity → IMPROVEMENTS only
 - Each section analyzed (pace, pauses, fillers, repetition, energy, tone) should appear in either strengths OR improvements
-- Provide 2-5 points total for strengths (only include actual good things)
-- Provide 2-6 points total for improvements (only include actual issues)
+- Provide 2-4 points total for strengths (only include actual good things)
+- Provide 2-4 points total for improvements (only include actual issues)
+- the number of points should not be more than 4 in both strengths and improvements
 
 **CRITICAL FORMATTING RULES:**
 ✓ Each point = ONE clear sentence (max 2 short sentences if absolutely needed)
@@ -508,25 +509,7 @@ Now generate UNIQUE, VARIED feedback for THIS candidate based on their specific 
             except (json.JSONDecodeError, ValueError) as e:
                 print(f"⚠️ [Dynamic Feedback] Failed to parse JSON: {e}")
                 print(f"Response preview: {response[:300]}...")
-                
-                # Fallback: try manual extraction
-                try:
-                    strengths_match = re.search(r'"strengths"\s*:\s*\[(.*?)\]', response, re.DOTALL)
-                    improvements_match = re.search(r'"improvements"\s*:\s*\[(.*?)\]', response, re.DOTALL)
-                    
-                    if strengths_match and improvements_match:
-                        strengths = re.findall(r'"([^"]+)"', strengths_match.group(1))
-                        improvements = re.findall(r'"([^"]+)"', improvements_match.group(1))
-                        
-                        if strengths or improvements:
-                            print(f"✅ [Dynamic Feedback] Manually extracted feedback")
-                            return {
-                                'strengths': strengths if strengths else ["You completed your response"],
-                                'improvements': improvements if improvements else ["Keep practicing your delivery"]
-                            }
-                except Exception as parse_error:
-                    print(f"⚠️ [Dynamic Feedback] Manual extraction failed: {parse_error}")
-                
+
                 print("⚠️ [Dynamic Feedback] Falling back to static feedback")
                 return generate_static_fallback_feedback(analysis_results, confidence_score)
         else:

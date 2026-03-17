@@ -1,9 +1,15 @@
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
+import os
+
+# MediaPipe can crash with protobuf text-format parse errors on some protobuf
+# versions. For compatibility, force the pure-Python protobuf implementation.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION_VERSION", "2")
+
 import cv2
 import mediapipe as mp
 import numpy as np
-import os
 import time
 import mysql.connector
 from mysql.connector import Error
@@ -22,8 +28,9 @@ mp_pose = solutions.pose
 load_dotenv()
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_USER = os.getenv("MYSQL_USER", "root")
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
-MYSQL_DB = os.getenv("MYSQL_DB", "")
+# Match main app defaults when env vars missing
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "interview@1234")
+MYSQL_DB = os.getenv("MYSQL_DB", "mockinterview")
 
 DEFAULT_RESUME_ID = "FACE_DEFAULT"
 
@@ -88,53 +95,145 @@ def store_face_feedback(feedback, student_id=None, session_id=None, qno=None):
         touch_quality = body_touch.get("quality") or None
         touch_feedback_text = body_touch.get("feedback") or None
 
-        insert_query = """
-            INSERT INTO face_feedback (
-                `student_id`,
-                `posture_quality`,
-                `posture_feedback`,
-                `alignment`,
-                `alignment_feedback`,
-                `eye_contact`,
-                `eyecontact_feedback`,
-                `touch`,
-                `touch_feedback`,
-                `strength`,
-                `improvements`,
-                `tips`,
-                `qno`,
-                `session_id`
+        # Check if session_id column exists so we can support both schemas
+        cursor.execute("SHOW COLUMNS FROM face_feedback LIKE 'session_id'")
+        has_session_id = bool(cursor.fetchone())
+
+        qno_val = int(qno) if qno is not None else None
+
+        # Upsert logic: ensure only one row per question (per session when available)
+        existing_id = None
+        if has_session_id and session_id and qno_val is not None:
+            cursor.execute(
+                "SELECT face_id FROM face_feedback WHERE session_id = %s AND qno = %s ORDER BY face_id DESC LIMIT 1",
+                (session_id, qno_val),
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
+            row = cursor.fetchone()
+            if row:
+                existing_id = row[0]
+        elif qno_val is not None:
+            # Legacy schema without session_id: use qno only
+            cursor.execute(
+                "SELECT face_id FROM face_feedback WHERE qno = %s ORDER BY face_id DESC LIMIT 1",
+                (qno_val,),
+            )
+            row = cursor.fetchone()
+            if row:
+                existing_id = row[0]
 
-        values = (
-            student_id,
-            posture_quality,
-            posture_feedback_text,
-            alignment_quality,
-            alignment_feedback_text,
-            eye_contact_quality,
-            eye_contact_feedback_text,
-            touch_quality,
-            touch_feedback_text,
-            strengths_str,
-            improvements_str,
-            tips_str,
-            int(qno) if qno is not None else None,
-            session_id
-        )
+        if existing_id:
+            print(f"[face_feedback] Updating: face_id={existing_id}, student_id={student_id}, qno={qno_val}, session_id={session_id}")
+            cursor.execute(
+                """
+                UPDATE face_feedback
+                SET student_id=%s,
+                    posture_quality=%s, posture_feedback=%s,
+                    alignment=%s, alignment_feedback=%s,
+                    eye_contact=%s, eyecontact_feedback=%s,
+                    touch=%s, touch_feedback=%s,
+                    strength=%s, improvements=%s, tips=%s
+                WHERE face_id=%s
+                """,
+                (
+                    student_id,
+                    posture_quality,
+                    posture_feedback_text,
+                    alignment_quality,
+                    alignment_feedback_text,
+                    eye_contact_quality,
+                    eye_contact_feedback_text,
+                    touch_quality,
+                    touch_feedback_text,
+                    strengths_str,
+                    improvements_str,
+                    tips_str,
+                    existing_id,
+                ),
+            )
+        else:
+            if has_session_id:
+                insert_query = """
+                    INSERT INTO face_feedback (
+                        `student_id`,
+                        `posture_quality`,
+                        `posture_feedback`,
+                        `alignment`,
+                        `alignment_feedback`,
+                        `eye_contact`,
+                        `eyecontact_feedback`,
+                        `touch`,
+                        `touch_feedback`,
+                        `strength`,
+                        `improvements`,
+                        `tips`,
+                        `qno`,
+                        `session_id`
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
 
-        print(f"📝 Inserting face feedback: student_id={student_id}, qno={qno}, session_id={session_id}")
-        
-        cursor.execute(insert_query, values)
+                values = (
+                    student_id,
+                    posture_quality,
+                    posture_feedback_text,
+                    alignment_quality,
+                    alignment_feedback_text,
+                    eye_contact_quality,
+                    eye_contact_feedback_text,
+                    touch_quality,
+                    touch_feedback_text,
+                    strengths_str,
+                    improvements_str,
+                    tips_str,
+                    qno_val,
+                    session_id,
+                )
+            else:
+                insert_query = """
+                    INSERT INTO face_feedback (
+                        `student_id`,
+                        `posture_quality`,
+                        `posture_feedback`,
+                        `alignment`,
+                        `alignment_feedback`,
+                        `eye_contact`,
+                        `eyecontact_feedback`,
+                        `touch`,
+                        `touch_feedback`,
+                        `strength`,
+                        `improvements`,
+                        `tips`,
+                        `qno`
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+
+                values = (
+                    student_id,
+                    posture_quality,
+                    posture_feedback_text,
+                    alignment_quality,
+                    alignment_feedback_text,
+                    eye_contact_quality,
+                    eye_contact_feedback_text,
+                    touch_quality,
+                    touch_feedback_text,
+                    strengths_str,
+                    improvements_str,
+                    tips_str,
+                    qno_val,
+                )
+
+            print(f"[face_feedback] Inserting: student_id={student_id}, qno={qno_val}, session_id={session_id}")
+            cursor.execute(insert_query, values)
+
         connection.commit()
         affected_rows = cursor.rowcount
         cursor.close()
         connection.close()
         
         if affected_rows > 0:
-            print(f"✅ Face feedback stored in face_feedback table (rows: {affected_rows})")
+            print(f"[face_feedback] Stored (rows: {affected_rows})")
             return True
         else:
             print("⚠️ No rows were inserted")

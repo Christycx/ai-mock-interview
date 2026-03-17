@@ -19,9 +19,6 @@ from gtts import gTTS
 import os
 import uuid
 from multiprocessing import Process, Semaphore
-from face import analyze_video, store_face_feedback
-from concurrent.futures import ThreadPoolExecutor
-from voice_feedback_generator import generate_dynamic_voice_feedback
 
 AUDIO_FOLDER = "static/audio"
 
@@ -146,12 +143,9 @@ def store_voice_feedback(session_id, question_id, question_number, strengths, im
     try:
         cursor = connection.cursor()
         
-        # Store as one sentence with comma-separated points
-        strengths_sentence = ", ".join([str(s).strip().rstrip('.') for s in (strengths or []) if str(s).strip()])
-        improvements_sentence = ", ".join([str(s).strip().rstrip('.') for s in (improvements or []) if str(s).strip()])
-        strengths_value = (strengths_sentence + ".") if strengths_sentence else ""
-        improvements_value = (improvements_sentence + ".") if improvements_sentence else ""
-        q_no_value = int(question_id)
+        # Convert lists to JSON strings
+        strengths_json = json.dumps(strengths) if strengths else "[]"
+        improvements_json = json.dumps(improvements) if improvements else "[]"
         
         # First check if table exists and has correct column names
         cursor.execute("SHOW COLUMNS FROM voice_feedback LIKE 'session_id'")
@@ -159,54 +153,30 @@ def store_voice_feedback(session_id, question_id, question_number, strengths, im
         
         if session_id_exists:
             # Use session_id column
-            cursor.execute(
-                "SELECT id FROM voice_feedback WHERE session_id = %s AND q_no = %s ORDER BY id DESC LIMIT 1",
-                (session_id, q_no_value),
-            )
-            existing = cursor.fetchone()
-            if existing:
-                cursor.execute(
-                    """
-                    UPDATE voice_feedback
-                    SET studentid=%s, strengths=%s, improvements=%s
-                    WHERE id=%s
-                    """,
-                    (1, strengths_value, improvements_value, existing[0]),
-                )
-            else:
-                cursor.execute(
-                    """
-                    INSERT INTO voice_feedback
-                    (studentid, session_id, strengths, improvements, q_no)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (1, session_id, strengths_value, improvements_value, q_no_value),
-                )
+            cursor.execute("""
+                INSERT INTO voice_feedback 
+                (studentid, session_id, strengths, improvements, q_no)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                1,  # Default student ID
+                session_id,
+                strengths_json,
+                improvements_json,
+                question_number
+            ))
         else:
             # Use resumeid column
-            cursor.execute(
-                "SELECT id FROM voice_feedback WHERE resumeid = %s AND q_no = %s ORDER BY id DESC LIMIT 1",
-                (session_id, q_no_value),
-            )
-            existing = cursor.fetchone()
-            if existing:
-                cursor.execute(
-                    """
-                    UPDATE voice_feedback
-                    SET studentid=%s, strengths=%s, improvements=%s
-                    WHERE id=%s
-                    """,
-                    (1, strengths_value, improvements_value, existing[0]),
-                )
-            else:
-                cursor.execute(
-                    """
-                    INSERT INTO voice_feedback
-                    (studentid, resumeid, strengths, improvements, q_no)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (1, session_id, strengths_value, improvements_value, q_no_value),
-                )
+            cursor.execute("""
+                INSERT INTO voice_feedback 
+                (studentid, resumeid, strengths, improvements, q_no)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                1,  # Default student ID
+                session_id,
+                strengths_json,
+                improvements_json,
+                question_number
+            ))
         
         connection.commit()
         cursor.close()
@@ -220,7 +190,7 @@ def store_voice_feedback(session_id, question_id, question_number, strengths, im
             connection.close()
         return False
 
-def store_content_feedback(student_id, session_id, question_id, question_number, response, content_analysis, sample_answer):
+def store_content_feedback(session_id, question_id, question_number, response, content_analysis, sample_answer):
     """Store content feedback in database"""
     connection = get_db_connection()
     if connection is None:
@@ -262,7 +232,7 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
                  structure, improvements, strengths, sample_answer, q_no)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                student_id if student_id else 1,
+                1,  # Default student ID
                 session_id,
                 response,
                 str(content_score),
@@ -275,14 +245,14 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
                 question_number
             ))
         else:
-            # Fallback to old schema if needed
+            # Use resumeid column
             cursor.execute("""
                 INSERT INTO content_feedback 
                 (studentid, resumeid, response, content_score, overall, relevance, 
                  structure, improvements, strengths, sample_answer, q_no)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                student_id if student_id else 1,  # Dynamic student ID
+                1,  # Default student ID
                 session_id,
                 response,
                 str(content_score),
@@ -300,38 +270,11 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
         connection.close()
         print(f"✅ Content feedback stored for question {question_id}")
         return True
+        
     except Error as e:
         print(f"❌ Error storing content feedback: {e}")
         if connection:
             connection.close()
-        return False
-
-def update_response_transcript(session_id, question_id, student_id, transcript):
-    """Update the transcript column in the responses table after transcription"""
-    if not transcript:
-        return False
-        
-    connection = get_db_connection()
-    if connection is None:
-        return False
-    try:
-        cursor = connection.cursor()
-        # Truncate to 1000 characters as per user's table schema
-        truncated_transcript = transcript[:1000]
-        
-        sql = """
-            UPDATE responses 
-            SET transcript = %s 
-            WHERE session_id = %s AND (question_id = %s OR q_no = %s)
-        """
-        # We try to match by question_id or q_no for robustness
-        cursor.execute(sql, (truncated_transcript, session_id, question_id, question_id))
-        connection.commit()
-        cursor.close()
-        connection.close()
-        return True
-    except Exception as e:
-        print(f"Error updating response transcript: {e}")
         return False
 
 def store_skipped_question(session_id, question_id, question_number):
@@ -435,7 +378,7 @@ def store_skipped_question(session_id, question_id, question_number):
         # ================================
 # MULTIPROCESSING CONFIGURATION
 # ================================
-MAX_PROCESSES = 5
+MAX_PROCESSES = 2
 process_semaphore = Semaphore(MAX_PROCESSES)
 
 def analyze_answer_process(video_path, question, question_id, session_id, question_number):
@@ -447,31 +390,13 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
         try:
             print(f"🔄 [Process] Starting analysis for Question {question_number}")
             
-            # 1. Fetch student_id early
-            student_id = None 
-            try:
-                conn = get_db_connection()
-                if conn:
-                    cur = conn.cursor(dictionary=True)
-                    cur.execute("SELECT student_id FROM interview_session WHERE session_id = %s", (session_id,))
-                    row = cur.fetchone()
-                    if row:
-                        student_id = row['student_id']
-                    cur.close()
-                    conn.close()
-            except:
-                pass
-
-            # 2. Audio processing for voice analysis
+            # Audio processing for voice analysis
             audio_path = extract_audio(video_path)
             transcribed_text = transcribe_text(audio_path)
+            
             print(f"📝 [Process] Transcribed text: {transcribed_text}")
             
-            # Update the responses table with the transcribed text AS SOON AS READY
-            if transcribed_text.strip():
-                update_response_transcript(session_id, question_id, student_id, transcribed_text)
-
-            # 3. Analyze audio features
+            # VOICE ANALYSIS (using existing tools)
             audio_features = analyze_audio_features(audio_path)
             pause_analysis = analyze_pauses_enhanced(audio_path)
             filler_analysis = analyze_filler_patterns(transcribed_text)
@@ -483,64 +408,39 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
             }
             
             confidence_score = calculate_advanced_confidence(analysis_results)
+            confidence_category = get_confidence_category(confidence_score)
+            feedback_data = generate_simple_feedback(analysis_results, confidence_score)
+
+            # CONTENT ANALYSIS (using Groq API)
+            sample_answer = None
+            content_analysis = None
             
-            # PHASE 1: Fast Parallel Tasks
-            with ThreadPoolExecutor(max_workers=4) as executor:
-                # A. Voice Feedback Generation (Fast)
-                voice_future = executor.submit(generate_dynamic_voice_feedback, analysis_results, confidence_score)
+            if question and transcribed_text.strip():
+                print("🚀 [Process] Starting content analysis...")
                 
-                # B. Face Analysis (Parallel)
-                print(f"🎥 [Process] Submitting face analysis...")
-                face_future = executor.submit(analyze_video, video_path)
+                # Add small delay to avoid rate limits
+                time.sleep(0.5)
                 
-                # C. Sample Answer & Content Analysis
-                sample_future = None
-                content_future = None
-                if question:
-                    sample_future = executor.submit(generate_sample_answer, question)
-                    if transcribed_text.strip():
-                        content_future = executor.submit(analyze_answer_content, question, transcribed_text)
+                # Generate sample answer using Groq
+                sample_answer = generate_sample_answer(question)
+                print(f"📋 [Process] Sample answer generated: {sample_answer is not None}")
+                
+                # Add delay between API calls
+                time.sleep(0.5)
+                
+                # Analyze user's answer using Groq
+                content_analysis = analyze_answer_content(question, transcribed_text)
+                print(f"📊 [Process] Content analysis completed: {content_analysis is not None}")
 
-                # INCREMENTAL STORAGE: Save Face Feedback ASAP
-                try:
-                    face_result = face_future.result()
-                    print(f"✅ [Process] Face analysis completed")
-                    if face_result and session_id and question_id:
-                        store_face_feedback(
-                            face_result, 
-                            student_id=student_id, 
-                            session_id=session_id, 
-                            qno=int(question_id)
-                        )
-                        print(f"✅ [Process] Face feedback stored")
-                except Exception as e:
-                    print(f"⚠️ [Process] Face analysis/storage error: {e}")
+            # Calculate speaking rate for metrics
+            speaking_rate = 0
+            if audio_features['duration'] > 0:
+                speaking_rate = (filler_analysis['word_count'] / audio_features['duration']) * 60
 
-                # Wait for Sample Answer (store content_feedback only once with full API data)
-                sample_answer = None
-                try:
-                    if sample_future:
-                        sample_answer = sample_future.result()
-                        print(f"📋 [Process] Sample answer generated")
-                except Exception as e:
-                    print(f"⚠️ [Process] Sample answer error: {e}")
-                    sample_answer = None
-
-                # Wait for remaining slow tasks
-                feedback_data = voice_future.result()
-                content_analysis = None
-                if content_future:
-                    try:
-                        content_analysis = content_future.result()
-                    except Exception as e:
-                        print(f"⚠️ [Process] Content analysis error: {e}")
-                        content_analysis = None
-                print(f"✅ [Process] Detail analysis completed")
-
-            # FINAL STORAGE: Update with evaluations
+            # STORE FEEDBACK IN DATABASE
             if session_id and question_id:
                 try:
-                    # Update voice feedback
+                    # Store voice feedback
                     store_voice_feedback(
                         session_id=session_id,
                         question_id=question_id,
@@ -549,10 +449,9 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                         improvements=feedback_data['improvements']
                     )
                     
-                    # Update content feedback with full analysis
-                    if sample_answer and content_analysis:
+                    # Store content feedback if analysis was performed
+                    if content_analysis and transcribed_text.strip():
                         store_content_feedback(
-                            student_id=student_id,
                             session_id=session_id,
                             question_id=question_id,
                             question_number=int(question_number),
@@ -560,8 +459,16 @@ def analyze_answer_process(video_path, question, question_id, session_id, questi
                             content_analysis=content_analysis,
                             sample_answer=sample_answer
                         )
-                    else:
-                        print("⚠️ [Process] Skipping content_feedback store because sample_answer/content_analysis missing (API required).")
+                    elif transcribed_text.strip():  # If we have transcript but no content analysis
+                        store_content_feedback(
+                            session_id=session_id,
+                            question_id=question_id,
+                            question_number=int(question_number),
+                            response=transcribed_text,
+                            content_analysis=None,
+                            sample_answer=sample_answer
+                        )
+                    
                     print(f"✅ [Process] Feedback stored in database for Q{question_number}")
                 except Exception as e:
                     print(f"⚠️ [Process] Failed to store feedback in database: {e}")
@@ -786,6 +693,80 @@ def get_confidence_category(score):
         return "Below Average"
     else:
         return "Poor"
+
+def generate_simple_feedback(analysis_results, confidence_score):
+    """Generate feedback based on analysis"""
+    try:
+        feedback = []
+        strengths = []
+        
+        pause_analysis = analysis_results['pause_analysis']
+        filler_analysis = analysis_results['filler_analysis']
+        audio_features = analysis_results['audio_features']
+        
+        speaking_rate = (filler_analysis['word_count'] / audio_features['duration']) * 60 if audio_features['duration'] > 0 else 0
+        
+        # Strengths
+        if pause_analysis['silence_ratio'] < 0.15:
+            strengths.append("Good flow with minimal pauses")
+        
+        if filler_analysis['filler_ratio'] < 0.03:
+            strengths.append("Clear speech with few filler words")
+        
+        if 140 <= speaking_rate <= 160:
+            strengths.append("Perfect speaking pace")
+        
+        if audio_features['avg_energy'] > 0.025:
+            strengths.append("Confident voice projection")
+        
+        if audio_features['pitch_std'] > 40:
+            strengths.append("Expressive and engaging tone")
+        
+        if len(filler_analysis['important_repeated_words']) == 0:
+            strengths.append("Good vocabulary diversity")
+        
+        # Improvements
+        if pause_analysis['silence_ratio'] > 0.25:
+            feedback.append("Reduce long pauses between thoughts")
+        
+        if pause_analysis['hesitant_pauses_count'] > pause_analysis['strategic_pauses_count']:
+            feedback.append("Use brief pauses instead of long hesitations")
+        
+        if filler_analysis['filler_ratio'] > 0.06:
+            feedback.append("Practice speaking without filler words like 'um' and 'like'")
+        
+        if filler_analysis['important_repeated_words']:
+            top_repeated = sorted(filler_analysis['important_repeated_words'].items(), key=lambda x: x[1], reverse=True)[:3]
+            words_str = ", ".join([f"'{word}'" for word, count in top_repeated])
+            feedback.append(f"Try using synonyms for repeated words: {words_str}")
+        
+        if speaking_rate < 120:
+            feedback.append("Try speaking a bit faster to maintain engagement")
+        elif speaking_rate > 180:
+            feedback.append("Slow down slightly for better clarity")
+        
+        if audio_features['avg_energy'] < 0.015:
+            feedback.append("Speak with more energy and confidence")
+        
+        if audio_features['pitch_std'] < 30:
+            feedback.append("Add more expression to your voice")
+        
+        if not feedback and not strengths:
+            if confidence_score > 70:
+                strengths.append("Good overall delivery")
+            else:
+                feedback.append("Keep practicing to build confidence")
+        
+        return {
+            'improvements': feedback,
+            'strengths': strengths
+        }
+    except Exception as e:
+        print(f"Feedback generation error: {e}")
+        return {
+            'improvements': ["Analysis incomplete - please try again"],
+            'strengths': []
+        }
 
 # ================================
 # GROQ API CALL FUNCTION
@@ -1713,29 +1694,45 @@ def analyze_voice():
     print(f"🎯 Received analysis request for question: {question}")
     print(f"📝 Question ID: {question_id}, Session ID: {session_id}, Question #: {question_number}")
 
-    # Process all questions in background
-    try:
-        # Start background process
-        process = Process(
-            target=analyze_answer_process,
-            args=(video_path, question, question_id, session_id, question_number)
-        )
-        process.daemon = True
-        process.start()
-        
-        print(f"✅ Background process started for Question {question_number}{' (Last Question)' if is_last_question else ''}")
-        
-        # Return immediately
-        return jsonify({
-            'success': True,
-            'message': 'Analysis started in background',
-            'processing_mode': 'asynchronous',
-            'question_number': question_number,
-            'is_last_question': is_last_question
-        })
-    except Exception as e:
-        print(f"❌ Failed to start background process: {str(e)}")
-        return jsonify({'error': f'Failed to start analysis: {str(e)}'}), 500
+    # If it's the last question, process synchronously (user will wait)
+    if is_last_question:
+        print(f"⏳ Last question - processing synchronously...")
+        try:
+            # Run analysis in current process for last question
+            analyze_answer_process(video_path, question, question_id, session_id, question_number)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Analysis completed',
+                'processing_mode': 'synchronous',
+                'question_number': question_number
+            })
+        except Exception as e:
+            print(f"❌ Analysis error: {str(e)}")
+            return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
+    else:
+        # For non-last questions, process in background
+        try:
+            # Start background process
+            process = Process(
+                target=analyze_answer_process,
+                args=(video_path, question, question_id, session_id, question_number)
+            )
+            process.daemon = True
+            process.start()
+            
+            print(f"✅ Background process started for Question {question_number}")
+            
+            # Return immediately
+            return jsonify({
+                'success': True,
+                'message': 'Analysis started in background',
+                'processing_mode': 'asynchronous',
+                'question_number': question_number
+            })
+        except Exception as e:
+            print(f"❌ Failed to start background process: {str(e)}")
+            return jsonify({'error': f'Failed to start analysis: {str(e)}'}), 500
 
 # ================================
 # ROUTE FOR SKIPPED QUESTIONS

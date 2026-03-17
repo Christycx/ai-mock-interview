@@ -87,16 +87,43 @@ def get_feedback():
             cursor.execute("SELECT video_path, transcript FROM responses WHERE session_id = %s AND question_id = %s", (session_id, q_id))
             resp_item = cursor.fetchone() or {}
             
-            # Fetch Content Feedback
-            cursor.execute("SELECT * FROM content_feedback WHERE session_id = %s AND q_no = %s", (session_id, q_id))
+            # Fetch Content Feedback (latest row only)
+            cursor.execute(
+                """
+                SELECT *
+                FROM content_feedback
+                WHERE session_id = %s AND q_no = %s
+                ORDER BY content_id DESC
+                LIMIT 1
+                """,
+                (session_id, q_id),
+            )
             cf = cursor.fetchone() or {}
             
-            # Fetch Voice Feedback
-            cursor.execute("SELECT * FROM voice_feedback WHERE session_id = %s AND q_no = %s", (session_id, q_id))
+            # Fetch Voice Feedback (latest row only)
+            cursor.execute(
+                """
+                SELECT *
+                FROM voice_feedback
+                WHERE session_id = %s AND q_no = %s
+                ORDER BY voice_id DESC
+                LIMIT 1
+                """,
+                (session_id, q_id),
+            )
             vf = cursor.fetchone() or {}
             
-            # Fetch Face Feedback
-            cursor.execute("SELECT * FROM face_feedback WHERE session_id = %s AND qno = %s", (session_id, q_id))
+            # Fetch Face Feedback (latest row only)
+            cursor.execute(
+                """
+                SELECT *
+                FROM face_feedback
+                WHERE session_id = %s AND qno = %s
+                ORDER BY face_id DESC
+                LIMIT 1
+                """,
+                (session_id, q_id),
+            )
             ff = cursor.fetchone() or {}
             
             print(f"    - Response found: {bool(resp_item)}")

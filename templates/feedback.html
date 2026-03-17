@@ -163,7 +163,8 @@
             padding: 10px 18px;
             border-radius: 10px 10px 0 0;
             border: none;
-            background: #FFD1DC; /* Light Pink */
+            background: #FFD1DC;
+            /* Light Pink */
             color: #444;
             font-family: 'Sora', sans-serif;
             font-size: 0.95rem;
@@ -377,7 +378,8 @@
         }
 
         .status-pill {
-            display: none !important; /* Hidden as requested */
+            display: none !important;
+            /* Hidden as requested */
         }
 
         .content-card .a-header,
@@ -538,9 +540,9 @@
         <div class="navbar-user" id="navbarUser">CX</div>
     </div>
     <script>
-        (function() {
+        (function () {
             const u = localStorage.getItem('currentUser');
-            if (u) { try { const obj = JSON.parse(u); if (obj && obj.name) { document.getElementById('navbarUser').textContent = obj.name.split(' ').map(n=>n[0]).join('').toUpperCase() || 'U'; } } catch(e){} }
+            if (u) { try { const obj = JSON.parse(u); if (obj && obj.name) { document.getElementById('navbarUser').textContent = obj.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'; } } catch (e) { } }
         })();
     </script>
 
@@ -640,7 +642,7 @@
                             <div class="f-box-c" id="f-posture">Loading...</div>
                         </div>
                         <div class="f-box">
-                            <div class="f-box-h">Alignment</div>
+                            <div class="f-box-h">Head Alignment</div>
                             <div class="f-box-c" id="f-alignment">Loading...</div>
                         </div>
                         <div class="f-box">
@@ -648,7 +650,7 @@
                             <div class="f-box-c" id="f-eye">Loading...</div>
                         </div>
                         <div class="f-box">
-                            <div class="f-box-h">Touch on Face</div>
+                            <div class="f-box-h">Hand movements</div>
                             <div class="f-box-c" id="f-touch">Loading...</div>
                         </div>
                     </div>
@@ -775,7 +777,7 @@
             const contentCard = document.querySelector('.content-card');
             const voiceCard = document.querySelector('.voice-card');
             const facialCard = document.querySelector('.facial-card');
-            
+
             // Hide or show status pills based on skipped status
             const statusPills = document.querySelectorAll('.status-pill');
             if (d.is_skipped) {
@@ -867,19 +869,19 @@
                             const link = document.createElement('a');
                             const q_id = qItem.id || '';
                             const q_no = k;
-                            
+
                             // Build URL with both qid and qno for max compatibility
                             link.href = `?session_id=${sid}&qid=${q_id}&qno=${q_no}`;
-                            
+
                             const qTranscript = (qItem.transcript || "").trim();
                             const qNoRes = !qItem.is_skipped && (qTranscript === "" || qTranscript.toLowerCase() === "no transcript available.");
-                            
-                            link.className = 'q-tab' + 
-                                (qItem.is_skipped ? ' skipped' : '') + 
+
+                            link.className = 'q-tab' +
+                                (qItem.is_skipped ? ' skipped' : '') +
                                 (qNoRes ? ' no-response' : '');
-                                
+
                             link.textContent = 'Q' + k;
-                            
+
                             // Target detection: prioritze qid, fallback to qno
                             if (qid && String(qItem.id) === String(qid)) {
                                 targetQKey = k;
@@ -890,7 +892,7 @@
                             link.onclick = (e) => {
                                 e.preventDefault();
                                 const newUrl = `${window.location.pathname}?session_id=${sid}&qid=${q_id}&qno=${q_no}`;
-                                window.history.pushState({path: newUrl}, '', newUrl);
+                                window.history.pushState({ path: newUrl }, '', newUrl);
                                 loadQ(k, e.target);
                             };
                             tabsRow.appendChild(link);
