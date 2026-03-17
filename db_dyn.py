@@ -28,7 +28,7 @@ from multiprocessing import Process, Semaphore
 from voice_feedback_generator import generate_dynamic_voice_feedback
 from concurrent.futures import ThreadPoolExecutor
 
-from face import analyze_video, store_face_feedback  # at the top, after other imports
+from face import analyze_video, store_face_feedback  
 
 AUDIO_FOLDER = "static/audio"
 
@@ -2468,7 +2468,7 @@ def ensure_session_exists(session_id, student_id=1, level='beginner', job_title=
                 cursor.execute("""
                     INSERT INTO interview_session (session_id, student_id, level, total_questions, status, job_title, company)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (session_id, student_id, level, 10, 'ongoing', job_title, company))
+                """, (session_id, student_id, level, QUESTIONS_PER_LEVEL.get(level, 10), 'ongoing', job_title, company))
                 connection.commit()
                 print(f"🆕 Created ongoing session: {session_id} for {job_title} at {company}")
             cursor.close()

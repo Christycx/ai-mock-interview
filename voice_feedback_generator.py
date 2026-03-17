@@ -421,7 +421,7 @@ EXCELLENT Severity (outstanding):
 - the number of points should not be more than 4 in both strengths and improvements (it should be strictly followed)
 
 **CRITICAL FORMATTING RULES:**
-✓ Each point = ONE clear sentence (max 2 short sentences if absolutely needed)
+✓ Each point = ONE clear sentence (max 2 short sentences if very absolutely needed)
 ✓ NO numbers, percentages, scores, metrics, or technical terms
 ✓ NO phrases like "Hz", "wpm", "ratio", "percentage", "energy level"
 ✓ Use natural language: "speak louder" not "increase energy levels"
