@@ -79,20 +79,14 @@ def store_face_feedback(feedback, student_id=None, session_id=None, qno=None):
         # Extract list data from recommendations and join with separator
         strengths_list = recommendations.get("strengths", []) or []
         improvements_list = recommendations.get("improvements", []) or []
-        tips_list = recommendations.get("tips", []) or []
 
         strengths_str = " | ".join(str(s) for s in strengths_list)[:1000] if strengths_list else ""
         improvements_str = " | ".join(str(i) for i in improvements_list)[:1000] if improvements_list else ""
-        tips_str = " | ".join(str(t) for t in tips_list)[:1000] if tips_list else ""
 
         # Prepare values - convert None to None (not empty string) for proper NULL handling
-        posture_quality = posture.get("quality") or None
         posture_feedback_text = posture.get("feedback") or None
-        alignment_quality = alignment.get("quality") or None
         alignment_feedback_text = alignment.get("feedback") or None
-        eye_contact_quality = eye_contact.get("quality") or None
         eye_contact_feedback_text = eye_contact.get("feedback") or None
-        touch_quality = body_touch.get("quality") or None
         touch_feedback_text = body_touch.get("feedback") or None
 
         # Check if session_id column exists so we can support both schemas
@@ -127,100 +121,55 @@ def store_face_feedback(feedback, student_id=None, session_id=None, qno=None):
                 """
                 UPDATE face_feedback
                 SET student_id=%s,
-                    posture_quality=%s, posture_feedback=%s,
-                    alignment=%s, alignment_feedback=%s,
-                    eye_contact=%s, eyecontact_feedback=%s,
-                    touch=%s, touch_feedback=%s,
-                    strength=%s, improvements=%s, tips=%s
-                WHERE face_id=%s
+                    posture_feedback=%s,
+                    alignment_feedback=%s,
+                    eyecontact_feedback=%s,
+                    touch_feedback=%s,
+                    strength=%s, improvements=%s WHERE face_id=%s
                 """,
                 (
                     student_id,
-                    posture_quality,
                     posture_feedback_text,
-                    alignment_quality,
                     alignment_feedback_text,
-                    eye_contact_quality,
                     eye_contact_feedback_text,
-                    touch_quality,
                     touch_feedback_text,
                     strengths_str,
                     improvements_str,
-                    tips_str,
                     existing_id,
                 ),
             )
         else:
             if has_session_id:
                 insert_query = """
-                    INSERT INTO face_feedback (
-                        `student_id`,
-                        `posture_quality`,
-                        `posture_feedback`,
-                        `alignment`,
-                        `alignment_feedback`,
-                        `eye_contact`,
-                        `eyecontact_feedback`,
-                        `touch`,
-                        `touch_feedback`,
-                        `strength`,
-                        `improvements`,
-                        `tips`,
-                        `qno`,
-                        `session_id`
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO face_feedback (`student_id`, `posture_feedback`, `alignment_feedback`, `eyecontact_feedback`, `touch_feedback`, `strength`, `improvements`, `qno`, `session_id`)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
 
                 values = (
                     student_id,
-                    posture_quality,
                     posture_feedback_text,
-                    alignment_quality,
                     alignment_feedback_text,
-                    eye_contact_quality,
                     eye_contact_feedback_text,
-                    touch_quality,
                     touch_feedback_text,
                     strengths_str,
                     improvements_str,
-                    tips_str,
                     qno_val,
                     session_id,
                 )
             else:
                 insert_query = """
-                    INSERT INTO face_feedback (
-                        `student_id`,
-                        `posture_quality`,
-                        `posture_feedback`,
-                        `alignment`,
-                        `alignment_feedback`,
-                        `eye_contact`,
-                        `eyecontact_feedback`,
-                        `touch`,
-                        `touch_feedback`,
-                        `strength`,
-                        `improvements`,
-                        `tips`,
-                        `qno`
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO face_feedback (`student_id`, `posture_feedback`, `alignment_feedback`, `eyecontact_feedback`, `touch_feedback`, `strength`, `improvements`, `qno`)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """
 
                 values = (
                     student_id,
-                    posture_quality,
                     posture_feedback_text,
-                    alignment_quality,
                     alignment_feedback_text,
-                    eye_contact_quality,
                     eye_contact_feedback_text,
-                    touch_quality,
                     touch_feedback_text,
                     strengths_str,
                     improvements_str,
-                    tips_str,
                     qno_val,
                 )
 

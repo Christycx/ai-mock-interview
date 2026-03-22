@@ -5,8 +5,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Interview Question Generator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navbar: #F9FBFF;
+            --navbar-text: #1E2A3A;
+            --accent: #B8CCE0;
+            --accent-dark: #2F5D8A;
+            --accent-hover: #24496D;
+            --accent-soft: #EAF1FA;
+            --bg: #F5F7FB;
+            --surface: #FFFFFF;
+            --surface-soft: #FAFCFF;
+            --text: #1B2430;
+            --muted: #5B6472;
+            --border: #D8E0EA;
+            --danger-bg: #FFF5F5;
+            --danger-text: #C53030;
+            --danger-border: #E53E3E;
+            --success-bg: #F0FFF4;
+            --success-text: #276749;
+            --success-border: #48BB78;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -20,12 +41,13 @@
             left: 0;
             width: 100%;
             height: 70px;
-            background: #ffffff;
+            background: var(--navbar);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(30, 42, 58, 0.08);
+            border-bottom: 1px solid var(--border);
             z-index: 1000;
         }
 
@@ -34,55 +56,58 @@
             align-items: center;
             gap: 12px;
             font-size: 20px;
-            font-weight: bold;
-            color: #1a202c;
+            font-weight: 800;
+            color: var(--navbar-text);
             text-decoration: none;
         }
 
         .logo-icon {
-            background: #ff6f91;
+            background: linear-gradient(135deg, var(--accent), #9FB7D0);
             width: 38px;
             height: 38px;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: var(--accent-hover);
             font-size: 18px;
         }
 
         .user {
             width: 40px;
             height: 40px;
-            background: #ff8ea3;
+            background: #EAF0F7;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: bold;
+            color: var(--navbar-text);
+            font-weight: 800;
             margin-right: 20px;
+            border: 1px solid var(--border);
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #ffffff;
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
             min-height: 100vh;
-            color: #1a202c;
+            color: var(--text);
             overflow-x: hidden;
             padding-top: 70px;
             /* Space for fixed topbar */
         }
 
         .app-header {
-            background: linear-gradient(135deg, #ffbcb0 0%, #ff9aad 50%, #ffbccb 100%);
-            color: white;
+            background: linear-gradient(135deg, #EAF1FA 0%, #F8FBFF 100%);
+            color: var(--text);
             padding: 36px 60px;
             position: relative;
             overflow: hidden;
             max-width: 900px;
             margin: 30px auto;
             border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 14px 30px rgba(27, 36, 48, 0.06);
         }
 
         .app-header::before {
@@ -92,7 +117,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background: radial-gradient(circle, rgba(47, 93, 138, 0.06) 1px, transparent 1px);
             background-size: 50px 50px;
             animation: moveGrid 20s linear infinite;
         }
@@ -124,14 +149,14 @@
         .app-logo {
             width: 70px;
             height: 70px;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
             border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 36px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(216, 224, 234, 0.8);
         }
 
         .header-text h1 {
@@ -150,14 +175,16 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 0 60px;
-            background: #fafafa;
+            background: transparent;
         }
 
         .page-banner {
-            background: linear-gradient(135deg, #ffbcb0 0%, #ff9aad 50%, #ffbccb 100%);
-            color: white;
+            background: linear-gradient(135deg, #EAF1FA 0%, #F8FBFF 100%);
+            color: var(--text);
             padding: 28px 80px;
             margin-bottom: 36px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
         }
 
         .page-banner h2 {
@@ -190,13 +217,13 @@
         .section-title {
             font-size: 24px;
             font-weight: 700;
-            color: #1a202c;
+            color: var(--text);
             margin-bottom: 8px;
         }
 
         .section-subtitle {
             font-size: 15px;
-            color: #718096;
+            color: var(--muted);
             margin-bottom: 24px;
         }
 
@@ -208,7 +235,7 @@
         .form-label {
             font-size: 14px;
             font-weight: 600;
-            color: #2d3748;
+            color: var(--navbar-text);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -216,28 +243,28 @@
         }
 
         .required-indicator {
-            color: #e53e3e;
+            color: var(--danger-border);
         }
 
         .form-input {
             padding: 16px 18px;
             font-size: 15px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border);
             border-radius: 10px;
-            background: white;
-            color: #1a202c;
+            background: var(--surface);
+            color: var(--text);
             transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Manrope', sans-serif;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #ff9a8b;
-            box-shadow: 0 0 0 3px rgba(255, 154, 139, 0.1);
+            border-color: var(--accent-dark);
+            box-shadow: 0 0 0 3px rgba(47, 93, 138, 0.12);
         }
 
         .form-input::placeholder {
-            color: #a0aec0;
+            color: #90A0B3;
         }
 
         /* Level section using cards */
@@ -249,9 +276,9 @@
 
         .level-btn {
             padding: 24px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border);
             border-radius: 12px;
-            background: white;
+            background: var(--surface);
             cursor: pointer;
             text-align: center;
             transition: all 0.3s ease;
@@ -263,10 +290,15 @@
         }
 
         .level-btn.active {
-            border-color: #ff9a8b;
-            background: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 100%);
+            border-color: var(--accent-dark);
+            background: linear-gradient(135deg, var(--accent-soft) 0%, #DCE8F5 100%);
+            color: var(--accent-hover);
+            box-shadow: 0 12px 28px rgba(47, 93, 138, 0.18);
+        }
+
+        .level-btn.active .level-info {
             color: white;
-            box-shadow: 0 12px 28px rgba(255, 154, 139, 0.3);
+            color: var(--accent-hover);
         }
 
         .level-icon {
@@ -290,7 +322,7 @@
             font-size: 17px;
             font-weight: 600;
             color: white;
-            background: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 100%);
+            background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-hover) 100%);
             border: none;
             border-radius: 10px;
             cursor: pointer;
@@ -304,7 +336,7 @@
 
         .submit-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(255, 154, 139, 0.4);
+            box-shadow: 0 12px 28px rgba(47, 93, 138, 0.22);
         }
 
         .submit-btn:disabled {
@@ -343,21 +375,21 @@
         }
 
         .tips-header h2 {
-            color: #1a202c;
+            color: var(--text);
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 10px;
         }
 
         .tips-header p {
-            color: #718096;
+            color: var(--muted);
             font-size: 18px;
         }
 
         .tips-progress {
             text-align: center;
             font-weight: 600;
-            color: #ff6a88;
+            color: var(--accent-dark);
             margin-bottom: 15px;
             font-size: 14px;
             text-transform: uppercase;
@@ -378,14 +410,14 @@
             padding: 25px;
             margin-bottom: 20px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.02);
-            border-left: 5px solid #ff9a8b;
+            border-left: 5px solid var(--accent-dark);
             display: flex;
             align-items: flex-start;
             gap: 20px;
         }
 
         .tip-number {
-            background: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 100%);
+            background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-hover) 100%);
             color: white;
             width: 40px;
             height: 40px;
@@ -430,7 +462,7 @@
             background: white;
             padding: 15px;
             border-radius: 10px;
-            border-left: 3px solid #ff9a8b;
+            border-left: 3px solid var(--accent-dark);
         }
 
         .tips-footer {
@@ -442,7 +474,7 @@
 
         .next-tips-btn,
         .start-interview-btn {
-            background: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 100%);
+            background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-hover) 100%);
             color: white;
             padding: 15px 40px;
             border: none;
@@ -482,7 +514,7 @@
             width: 20px;
             height: 20px;
             border: 3px solid rgba(255, 154, 139, 0.3);
-            border-top-color: #ff9a8b;
+            border-top-color: var(--accent-dark);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -534,12 +566,12 @@
         }
 
         .file-upload-area:hover {
-            border-color: #ff9a8b;
+            border-color: var(--accent-dark);
             background: #fff5f5;
         }
 
         .file-upload-area.has-file {
-            border-color: #ff9a8b;
+            border-color: var(--accent-dark);
             background: #ffe8e8;
         }
 

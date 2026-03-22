@@ -3,15 +3,30 @@
 
 <head>
     <title>AI Interview Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body {
-            font-family: Arial;
-            background: #f8f9fc;
-            margin: 0;
+        :root {
+            --navbar: #F9FBFF;
+            --navbar-text: #1E2A3A;
+            --accent: #B8CCE0;
+            --bg: #F5F7FB;
+            --surface: #FFFFFF;
+            --heading: #1B2430;
+            --body: #5B6472;
+            --button: #2F5D8A;
+            --button-hover: #24496D;
+            --border: #D8E0EA;
         }
 
-        /* FIXED TOP BAR */
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            color: var(--heading);
+        }
 
         .topbar {
             position: fixed;
@@ -19,64 +34,62 @@
             left: 0;
             width: 100%;
             height: 70px;
-            background: #ffffff;
+            background: var(--navbar);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(30, 42, 58, 0.08);
+            border-bottom: 1px solid var(--border);
             z-index: 1000;
         }
-
-        /* LOGO SECTION */
 
         .logo {
             display: flex;
             align-items: center;
             gap: 12px;
             font-size: 20px;
-            font-weight: bold;
+            font-weight: 800;
+            color: var(--navbar-text);
         }
 
         .logo-icon {
-            background: #ff6f91;
+            background: linear-gradient(135deg, var(--accent), #9FB7D0);
             width: 38px;
             height: 38px;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #24496D;
             font-size: 18px;
         }
-
-        /* USER ICON */
 
         .user {
             width: 40px;
             height: 40px;
-            background: #ff8ea3;
+            background: #EAF0F7;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: bold;
+            color: var(--navbar-text);
+            font-weight: 800;
             margin-right: 20px;
+            border: 1px solid var(--border);
         }
-
-        /* HERO SECTION */
 
         .header {
             margin-top: 70px;
-            background: linear-gradient(90deg, #f8a6b8, #ff8ea3);
-            color: white;
+            background: linear-gradient(135deg, #EAF1FA 0%, #F8FBFF 100%);
+            color: var(--heading);
             padding: 40px 60px;
             font-size: 28px;
-            font-weight: bold;
-            width: 100%; /* Spans horizontally full screen */
+            font-weight: 800;
+            width: 100%;
             box-sizing: border-box;
             border-radius: 0 0 20px 20px;
+            border-bottom: 1px solid var(--border);
         }
 
         .header span {
@@ -84,9 +97,9 @@
             display: block;
             margin-top: 10px;
             line-height: 1.6;
+            color: var(--body);
+            font-weight: 500;
         }
-
-        /* MAIN CONTAINER */
 
         .container {
             width: 90%;
@@ -94,63 +107,60 @@
             margin-top: 40px;
         }
 
-        /* GREETING */
-
         .greeting {
             font-size: 22px;
             margin-bottom: 30px;
+            font-weight: 600;
         }
-
-        /* FLEX BOX FOR SIDE BY SIDE */
 
         .box-container {
             display: flex;
             gap: 30px;
         }
 
-        /* BOX STYLE */
-
         .box {
             flex: 1;
-            background: white;
+            background: var(--surface);
             padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 14px 30px rgba(27, 36, 48, 0.06);
+            border: 1px solid var(--border);
             min-height: 220px;
         }
 
         .box h2 {
             margin-bottom: 10px;
+            color: var(--heading);
         }
 
         .box p {
-            color: #555;
+            color: var(--body);
             margin-bottom: 25px;
             line-height: 1.6;
         }
 
-        /* BUTTON */
-
         .btn {
-            background: #ff6f91;
+            background: var(--button);
             border: none;
             padding: 12px 25px;
             color: white;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 15px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+            transition: all 0.2s ease;
         }
 
         .btn:hover {
-            background: #ff4c78;
+            background: var(--button-hover);
+            transform: translateY(-1px);
         }
     </style>
 </head>
 
 
 <body>
-
-    <!-- TOP NAVBAR -->
 
     <div class="topbar">
 
@@ -165,8 +175,6 @@
 
     </div>
 
-
-    <!-- HERO SECTION -->
 
     <div class="header">
         🤖 Your AI Interview Assistant
@@ -183,8 +191,6 @@
 
         <div class="box-container">
 
-            <!-- START INTERVIEW BOX -->
-
             <div class="box">
 
                 <h2>Start Your Interview Preparation</h2>
@@ -199,8 +205,6 @@
 
             </div>
 
-
-            <!-- REVIEW FEEDBACK BOX -->
 
             <div class="box">
 
@@ -221,18 +225,14 @@
     </div>
 
     <script>
-        // Load user data from localStorage
         document.addEventListener('DOMContentLoaded', () => {
             const userStr = localStorage.getItem('currentUser');
             if (userStr) {
                 try {
                     const user = JSON.parse(userStr);
                     if (user && user.name) {
-                        // Extract first name for the circular icon if possible
                         const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
                         document.querySelector('.user').textContent = initials || 'U';
-
-                        // Update greeting
                         document.querySelector('.greeting b').textContent = user.name;
                     }
                 } catch (e) {

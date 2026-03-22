@@ -526,19 +526,11 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
     try:
         cursor = connection.cursor()
         
-        # Extract scores from content_analysis
+        # Extract data from content_analysis
         if content_analysis and isinstance(content_analysis, dict):
-            content_score = content_analysis.get('content_score', 0)
-            overall_score = content_analysis.get('overall_score', 0)
-            relevance_score = content_analysis.get('relevance_score', 0)
-            structure_score = content_analysis.get('structure_score', 0)
             improvements = content_analysis.get('improvements', [])
             strengths = content_analysis.get('strengths', [])
         else:
-            content_score = 0
-            overall_score = 0
-            relevance_score = 0
-            structure_score = 0
             improvements = []
             strengths = []
         
@@ -562,17 +554,13 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
                     cursor.execute(
                         """
                         UPDATE content_feedback
-                        SET student_id=%s, response=%s, content_score=%s, overall=%s, relevance=%s, structure=%s,
+                        SET student_id=%s, response=%s,
                             improvements=%s, strengths=%s, sample_answer=%s
                         WHERE content_id=%s
                         """,
                         (
                             student_id,
                             response,
-                            str(content_score),
-                            str(overall_score),
-                            str(relevance_score),
-                            str(structure_score),
                             improvements_json,
                             strengths_json,
                             sample_answer if sample_answer else "",
@@ -583,18 +571,13 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
                     cursor.execute(
                         """
                         INSERT INTO content_feedback
-                        (student_id, session_id, response, content_score, overall, relevance,
-                         structure, improvements, strengths, sample_answer, q_no)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (student_id, session_id, response, improvements, strengths, sample_answer, q_no)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                         """,
                         (
                             student_id,
                             session_id,
                             response,
-                            str(content_score),
-                            str(overall_score),
-                            str(relevance_score),
-                            str(structure_score),
                             improvements_json,
                             strengths_json,
                             sample_answer if sample_answer else "",
@@ -614,17 +597,12 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
                     cursor.execute(
                         """
                         UPDATE content_feedback
-                        SET student_id=%s, response=%s, content_score=%s, overall=%s, relevance=%s, structure=%s,
-                            improvements=%s, strengths=%s, sample_answer=%s
+                        SET student_id=%s, response=%s, improvements=%s, strengths=%s, sample_answer=%s
                         WHERE content_id=%s
                         """,
                         (
                             student_id,
                             response,
-                            str(content_score),
-                            str(overall_score),
-                            str(relevance_score),
-                            str(structure_score),
                             improvements_json,
                             strengths_json,
                             sample_answer if sample_answer else "",
@@ -635,18 +613,13 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
                     cursor.execute(
                         """
                         INSERT INTO content_feedback
-                        (student_id, resumeid, response, content_score, overall, relevance,
-                         structure, improvements, strengths, sample_answer, q_no)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (student_id, resumeid, response, improvements, strengths, sample_answer, q_no)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                         """,
                         (
                             student_id,
                             session_id,
                             response,
-                            str(content_score),
-                            str(overall_score),
-                            str(relevance_score),
-                            str(structure_score),
                             improvements_json,
                             strengths_json,
                             sample_answer if sample_answer else "",
@@ -771,17 +744,12 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
                     cursor.execute(
                         """
                         UPDATE content_feedback
-                        SET student_id=%s, response=%s, content_score=%s, overall=%s, relevance=%s, 
-                            structure=%s, improvements=%s, strengths=%s, sample_answer=%s
+                        SET student_id=%s, response=%s, improvements=%s, strengths=%s, sample_answer=%s
                         WHERE content_id=%s
                         """,
                         (
                             student_id,
                             "NOT_ANSWERED",
-                            "0",
-                            "0",
-                            "0",
-                            "0",
                             json.dumps(["Question was skipped"]),
                             json.dumps(["NOT_ANSWERED"]),
                             sample_answer,
@@ -791,21 +759,16 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
                 else:
                     cursor.execute("""
                         INSERT INTO content_feedback 
-                        (student_id, session_id, response, content_score, overall, relevance, 
-                         structure, improvements, strengths, sample_answer, q_no)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (student_id, session_id, response, improvements, strengths, sample_answer, q_no)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """, (
                         student_id,
                         session_id,
                         "NOT_ANSWERED",
-                        "0",
-                        "0",
-                        "0",
-                        "0",
                         json.dumps(["Question was skipped"]),
                         json.dumps(["NOT_ANSWERED"]),
                         sample_answer,
-                        int(question_id)  # Use question_id (PK), not question_number
+                        int(question_id)
                     ))
             except Exception as e:
                 print(f"❌ Error storing skipped content_feedback: {e}")
@@ -821,17 +784,12 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
                     cursor.execute(
                         """
                         UPDATE content_feedback
-                        SET student_id=%s, response=%s, content_score=%s, overall=%s, relevance=%s, 
-                            structure=%s, improvements=%s, strengths=%s, sample_answer=%s
+                        SET student_id=%s, response=%s, improvements=%s, strengths=%s, sample_answer=%s
                         WHERE content_id=%s
                         """,
                         (
                             student_id,
                             "NOT_ANSWERED",
-                            "0",
-                            "0",
-                            "0",
-                            "0",
                             json.dumps(["Question was skipped"]),
                             json.dumps(["NOT_ANSWERED"]),
                             sample_answer,
@@ -841,17 +799,12 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
                 else:
                     cursor.execute("""
                         INSERT INTO content_feedback 
-                        (student_id, resumeid, response, content_score, overall, relevance, 
-                         structure, improvements, strengths, sample_answer, q_no)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (student_id, resumeid, response, improvements, strengths, sample_answer, q_no)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """, (
                         student_id,
                         session_id,
                         "NOT_ANSWERED",
-                        "0",
-                        "0",
-                        "0",
-                        "0",
                         json.dumps(["Question was skipped"]),
                         json.dumps(["NOT_ANSWERED"]),
                         sample_answer,
@@ -868,7 +821,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
             # Use session_id column
             try:
                 cursor.execute(
-                    "SELECT f_id FROM face_feedback WHERE session_id = %s AND qno = %s ORDER BY f_id DESC LIMIT 1",
+                    "SELECT face_id FROM face_feedback WHERE session_id = %s AND qno = %s ORDER BY face_id DESC LIMIT 1",
                     (session_id, int(question_id)),
                 )
                 existing = cursor.fetchone()
@@ -876,23 +829,54 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
                     cursor.execute(
                         """
                         UPDATE face_feedback
-                        SET student_id=%s, posture_quality=%s, posture_feedback=%s, alignment=%s,
-                            alignment_feedback=%s, eye_contact=%s, eyecontact_feedback=%s, touch=%s, 
-                            touch_feedback=%s, strength=%s, improvements=%s, tips=%s
-                        WHERE f_id=%s
+                        SET student_id=%s, posture_feedback=%s, alignment_feedback=%s, eyecontact_feedback=%s, touch_feedback=%s, strength=%s, improvements=%s
+                        WHERE face_id=%s
                         """,
                         (
                             student_id,
+                            "Question was skipped", "Question was skipped", "Question was skipped", "Question was skipped",
                             "NOT_ANSWERED",
                             "Question was skipped",
+                            existing[0]
+                        )
+                    )
+                else:
+                    cursor.execute("""
+                        INSERT INTO face_feedback (student_id, session_id, posture_feedback, alignment_feedback, eyecontact_feedback, touch_feedback, strength, improvements, qno)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        student_id,
+                        session_id,
+                        "Question was skipped", "Question was skipped", "Question was skipped", "Question was skipped",
+                        "NOT_ANSWERED",
+                        "Question was skipped",
+                        int(question_id)
+                    ))
+            except Exception as face_err:
+                print(f"⚠️ Could not store skipped face_feedback row: {face_err}")
+        else:
+            # Use legacy schema (no session_id)
+            try:
+                cursor.execute(
+                    "SELECT face_id FROM face_feedback WHERE qno = %s ORDER BY face_id DESC LIMIT 1",
+                    (int(question_id),),
+                )
+                existing = cursor.fetchone()
+                if existing:
+                    cursor.execute(
+                        """
+                        UPDATE face_feedback
+                        SET student_id=%s, 
+                            posture_feedback=%s, alignment_feedback=%s, 
+                            eyecontact_feedback=%s, touch_feedback=%s, 
+                            strength=%s, improvements=%s
+                        WHERE face_id=%s
+                        """,
+                        (
+                            student_id,
+                            "Question was skipped", "Question was skipped", 
+                            "Question was skipped", "Question was skipped",
                             "NOT_ANSWERED",
-                            "Question was skipped",
-                            "NOT_ANSWERED",
-                            "Question was skipped",
-                            "NOT_ANSWERED",
-                            "Question was skipped",
-                            "NOT_ANSWERED",
-                            "Question was skipped",
                             "Question was skipped",
                             existing[0]
                         )
@@ -900,28 +884,18 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
                 else:
                     cursor.execute("""
                         INSERT INTO face_feedback 
-                        (student_id, session_id, posture_quality, posture_feedback, alignment, 
-                         alignment_feedback, eye_contact, eyecontact_feedback, touch, touch_feedback, 
-                         strength, improvements, tips, qno)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (student_id, posture_feedback, alignment_feedback, eyecontact_feedback, touch_feedback, strength, improvements, qno)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
                         student_id,
-                        session_id,
+                        "Question was skipped", "Question was skipped", 
+                        "Question was skipped", "Question was skipped",
                         "NOT_ANSWERED",
                         "Question was skipped",
-                        "NOT_ANSWERED",
-                        "Question was skipped",
-                        "NOT_ANSWERED",
-                        "Question was skipped",
-                        "NOT_ANSWERED",
-                        "Question was skipped",
-                        "NOT_ANSWERED",
-                        "Question was skipped",
-                        "Question was skipped",
-                        int(question_id)  # Fix: Use question_id (PK), not question_number
+                        int(question_id)
                     ))
             except Exception as face_err:
-                print(f"⚠️ Could not store skipped face_feedback row: {face_err}")
+                print(f"⚠️ Could not store skipped face_feedback (legacy): {face_err}")
                 
         # Also store the skipped attempt in responses table
         store_response(session_id, question_id, student_id, "NOT_ANSWERED", "Question was skipped")
@@ -978,7 +952,7 @@ def analyze_answer_process(video_path, question, question_id, session_id, studen
             }
             
             confidence_score = calculate_advanced_confidence(analysis_results)
-            confidence_category = get_confidence_category(confidence_score)
+            #confidence_category = get_confidence_category(confidence_score)
 
             sample_answer = None
             content_analysis = None
@@ -1106,14 +1080,7 @@ def analyze_answer_process(video_path, question, question_id, session_id, studen
         except Exception as e:
             print(f"❌ [Process] Analysis error: {str(e)}")
             
-            # Cleanup on error
-            # We preserve the video_path for debugging or retry if needed,
-            # for p in [video_path]:
-            #     try:
-            #         if os.path.exists(p):
-            #             os.remove(p)
-            #     except Exception:
-            #         pass
+            
 
 # ===============================
 # GROQ API CONFIGURATION
@@ -1300,18 +1267,18 @@ def calculate_advanced_confidence(analysis_results):
         print(f"Confidence calculation error: {e}")
         return 50.0
 
-def get_confidence_category(score):
-    """Convert score to category with updated ranges"""
-    if score >= 80:
-        return "Excellent"
-    elif score >= 65:
-        return "Good"
-    elif score >= 50:
-        return "Average"
-    elif score >= 30:
-        return "Below Average"
-    else:
-        return "Poor"
+#def get_confidence_category(score):
+ #   """Convert score to category with updated ranges"""
+  #  if score >= 80:
+   #     return "Excellent"
+    #elif score >= 65:
+     #   return "Good"
+    #elif score >= 50:
+     #   return "Average"
+    #elif score >= 30:
+     #   return "Below Average"
+    #else:
+     #   return "Poor"
 
 
 
@@ -1739,10 +1706,6 @@ def get_analysis_prompt(question, user_answer, question_type):
     base_json_structure = """
 Return ONLY valid JSON (no markdown, no explanations) in this EXACT structure:
 {
-    "content_score": 7,
-    "structure_score": 6,
-    "relevance_score": 8,
-    "overall_score": 7,
     "content_feedback": "Brief specific assessment",
     "missing_elements": ["Element 1", "Element 2"],
     "strengths": ["Strength 1", "Strength 2", "Strength 3"],
@@ -2900,7 +2863,7 @@ def get_feedback():
                 "video_path": video_url,
                 "is_skipped": is_skipped,
                 "content": {
-                    "status": "Excellent" if parse_metric(cf.get('overall'), 0) >= 8 else "Good" if parse_metric(cf.get('overall'), 0) >= 6 else "Needs Improvement" if cf.get('overall') else "Not Evaluated",
+                    "status": "Evaluated" if (cf.get('strengths') or cf.get('improvements')) else "Not Evaluated",
                     # User: strengths column in content_feedback
                     "strengths": parse_list(cf.get('strengths'), []),
                     # User: improvements column in content_feedback
@@ -2908,12 +2871,7 @@ def get_feedback():
                     "sample": cf.get('sample_answer', "")
                 },
                 "facial": {
-                    "status": (
-                        "Excellent" if all(ff.get(k) == 'good' for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
-                        "Needs Improvement" if any(ff.get(k) == 'needs_improvement' for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
-                        "Good" if any(ff.get(k) in ['good', 'average'] for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
-                        "Not Evaluated"
-                    ),
+                    "status": "Evaluated" if (ff.get('posture_feedback') or ff.get('alignment_feedback')) else "Not Evaluated",
                     "posture_feedback": ff.get('posture_feedback', ''),
                     "alignment_feedback": ff.get('alignment_feedback', ''),
                     "eyecontact_feedback": ff.get('eyecontact_feedback', ''),
@@ -3067,7 +3025,7 @@ if __name__ == '__main__':
             print("⚠️ Warning: Some tables might be missing")
             print("   If you get database errors, please create these tables:")
             print("   CREATE TABLE voice_feedback (id INT AUTO_INCREMENT PRIMARY KEY, studentid INT, session_id VARCHAR(100), strengths JSON, improvements JSON, q_no INT);")
-            print("   CREATE TABLE content_feedback (id INT AUTO_INCREMENT PRIMARY KEY, studentid INT, session_id VARCHAR(100), response TEXT, content_score VARCHAR(10), overall VARCHAR(10), relevance VARCHAR(10), structure VARCHAR(10), improvements JSON, strengths JSON, sample_answer TEXT, q_no INT);")
+            print("   CREATE TABLE content_feedback (id INT AUTO_INCREMENT PRIMARY KEY, studentid INT, session_id VARCHAR(100), response TEXT, improvements JSON, strengths JSON, sample_answer TEXT, q_no INT);")
         
         cursor.close()
         connection.close()

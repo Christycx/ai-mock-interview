@@ -6,21 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Interview Feedback</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;600;700&display=swap"
         rel="stylesheet" />
     <style>
         :root {
-            --blue: #1565C0;
-            --blue-lt: #E3F0FF;
-            --orange: #E65100;
-            --orange-lt: #FFF3E0;
-            --green: #2E7D32;
-            --green-lt: #E8F5E9;
-            --bg: #F4F6F9;
+            --blue: #2F5D8A;
+            --blue-lt: #EAF1FA;
+            --orange: #B7791F;
+            --orange-lt: #FFF7E6;
+            --green: #2E7D5B;
+            --green-lt: #EAF7F0;
+            --bg: #F5F7FB;
             --card: #FFFFFF;
-            --border: #E0E4EA;
-            --text: #1A1A2E;
-            --muted: #6B7280;
+            --border: #D8E0EA;
+            --text: #1B2430;
+            --muted: #5B6472;
+            --navbar: #F9FBFF;
+            --navbar-text: #1E2A3A;
+            --accent: #B8CCE0;
+            --accent-soft: #F2F7FC;
         }
 
         * {
@@ -30,7 +34,7 @@
         }
 
         body {
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Manrope', sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
@@ -44,12 +48,13 @@
             left: 0;
             width: 100%;
             height: 70px;
-            background: #ffffff;
+            background: var(--navbar);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(30, 42, 58, 0.08);
+            border-bottom: 1px solid var(--border);
             z-index: 1000;
         }
 
@@ -58,34 +63,35 @@
             align-items: center;
             gap: 12px;
             font-size: 20px;
-            font-weight: bold;
-            color: #1a202c;
+            font-weight: 800;
+            color: var(--navbar-text);
             text-decoration: none;
         }
 
         .navbar-logo-icon {
-            background: #ff6f91;
+            background: linear-gradient(135deg, var(--accent), #9FB7D0);
             width: 38px;
             height: 38px;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: var(--blue);
             font-size: 18px;
         }
 
         .navbar-user {
             width: 40px;
             height: 40px;
-            background: #ff8ea3;
+            background: #EAF0F7;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: bold;
+            color: var(--navbar-text);
+            font-weight: 800;
             margin-right: 20px;
+            border: 1px solid var(--border);
         }
 
 
@@ -163,9 +169,8 @@
             padding: 10px 18px;
             border-radius: 10px 10px 0 0;
             border: none;
-            background: #FFD1DC;
-            /* Light Pink */
-            color: #444;
+            background: var(--accent-soft);
+            color: var(--navbar-text);
             font-family: 'Sora', sans-serif;
             font-size: 0.95rem;
             font-weight: 700;
@@ -176,7 +181,7 @@
         }
 
         .q-tab.active {
-            background: #FF6F91;
+            background: var(--blue);
             color: white;
             transform: translateY(-6px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, .22);
@@ -194,21 +199,21 @@
 
         /* SKIPPED TAB */
         .q-tab.skipped {
-            background: #9E9E9E !important;
+            background: #94A3B8 !important;
             color: #FFF !important;
             opacity: 0.7;
         }
 
         .q-tab.skipped.active {
             opacity: 1;
-            border: 3px solid #616161;
+            border: 3px solid #64748B;
         }
 
 
 
         /* SKIPPED CARD HEADER */
         .a-card.skipped .a-header {
-            background: #9E9E9E !important;
+            background: #94A3B8 !important;
         }
 
         /* SECTION CARD */
@@ -315,8 +320,8 @@
         .f-box {
             flex: 1;
             min-width: 160px;
-            background: #FFF8F0;
-            border: 1px solid #FFE0B2;
+            background: var(--orange-lt);
+            border: 1px solid #F2D39A;
             border-radius: 8px;
             padding: 12px;
             display: flex;
@@ -327,14 +332,14 @@
         .f-box-h {
             font-size: 0.72rem;
             font-weight: 700;
-            color: #E65100;
+            color: var(--orange);
             text-transform: uppercase;
             letter-spacing: 0.04em;
         }
 
         .f-box-c {
             font-size: 0.88rem;
-            color: #4E342E;
+            color: var(--text);
             line-height: 1.5;
         }
 
@@ -385,8 +390,8 @@
         .content-card .a-header,
         .facial-card .a-header,
         .voice-card .a-header {
-            background: #FFD1DC;
-            color: #5D4037;
+            background: var(--accent-soft);
+            color: var(--navbar-text);
         }
 
         .a-body {
@@ -410,8 +415,8 @@
         .content-card .sub-heading,
         .facial-card .sub-heading,
         .voice-card .sub-heading {
-            background: #FFF0F3;
-            color: #D81B60;
+            background: var(--blue-lt);
+            color: var(--blue);
         }
 
         /* BULLET LIST */
@@ -424,7 +429,7 @@
 
         .bullet-list li {
             font-size: 0.93rem;
-            color: #555;
+            color: var(--muted);
             padding-left: 16px;
             position: relative;
             line-height: 1.5;

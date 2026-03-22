@@ -3,12 +3,30 @@
 
 <head>
     <title>Interview Feedback</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --navbar: #F9FBFF;
+            --navbar-text: #1E2A3A;
+            --accent: #B8CCE0;
+            --accent-dark: #2F5D8A;
+            --accent-hover: #24496D;
+            --accent-soft: #EAF1FA;
+            --bg: #F5F7FB;
+            --surface: #FFFFFF;
+            --text: #1B2430;
+            --muted: #5B6472;
+            --border: #D8E0EA;
+        }
+
         body {
-            font-family: Arial;
-            background: #f8f9fc;
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg);
             margin: 0;
+            color: var(--text);
         }
 
         /* TOP BAR */
@@ -19,12 +37,13 @@
             left: 0;
             width: 100%;
             height: 70px;
-            background: white;
+            background: var(--navbar);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(30, 42, 58, 0.08);
+            border-bottom: 1px solid var(--border);
             z-index: 1000;
         }
 
@@ -33,12 +52,13 @@
             align-items: center;
             gap: 10px;
             font-size: 20px;
-            font-weight: bold;
+            font-weight: 800;
+            color: var(--navbar-text);
         }
 
         .logo-icon {
-            background: #ff6f91;
-            color: white;
+            background: linear-gradient(135deg, var(--accent), #9FB7D0);
+            color: var(--accent-hover);
             width: 36px;
             height: 36px;
             border-radius: 8px;
@@ -50,14 +70,15 @@
         .user {
             width: 40px;
             height: 40px;
-            background: #ff8ea3;
+            background: #EAF0F7;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: bold;
+            color: var(--navbar-text);
+            font-weight: 800;
             margin-right: 50px;
+            border: 1px solid var(--border);
         }
 
         /* PAGE */
@@ -71,7 +92,7 @@
         /* BACK BUTTON */
 
         .back {
-            color: #ff6f91;
+            color: var(--accent-dark);
             margin-bottom: 20px;
             cursor: pointer;
             font-weight: 600;
@@ -80,11 +101,12 @@
         /* SESSION CARD */
 
         .session {
-            background: white;
+            background: var(--surface);
             padding: 25px;
             border-radius: 14px;
             margin-bottom: 25px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 24px rgba(27, 36, 48, 0.06);
+            border: 1px solid var(--border);
         }
 
         /* HEADER */
@@ -104,7 +126,7 @@
         }
 
         .job-icon {
-            background: #eef1f4;
+            background: var(--accent-soft);
             width: 50px;
             height: 50px;
             border-radius: 12px;
@@ -124,8 +146,8 @@
         /* BADGE */
 
         .level {
-            background: #eef1f4;
-            color: #666;
+            background: var(--accent-soft);
+            color: var(--muted);
             padding: 7px 15px;
             border-radius: 20px;
             font-size: 14px;
@@ -135,7 +157,7 @@
         .review-btn {
             margin-top: 20px;
             width: 100%;
-            background: #ff6f91;
+            background: linear-gradient(135deg, var(--accent-dark), var(--accent-hover));
             color: white;
             border: none;
             padding: 12px;
@@ -149,7 +171,7 @@
         }
 
         .review-btn:hover {
-            background: #ff527b;
+            background: linear-gradient(135deg, #3E6A96, #24496D);
         }
 
         /* META ROW */
@@ -158,7 +180,7 @@
             margin-top: 10px;
             display: flex;
             gap: 25px;
-            color: #666;
+            color: var(--muted);
             font-size: 14px;
         }
 
@@ -166,7 +188,7 @@
 
         .feedback {
             margin-top: 20px;
-            background: #f7f7f7;
+            background: var(--accent-soft);
             padding: 15px;
             border-radius: 10px;
         }

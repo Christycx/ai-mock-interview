@@ -3,10 +3,24 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>AI Interview Assistant - Login</title>
+    <title>Interview Assistant</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navbar: #F9FBFF;
+            --navbar-text: #1E2A3A;
+            --accent: #B8CCE0;
+            --accent-dark: #2F5D8A;
+            --accent-hover: #24496D;
+            --accent-soft: #EAF1FA;
+            --bg: #F5F7FB;
+            --surface: #FFFFFF;
+            --text: #1B2430;
+            --muted: #5B6472;
+            --border: #D8E0EA;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,8 +30,8 @@
         html,
         body {
             height: 100%;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            color: #1a202c;
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text);
             overflow: hidden;
         }
 
@@ -29,13 +43,13 @@
         /* Left Section - Brand */
         .brand-section {
             flex: 1;
-            background: linear-gradient(135deg, #ffc1cc 0%, #ffb3c1 50%, #ffa6b8 100%);
+            background: linear-gradient(135deg, #EAF1FA 0%, #DCE8F5 50%, #C9DAEC 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 60px;
-            color: white;
+            color: var(--text);
             position: relative;
             overflow: hidden;
         }
@@ -47,7 +61,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background: radial-gradient(circle, rgba(47, 93, 138, 0.08) 1px, transparent 1px);
             background-size: 50px 50px;
             animation: moveGrid 20s linear infinite;
         }
@@ -72,7 +86,7 @@
         .brand-logo {
             width: 100px;
             height: 100px;
-            background: rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, var(--accent), #9FB7D0);
             backdrop-filter: blur(10px);
             border-radius: 24px;
             display: flex;
@@ -81,6 +95,7 @@
             font-size: 48px;
             margin: 0 auto 30px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            color: var(--accent-hover);
         }
 
         .brand-title {
@@ -100,7 +115,7 @@
         /* Right Section - Form */
         .form-section {
             flex: 1;
-            background: #ffffff;
+            background: var(--surface);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -119,13 +134,13 @@
         .form-title {
             font-size: 32px;
             font-weight: 700;
-            color: #1a202c;
+            color: var(--text);
             margin-bottom: 10px;
         }
 
         .form-description {
             font-size: 16px;
-            color: #718096;
+            color: var(--muted);
         }
 
         .form-group {
@@ -136,7 +151,7 @@
             display: block;
             font-size: 14px;
             font-weight: 600;
-            color: #2d3748;
+            color: var(--navbar-text);
             margin-bottom: 8px;
         }
 
@@ -144,22 +159,22 @@
             width: 100%;
             padding: 14px 16px;
             font-size: 15px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border);
             border-radius: 8px;
             background: #ffffff;
-            color: #1a202c;
+            color: var(--text);
             transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Manrope', sans-serif;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #ffb3c1;
-            box-shadow: 0 0 0 3px rgba(255, 179, 193, 0.1);
+            border-color: var(--accent-dark);
+            box-shadow: 0 0 0 3px rgba(47, 93, 138, 0.12);
         }
 
         .form-input::placeholder {
-            color: #a0aec0;
+            color: #90A0B3;
         }
 
         .error-message {
@@ -176,7 +191,7 @@
             font-size: 16px;
             font-weight: 600;
             color: white;
-            background: linear-gradient(135deg, #ffc1cc 0%, #ffb3c1 50%, #ffa6b8 100%);
+            background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-hover) 100%);
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -186,8 +201,8 @@
 
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(255, 179, 193, 0.4);
-            background: linear-gradient(135deg, #ffccd5 0%, #ffbeca 50%, #ffb1c3 100%);
+            box-shadow: 0 10px 25px rgba(47, 93, 138, 0.22);
+            background: linear-gradient(135deg, #3E6A96 0%, #32557B 50%, #24496D 100%);
         }
 
         .submit-btn:active {
@@ -204,12 +219,12 @@
         .form-footer {
             text-align: center;
             margin-top: 30px;
-            color: #718096;
+            color: var(--muted);
             font-size: 15px;
         }
 
         .switch-link {
-            color: #ff6b9d;
+            color: var(--accent-dark);
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
@@ -217,7 +232,7 @@
         }
 
         .switch-link:hover {
-            color: #ffa6b8;
+            color: var(--accent-hover);
             text-decoration: underline;
         }
 
@@ -272,14 +287,14 @@
         }
 
         .top-navbar-logo-icon {
-            background: #ff6f91;
+            background: linear-gradient(135deg, var(--accent), #9FB7D0);
             width: 38px;
             height: 38px;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: var(--accent-hover);
             font-size: 18px;
         }
 
@@ -300,8 +315,8 @@
         <div class="brand-section">
             <div class="brand-content">
                 <div class="brand-logo">🤖</div>
-                <h1 class="brand-title">AI Interview Assistant</h1>
-                <p class="brand-subtitle">Master your interviews with AI-powered practice sessions and personalized
+                <h1 class="brand-title">Interview Assistant</h1>
+                <p class="brand-subtitle">Master your interviews with practice sessions and personalized
                     feedback</p>
             </div>
         </div>

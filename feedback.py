@@ -199,7 +199,7 @@ def get_feedback():
                 "video_path": video_url,
                 "is_skipped": is_skipped,
                 "content": {
-                    "status": "Excellent" if parse_metric(cf.get('overall'), 0) >= 8 else "Good" if parse_metric(cf.get('overall'), 0) >= 6 else "Needs Improvement" if cf.get('overall') else "Not Evaluated",
+                    "status": "Evaluated" if (cf.get('strengths') or cf.get('improvements')) else "Not Evaluated",
                     # User: strengths column in content_feedback
                     "strengths": parse_list(cf.get('strengths'), []),
                     # User: improvements column in content_feedback
@@ -207,12 +207,7 @@ def get_feedback():
                     "sample": cf.get('sample_answer', "")
                 },
                 "facial": {
-                    "status": (
-                        "Excellent" if all(ff.get(k) == 'good' for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
-                        "Needs Improvement" if any(ff.get(k) == 'needs_improvement' for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
-                        "Good" if any(ff.get(k) in ['good', 'average'] for k in ['posture_quality', 'alignment', 'eye_contact', 'touch']) else
-                        "Not Evaluated"
-                    ),
+                    "status": "Evaluated" if (ff.get('posture_feedback') or ff.get('alignment_feedback')) else "Not Evaluated",
                     "posture_feedback": ff.get('posture_feedback', ''),
                     "alignment_feedback": ff.get('alignment_feedback', ''),
                     "eyecontact_feedback": ff.get('eyecontact_feedback', ''),
