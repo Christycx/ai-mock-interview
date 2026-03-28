@@ -22,8 +22,6 @@ from flask_bcrypt import Bcrypt
 import fitz  # PyMuPDF for resume parsing
 import google.generativeai as genai
 from gtts import gTTS
-import os
-import uuid
 from multiprocessing import Process, Semaphore
 from voice_feedback_generator import generate_dynamic_voice_feedback
 from concurrent.futures import ThreadPoolExecutor
@@ -435,13 +433,10 @@ def store_voice_feedback(student_id, session_id, question_id, question_number, s
 
         cursor.execute("SHOW COLUMNS FROM voice_feedback LIKE 'student_id'")
         has_student_id = cursor.fetchone()
-        cursor.execute("SHOW COLUMNS FROM voice_feedback LIKE 'studentid'")
-        has_studentid = cursor.fetchone()
+        
 
         if has_student_id:
             student_col = "student_id"
-        elif has_studentid:
-            student_col = "studentid"
         else:
             # Fallback: keep legacy behavior (will likely fail loudly if schema is unexpected)
             student_col = "student_id"
@@ -475,34 +470,7 @@ def store_voice_feedback(student_id, session_id, question_id, question_number, s
                     )
             except Exception as e:
                 print(f"❌ Error inserting into voice_feedback (session_id): {e}")
-        else:
-            # Use resumeid column
-            try:
-                cursor.execute(
-                    "SELECT voice_id FROM voice_feedback WHERE resumeid = %s AND q_no = %s ORDER BY voice_id DESC LIMIT 1",
-                    (session_id, int(question_id)),
-                )
-                existing = cursor.fetchone()
-                if existing:
-                    cursor.execute(
-                        f"""
-                        UPDATE voice_feedback
-                        SET {student_col}=%s, strengths=%s, improvements=%s
-                        WHERE voice_id=%s
-                        """,
-                        (student_id, strengths_value, improvements_value, existing[0]),
-                    )
-                else:
-                    cursor.execute(
-                        f"""
-                        INSERT INTO voice_feedback
-                        ({student_col}, resumeid, strengths, improvements, q_no)
-                        VALUES (%s, %s, %s, %s, %s)
-                        """,
-                        (student_id, session_id, strengths_value, improvements_value, int(question_id)),
-                    )
-            except Exception as e:
-                print(f"❌ Error inserting into voice_feedback (resumeid): {e}")
+        
         
         connection.commit()
         cursor.close()
@@ -586,48 +554,6 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
                     )
             except Exception as e:
                 print(f"❌ Error upserting into content_feedback (session_id): {e}")
-        else:
-            try:
-                cursor.execute(
-                    "SELECT content_id FROM content_feedback WHERE resumeid = %s AND q_no = %s ORDER BY content_id DESC LIMIT 1",
-                    (session_id, int(question_id)),
-                )
-                existing = cursor.fetchone()
-                if existing:
-                    cursor.execute(
-                        """
-                        UPDATE content_feedback
-                        SET student_id=%s, response=%s, improvements=%s, strengths=%s, sample_answer=%s
-                        WHERE content_id=%s
-                        """,
-                        (
-                            student_id,
-                            response,
-                            improvements_json,
-                            strengths_json,
-                            sample_answer if sample_answer else "",
-                            existing[0],
-                        ),
-                    )
-                else:
-                    cursor.execute(
-                        """
-                        INSERT INTO content_feedback
-                        (student_id, resumeid, response, improvements, strengths, sample_answer, q_no)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        """,
-                        (
-                            student_id,
-                            session_id,
-                            response,
-                            improvements_json,
-                            strengths_json,
-                            sample_answer if sample_answer else "",
-                            int(question_id),
-                        ),
-                    )
-            except Exception as e:
-                print(f"❌ Error upserting into content_feedback (resumeid): {e}")
         
         connection.commit()
         cursor.close()
@@ -691,42 +617,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
                     ))
             except Exception as e:
                 print(f"❌ Error storing skipped voice_feedback: {e}")
-        else:
-            # Use resumeid column
-            try:
-                cursor.execute(
-                    "SELECT voice_id FROM voice_feedback WHERE resumeid = %s AND q_no = %s ORDER BY voice_id DESC LIMIT 1",
-                    (session_id, int(question_id)),
-                )
-                existing = cursor.fetchone()
-                if existing:
-                    cursor.execute(
-                        """
-                        UPDATE voice_feedback
-                        SET student_id=%s, strengths=%s, improvements=%s
-                        WHERE voice_id=%s
-                        """,
-                        (
-                            student_id,
-                            json.dumps(["NOT_ANSWERED"]),
-                            json.dumps(["Question was skipped"]),
-                            existing[0]
-                        )
-                    )
-                else:
-                    cursor.execute("""
-                        INSERT INTO voice_feedback 
-                        (student_id, resumeid, strengths, improvements, q_no)
-                        VALUES (%s, %s, %s, %s, %s)
-                    """, (
-                        student_id,
-                        session_id,
-                        json.dumps(["NOT_ANSWERED"]),
-                        json.dumps(["Question was skipped"]),
-                        int(question_id)
-                    ))
-            except Exception as e:
-                print(f"❌ Error storing skipped voice_feedback (resumeid): {e}")
+        
         
         # Check table structure for content_feedback
         cursor.execute("SHOW COLUMNS FROM content_feedback LIKE 'session_id'")
@@ -772,46 +663,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
                     ))
             except Exception as e:
                 print(f"❌ Error storing skipped content_feedback: {e}")
-        else:
-            # Use resumeid column
-            try:
-                cursor.execute(
-                    "SELECT content_id FROM content_feedback WHERE resumeid = %s AND q_no = %s ORDER BY content_id DESC LIMIT 1",
-                    (session_id, int(question_id)),
-                )
-                existing = cursor.fetchone()
-                if existing:
-                    cursor.execute(
-                        """
-                        UPDATE content_feedback
-                        SET student_id=%s, response=%s, improvements=%s, strengths=%s, sample_answer=%s
-                        WHERE content_id=%s
-                        """,
-                        (
-                            student_id,
-                            "NOT_ANSWERED",
-                            json.dumps(["Question was skipped"]),
-                            json.dumps(["NOT_ANSWERED"]),
-                            sample_answer,
-                            existing[0]
-                        )
-                    )
-                else:
-                    cursor.execute("""
-                        INSERT INTO content_feedback 
-                        (student_id, resumeid, response, improvements, strengths, sample_answer, q_no)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    """, (
-                        student_id,
-                        session_id,
-                        "NOT_ANSWERED",
-                        json.dumps(["Question was skipped"]),
-                        json.dumps(["NOT_ANSWERED"]),
-                        sample_answer,
-                        int(question_id)
-                    ))
-            except Exception as e:
-                 print(f"❌ Error storing skipped content_feedback (resumeid): {e}")
+        
         
         # Check table structure for face_feedback (for session_id support)
         cursor.execute("SHOW COLUMNS FROM face_feedback LIKE 'session_id'")
@@ -854,49 +706,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
                     ))
             except Exception as face_err:
                 print(f"⚠️ Could not store skipped face_feedback row: {face_err}")
-        else:
-            # Use legacy schema (no session_id)
-            try:
-                cursor.execute(
-                    "SELECT face_id FROM face_feedback WHERE qno = %s ORDER BY face_id DESC LIMIT 1",
-                    (int(question_id),),
-                )
-                existing = cursor.fetchone()
-                if existing:
-                    cursor.execute(
-                        """
-                        UPDATE face_feedback
-                        SET student_id=%s, 
-                            posture_feedback=%s, alignment_feedback=%s, 
-                            eyecontact_feedback=%s, touch_feedback=%s, 
-                            strength=%s, improvements=%s
-                        WHERE face_id=%s
-                        """,
-                        (
-                            student_id,
-                            "Question was skipped", "Question was skipped", 
-                            "Question was skipped", "Question was skipped",
-                            "NOT_ANSWERED",
-                            "Question was skipped",
-                            existing[0]
-                        )
-                    )
-                else:
-                    cursor.execute("""
-                        INSERT INTO face_feedback 
-                        (student_id, posture_feedback, alignment_feedback, eyecontact_feedback, touch_feedback, strength, improvements, qno)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (
-                        student_id,
-                        "Question was skipped", "Question was skipped", 
-                        "Question was skipped", "Question was skipped",
-                        "NOT_ANSWERED",
-                        "Question was skipped",
-                        int(question_id)
-                    ))
-            except Exception as face_err:
-                print(f"⚠️ Could not store skipped face_feedback (legacy): {face_err}")
-                
+                    
         # Also store the skipped attempt in responses table
         store_response(session_id, question_id, student_id, "NOT_ANSWERED", "Question was skipped")
         
@@ -913,7 +723,7 @@ def store_skipped_question(student_id, session_id, question_id, question_number,
             connection.close()
         return False               
         
-        # ================================
+# ================================
 # MULTIPROCESSING CONFIGURATION
 # ================================
 MAX_PROCESSES = 5
