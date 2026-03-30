@@ -607,7 +607,7 @@
                 <div class="a-header">
                     <div class="a-header-left">
                         <div class="a-header-icon">📝</div>
-                        Content Analysis
+                        Answer Quality Analysis
                     </div>
                     <div class="status-pill" id="contentStatus">Good</div>
                 </div>
@@ -636,7 +636,7 @@
                 <div class="a-header">
                     <div class="a-header-left">
                         <div class="a-header-icon">😊</div>
-                        Facial Analysis
+                        Behavioral and Posture Analysis
                     </div>
                     <div class="status-pill" id="facialStatus">Needs Improvement</div>
                 </div>
@@ -681,7 +681,7 @@
                 <div class="a-header">
                     <div class="a-header-left">
                         <div class="a-header-icon">🎤</div>
-                        Voice Analysis
+                        Speech delivery Analysis
                     </div>
                     <div class="status-pill" id="voiceStatus">Excellent</div>
                 </div>
@@ -762,9 +762,19 @@
             } else {
                 videoWrap.style.display = 'block';
                 if (d.video_path) {
-                    videoObj.src = d.video_path.startsWith('/') ? d.video_path : '/' + d.video_path;
+                    // Server now provides the full relative URL (e.g., /uploads/file.webm)
+                    videoObj.innerHTML = `<source src="${d.video_path}" type="video/webm">`;
+                    videoObj.load();
                     videoObj.style.display = 'block';
                     placeholder.style.display = 'none';
+                    
+                    // Add error listener for debugging
+                    videoObj.onerror = function() {
+                        console.error("❌ Failed to load video from:", d.video_path);
+                        placeholder.innerHTML = `<div class="play-btn">❌</div><span>Error loading video</span>`;
+                        placeholder.style.display = 'flex';
+                        videoObj.style.display = 'none';
+                    };
                 } else {
                     videoObj.style.display = 'none';
                     placeholder.style.display = 'flex';

@@ -427,6 +427,18 @@
       border-left-color: #7C6AA6;
     }
 
+    .video-feedback {
+      border-left-color: #f39c12;
+      background: #fdfaf5;
+    }
+
+    .video-feedback video {
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-top: 10px;
+    }
+
     .section-title {
       font-size: 18px;
       font-weight: 700;
@@ -1026,7 +1038,7 @@
             formData.append('is_last_question', isLastQuestion.toString());
             // If last question, show loading. Otherwise, enable next button immediately
             if (isLastQuestion) {
-              showLoading();
+              showFinalResults();
             } else {
               // Enable next question immediately
               nextBtn.style.display = 'flex';
@@ -1128,38 +1140,29 @@
             const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
             formData.append('is_last_question', isLastQuestion.toString());
 
-            // If last question, show loading. Otherwise, enable next button immediately
+            // Re-enable navigation buttons immediately
             if (isLastQuestion) {
-              showLoading();
+                showFinalResults();
             } else {
-              // Enable next question immediately
-              nextBtn.style.display = 'flex';
-              nextBtn.disabled = false;
-              resultDiv.style.display = 'none';
+                nextBtn.style.display = 'flex';
+                nextBtn.disabled = false;
             }
-
-            // Face analysis is now handled concurrently within /analyze_voice background process
+            
+            // Hide any previous results
+            resultDiv.style.display = 'none';
 
             fetch('/analyze_voice', { method: 'POST', body: formData })
               .then(res => res.json())
               .then(data => {
-                if (data.error) {
-                  throw new Error(data.error);
-                }
+                if (data.error) throw new Error(data.error);
+                
+                // Final results only show when completion is triggered
                 if (isLastQuestion) {
-                  showFinalResults();
-                } else {
-                  console.log(`✅ Analysis started in background for Question ${currentQuestionIndex + 1}`);
+                    showFinalResults();
                 }
               })
-
               .catch(err => {
-                console.error('Analysis error:', err);
-                if (isLastQuestion) {
-                  showError(err.message || 'Unable to process your response. Please try again.');
-                } else {
-                  console.error('Background analysis error (non-blocking):', err);
-                }
+                console.error('Background analysis error:', err);
               });
 
             chunks = [];
@@ -1207,34 +1210,20 @@
     }
 
     // Display results
-    function displayResults(data) {
+    function displayResults(data, videoUrl) {
       // Update question display with actual question and type
       updateQuestionDisplay(data.question || questions[currentQuestionIndex].question_text,
         data.question_type || 'general');
 
-      const confidenceClass = `confidence-${data.confidence_category.toLowerCase().replace(' ', '-')}`;
-      const confidenceScore = parseFloat(data.confidence_score) || 0;
+      let resultHTML = ``;
 
-      let resultHTML = `
-        <div class="confidence-display">
-          <div class="confidence-card ${confidenceClass}">
-            <div class="confidence-category">${data.confidence_category}</div>
-            <div class="confidence-score">Voice Confidence Score</div>
-            <div class="confidence-percentage">${confidenceScore}%</div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${confidenceScore}%"></div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // Transcript
-      if (data.transcript && data.transcript.trim().length > 0) {
+      // Video Response section for immediate review
+      if (videoUrl) {
         resultHTML += `
-          <div class="feedback-section transcript">
-            <div class="section-title"><i>📝</i> Your Response</div>
-            <div class="feedback-list">
-              <div class="transcript-content">"${data.transcript}"</div>
+          <div class="feedback-section video-feedback">
+            <div class="section-title"><i>🎬</i> Your Video Response</div>
+            <div class="feedback-list" style="padding: 10px; background: #000;">
+              <video src="${videoUrl}" controls></video>
             </div>
           </div>
         `;
@@ -1343,17 +1332,7 @@
       skipBtn.style.display = 'none';
       if (currentQuestionIndex < totalQuestions - 1) {
         nextBtn.style.display = 'flex';
-      } else {
-        finishBtn.style.display = 'flex';
       }
-
-      // Animate progress bar
-      setTimeout(() => {
-        const progressFill = document.querySelector('.progress-fill');
-        if (progressFill) {
-          progressFill.style.width = confidenceScore + '%';
-        }
-      }, 100);
     }
 
     async function completeAndRedirect() {

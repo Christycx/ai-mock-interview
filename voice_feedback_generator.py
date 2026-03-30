@@ -517,7 +517,7 @@ Now generate UNIQUE, VARIED feedback for THIS candidate based on their specific 
             return generate_static_fallback_feedback(analysis_results, confidence_score)
             
     except Exception as e:
-        print(f"❌ [Dynamic Feedback] Generation error: {str(e)}")
+        print(f" [Dynamic Feedback] Generation error: {str(e)}")
         print("⚠️ Using static fallback feedback")
         return generate_static_fallback_feedback(analysis_results, confidence_score)
 

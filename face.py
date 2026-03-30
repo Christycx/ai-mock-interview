@@ -55,7 +55,7 @@ def store_face_feedback(feedback, student_id=None, session_id=None, qno=None):
     Store face analysis feedback into face_feedback table.
     Expects feedback in the structure returned by generate_comprehensive_feedback.
     
-    Args:
+    important:
         feedback: Dictionary containing face analysis feedback
         student_id: ID of the student
         session_id: Interview session ID
@@ -189,8 +189,8 @@ def store_face_feedback(feedback, student_id=None, session_id=None, qno=None):
             return False
             
     except Error as e:
-        print(f"❌ Error storing face feedback: {e}")
-        print(f"   Error type: {type(e).__name__}")
+        print(f"Error storing face feedback: {e}")
+        print(f"Error type: {type(e).__name__}")
         import traceback
         traceback.print_exc()
         try:
@@ -212,35 +212,50 @@ def analyze_video(video_path):
     eye_contact_metrics = []
     body_touch_metrics = []
 
-    frame_count = 0
-    while cap.isOpened() and frame_count < 150:  # Analyze more frames for better accuracy
+    
+    frame_count = 0    
+    pose_results = None
+    face_results = None
+
+    while cap.isOpened() and frame_count < 600:  
         success, frame = cap.read()
         if not success:
             break
 
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pose_results = pose.process(frame_rgb)
-        face_results = face_mesh.process(frame_rgb)
+        if frame_count % 5 == 0:
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            pose_results = pose.process(frame_rgb)
+            face_results = face_mesh.process(frame_rgb)
 
-        # Analyze posture
-        if pose_results.pose_landmarks:
-            posture_feedback = analyze_posture_complete(pose_results.pose_landmarks.landmark)
-            posture_metrics.append(posture_feedback)
+            # 1. Analyze posture (Independent of face)
+            if pose_results and pose_results.pose_landmarks:
+                posture_feedback = analyze_posture_complete(
+                    pose_results.pose_landmarks.landmark
+                )
+                posture_metrics.append(posture_feedback)
 
-        # Analyze face alignment and eye contact
-        if face_results.multi_face_landmarks:
-            for face_landmarks in face_results.multi_face_landmarks:
-                alignment_feedback = analyze_head_alignment(face_landmarks.landmark)
-                alignment_metrics.append(alignment_feedback)
-                
-                eye_contact_feedback = analyze_eye_contact_improved(face_landmarks.landmark, 
-                                                                      pose_results.pose_landmarks if pose_results.pose_landmarks else None)
-                eye_contact_metrics.append(eye_contact_feedback)
-                
-                # Analyze body touch
-                if pose_results.pose_landmarks:
-                    body_touch_feedback = analyze_body_touch(face_landmarks.landmark, pose_results.pose_landmarks)
-                    body_touch_metrics.append(body_touch_feedback)
+            # 2. Analyze face metrics (If face is detected)
+            if face_results and face_results.multi_face_landmarks:
+                for face_landmarks in face_results.multi_face_landmarks:
+                    # Head alignment
+                    alignment_feedback = analyze_head_alignment(face_landmarks.landmark)
+                    alignment_metrics.append(alignment_feedback)
+
+                    # Eye contact
+                    eye_contact_feedback = analyze_eye_contact_improved(
+                        face_landmarks.landmark,
+                        pose_results.pose_landmarks if (pose_results and pose_results.pose_landmarks) else None
+                    )
+                    eye_contact_metrics.append(eye_contact_feedback)
+
+            # 3. Analyze body touch (Now independent of face loop, but requires both potentially)
+            if pose_results and pose_results.pose_landmarks and face_results and face_results.multi_face_landmarks:
+                # Use first face detected for body touch distance
+                face_landmarks = face_results.multi_face_landmarks[0]
+                body_touch_feedback = analyze_body_touch(
+                    face_landmarks.landmark, pose_results.pose_landmarks
+                )
+                body_touch_metrics.append(body_touch_feedback)
 
         frame_count += 1
 

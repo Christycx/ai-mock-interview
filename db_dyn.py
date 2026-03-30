@@ -498,6 +498,20 @@ def store_content_feedback(student_id, session_id, question_id, question_number,
         if content_analysis and isinstance(content_analysis, dict):
             improvements = content_analysis.get('improvements', [])
             strengths = content_analysis.get('strengths', [])
+            
+            # User: merge missing elements into improvements
+            missing_elements = content_analysis.get('missing_elements', [])
+            if isinstance(missing_elements, list):
+                if not isinstance(improvements, list):
+                    improvements = [improvements] if improvements else []
+                improvements.extend(missing_elements)
+            
+            # User: merge key points covered into strengths
+            key_points = content_analysis.get('key_points_covered', [])
+            if isinstance(key_points, list):
+                if not isinstance(strengths, list):
+                    strengths = [strengths] if strengths else []
+                strengths.extend(key_points)
         else:
             improvements = []
             strengths = []
@@ -908,7 +922,7 @@ print(f"✅ Using Groq with model: {SAMPLE_ANSWER_MODEL}")
 whisper_model = whisper.load_model("small")
 
 # Enhanced filler words list
-FILLER_WORDS = ["um", "uh", "like", "you know", "so", "actually", "basically", "literally", "right", "okay"]
+FILLER_WORDS = ["um", "uh", "like", "you know", "so", "actually", "basically", "literally", "right", "okay", "hmm", "well", "er", "ah", "oh", "mm", "huh", "gonna", "wanna", "kinda", "sorta", "just", "really", "very", "I mean", "you see", "I guess", "I think", "I feel", "I mean", "you know what I mean", "if you know what I mean", "at the end of the day", "to be honest", "in my opinion", "like I said", "as I was saying", "let me think", "let me see", "what's the word", "how can I put this"]
 
 # Common words that don't matter if repeated
 COMMON_WORDS = {
@@ -1076,19 +1090,6 @@ def calculate_advanced_confidence(analysis_results):
     except Exception as e:
         print(f"Confidence calculation error: {e}")
         return 50.0
-
-#def get_confidence_category(score):
- #   """Convert score to category with updated ranges"""
-  #  if score >= 80:
-   #     return "Excellent"
-    #elif score >= 65:
-     #   return "Good"
-    #elif score >= 50:
-     #   return "Average"
-    #elif score >= 30:
-     #   return "Below Average"
-    #else:
-     #   return "Poor"
 
 
 
@@ -1277,7 +1278,7 @@ Return ONLY the category name (one word: introduction, technical, behavioral, co
             return 'general'
             
     except Exception as e:
-        print(f"❌ Groq API classification error: {str(e)}")
+        print(f" Groq API classification error: {str(e)}")
         # If API fails, return 'general' as fallback
         return 'general'
 
@@ -1785,26 +1786,26 @@ def generate_sample_answer(question):
     try:
         # Detect question type
         question_type = detect_question_type(question)
-        print(f"🔍 Question type detected: {question_type}")
+        print(f" Question type detected: {question_type}")
         
         # Get appropriate prompt
         prompt = get_sample_answer_prompt(question, question_type)
         
-        print(f"📝 Generating {question_type} sample answer for: {question[:100]}...")
+        print(f" Generating {question_type} sample answer for: {question[:100]}...")
         
         # Call Groq API
         answer = call_groq_api(prompt, model=SAMPLE_ANSWER_MODEL)
         
         if answer and len(answer) > 10:
-            print(f"✅ Sample answer generated ({len(answer)} chars)")
+            print(f" Sample answer generated ({len(answer)} chars)")
             return answer.strip()
         else:
-            print("❌ No response from Groq")
+            print(" No response from Groq")
             # If API fails, raise exception
             raise Exception("Groq API failed to generate sample answer")
             
     except Exception as e:
-        print(f"❌ Sample answer generation error: {str(e)}")
+        print(f" Sample answer generation error: {str(e)}")
         raise Exception(f"Failed to generate sample answer: {str(e)}")
 
 def analyze_answer_content(question, user_answer):
@@ -1812,12 +1813,12 @@ def analyze_answer_content(question, user_answer):
     try:
         # Detect question type
         question_type = detect_question_type(question)
-        print(f"🔍 Analyzing {question_type} answer...")
+        print(f" Analyzing {question_type} answer...")
         
         # Get appropriate analysis prompt
         prompt = get_analysis_prompt(question, user_answer, question_type)
         
-        print(f"📊 Analyzing answer content with Groq...")
+        print(f" Analyzing answer content with Groq...")
         print(f"Question: {question[:100]}...")
         print(f"User answer length: {len(user_answer)} characters")
         
@@ -1825,7 +1826,7 @@ def analyze_answer_content(question, user_answer):
         response = call_groq_api(prompt, model=ANALYSIS_MODEL)
         
         if response:
-            print("✅ Groq response received")
+            print(" Groq response received")
             
             # Try multiple methods to extract JSON
             content_analysis = None
@@ -1833,7 +1834,7 @@ def analyze_answer_content(question, user_answer):
             # Method 1: Direct JSON parse
             try:
                 content_analysis = json.loads(response.strip())
-                print("✅ JSON parsed directly")
+                print(" JSON parsed directly")
                 # Add question_type to the analysis result
                 if content_analysis and isinstance(content_analysis, dict):
                     content_analysis['question_type'] = question_type
@@ -1842,20 +1843,20 @@ def analyze_answer_content(question, user_answer):
                 # Method 2: Extract JSON from text
                 content_analysis = extract_json_from_text(response)
                 if content_analysis:
-                    print("✅ JSON extracted from text")
+                    print(" JSON extracted from text")
                     # Add question_type to the analysis result
                     if isinstance(content_analysis, dict):
                         content_analysis['question_type'] = question_type
                     return content_analysis
                 else:
-                    print("❌ Could not parse JSON")
+                    print(" Could not parse JSON")
                     raise Exception("Failed to parse JSON from Groq response")
         
         else:
             raise Exception("No response from Groq API for analysis")
             
     except Exception as e:
-        print(f"❌ Answer analysis error: {str(e)}")
+        print(f"Answer analysis error: {str(e)}")
         raise Exception(f"Failed to analyze answer: {str(e)}")
 
 # ================================
@@ -2206,8 +2207,8 @@ def update_response_transcript(session_id, question_id, student_id, transcript):
         return False
     try:
         cursor = connection.cursor()
-        # Truncate to 1000 characters as per user's table schema
-        truncated_transcript = transcript[:1000]
+        # Truncate to 3000 characters as per user's table schema
+        truncated_transcript = transcript[:3000]
         
         sql = """
             UPDATE responses 
@@ -2243,7 +2244,7 @@ def ensure_session_exists(session_id, student_id=1, level='beginner', job_title=
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, (session_id, student_id, level, QUESTIONS_PER_LEVEL.get(level, 10), 'ongoing', job_title, company))
                 connection.commit()
-                print(f"🆕 Created ongoing session: {session_id} for {job_title} at {company}")
+                print(f" Created ongoing session: {session_id} for {job_title} at {company}")
             cursor.close()
             connection.close()
         except Exception as e:
@@ -2338,11 +2339,9 @@ def analyze_voice():
     question_number = request.form.get('question_number', '1')
     is_last_question = request.form.get('is_last_question', 'false').lower() == 'true'
     
-    if not question:
-        question = "What are the four pillars of OOPS (Object-Oriented Programming)? Explain each."
-
-    print(f"🎯 Received analysis request for question: {question}")
-    print(f"📝 Question ID: {question_id}, Session ID: {session_id}, Student ID: {student_id}, Question #: {question_number}")
+    
+    print(f" Received analysis request for question: {question}")
+    print(f" Question ID: {question_id}, Session ID: {session_id}, Student ID: {student_id}, Question #: {question_number}")
 
     # Ensure session exists as 'ongoing'
     ensure_session_exists(session_id, student_id=student_id)
@@ -2357,7 +2356,7 @@ def analyze_voice():
         process.daemon = True
         process.start()
         
-        print(f"✅ Background process started for Question {question_number}{' (Last Question)' if is_last_question else ''}")
+        print(f" Background process started for Question {question_number}{' (Last Question)' if is_last_question else ''}")
         
         # Return immediately
         return jsonify({
@@ -2368,7 +2367,7 @@ def analyze_voice():
             'is_last_question': is_last_question
         })
     except Exception as e:
-        print(f"❌ Failed to start background process: {str(e)}")
+        print(f" Failed to start background process: {str(e)}")
         return jsonify({'error': f'Failed to start analysis: {str(e)}'}), 500
 
 # ================================
@@ -2390,17 +2389,17 @@ def skip_question():
         if not session_id:
             return jsonify({'error': 'Session ID is required'}), 400
         
-        # Ensure session exists as 'ongoing'
+        
         ensure_session_exists(session_id, student_id=student_id, level=level)
         
-        print(f"⏭️ Skipping question {question_number} (ID: {question_id}) for session {session_id}")
+        print(f"Skipping question {question_number} (ID: {question_id}) for session {session_id}")
         
         # Generate sample answer if question text is available
         sample_answer = ""
         if question_text:
             try:
                 sample_answer = generate_sample_answer(question_text)
-                print(f"📋 Generated sample answer for skipped question: {len(sample_answer)} chars")
+                print(f" Generated sample answer for skipped question: {len(sample_answer)} chars")
             except Exception as e:
                 print(f"⚠️ Failed to generate sample answer for skip: {e}")
         
@@ -2469,14 +2468,14 @@ def complete_session():
                         INSERT INTO progress_tracking (student_id, session_id, level, completed_at)
                         VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
                     """, (student_id, session_id, level))
-                    print(f"📈 Progress tracked for Student {student_id} in session {session_id}")
+                    print(f" Progress tracked for Student {student_id} in session {session_id}")
                 except Exception as track_err:
                     print(f"⚠️ Failed to log progress tracking: {track_err}")
             
             connection.commit()
             cursor.close()
             connection.close()
-            print(f"🏁 Session {session_id} marked as completed")
+            print(f"Session {session_id} marked as completed")
             return jsonify({'success': True, 'message': 'Session completed and progress tracked'})
         return jsonify({'error': 'Database connection failed'}), 500
     except Exception as e:
@@ -2521,10 +2520,8 @@ def feedback():
 @app.route('/get_feedback')
 def get_feedback():
     session_id = request.args.get('session_id')
-    
-    
-    
-    print(f"🔍 Fetching feedback for session: {session_id}")
+ 
+    print(f" Fetching feedback for session: {session_id}")
 
     connection = get_db_connection()
     if not connection:
@@ -2542,7 +2539,7 @@ def get_feedback():
             ORDER BY questions_id ASC
         """, (session_id,))
         questions_list = cursor.fetchall()
-        print(f"📊 Found {len(questions_list)} questions for session {session_id}")
+        print(f"Found {len(questions_list)} questions for session {session_id}")
         
         if not questions_list:
             return jsonify({}), 200
@@ -2555,7 +2552,7 @@ def get_feedback():
             q_text = q_item['question_text']
             q_num_label = str(idx + 1) # Frontend uses "1", "2", etc.
             
-            print(f"  ➡️ Processing Q{q_num_label} (ID: {q_id})")
+            print(f" Processing Q{q_num_label} (ID: {q_id})")
 
             # Fetch Response (Video & Transcript)
             cursor.execute("SELECT video_path, transcript FROM responses WHERE session_id = %s AND question_id = %s", (session_id, q_id))
@@ -2659,7 +2656,12 @@ def get_feedback():
             
             video_url = ""
             if db_video_path and not is_skipped:
-                video_url = db_video_path.replace('\\\\', '/')
+                # Fix path for URL
+                # If "uploads\file.webm" -> "/uploads/file.webm"
+                norm_path = db_video_path.replace('\\', '/')
+                if norm_path.startswith('uploads/'):
+                    norm_path = norm_path[len('uploads/'):]
+                video_url = '/uploads/' + norm_path
             
             # Prioritize response column from content_feedback, never from responses table based on user request
             transcript = cf.get('response', '')
@@ -2733,9 +2735,9 @@ def analyze_interview():
             filepath = mp4_path
 
         cap.release()
-        print(f"🎥 Analyzing video: {filepath}")
+        print(f" Analyzing video: {filepath}")
         result = analyze_video(filepath)
-        print(f"✅ Video analysis complete. Result structure: {result.keys() if isinstance(result, dict) else type(result)}")
+        print(f" Video analysis complete. ")
 
         # Question number → qno in face_feedback
         qno_raw = request.form.get("question_number") or request.form.get("qno")
@@ -2748,23 +2750,23 @@ def analyze_interview():
         # Get session_id
         session_id = request.form.get("session_id")
 
-        print(f"📊 Parameters: qno={qno_val}, session_id={session_id}")
+        print(f"Parameters: qno={qno_val}, session_id={session_id}")
         
         # Store face feedback with error handling
         if isinstance(result, dict):
             student_id = request.form.get("student_id") or 1
             db_success = store_face_feedback(result, student_id=student_id, session_id=session_id, qno=qno_val)
             if db_success:
-                print(f"✅ Face feedback successfully stored in database")
+                print(f" Face feedback successfully stored in database")
             else:
                 print(f"⚠️ Face feedback storage returned False")
         else:
-            print(f"❌ Unexpected result type from analyze_video: {type(result)}")
+            print(f"Unexpected result type from analyze_video: {type(result)}")
 
         return jsonify(result)
 
     except Exception as e:
-        print(f"❌ Analysis error: {str(e)}")
+        print(f"Analysis error: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
@@ -2802,9 +2804,7 @@ def debug_database():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print(f"\n{'='*50}")
-    print(f"🚀 Interview Answer Analyzer")
-    print(f"{'='*50}")
+    print(f" Interview Answer Analyzer")
     print(f"✓ Groq API: Configured")
     print(f"✓ Model: {SAMPLE_ANSWER_MODEL}")
     print(f"✓ Whisper: Loaded")
